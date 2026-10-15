@@ -1,5 +1,5 @@
 ***What's in this build***
-This build has the same features as build 5. The difference is how it was made: it was built with Apple's official released iOS 27 tools on a GitHub build server, the same process used for App Store releases. Please use it as you normally would and let me know if anything behaves differently from build 5, including the app failing to open, missing weather, or settings that didn't carry over.
+This build has the same features as build 5. The difference is how it was made: it was built with Apple's official released developer tools on a GitHub build server, the same process used for App Store releases. Please use it as you normally would and let me know if anything behaves differently from build 5, including the app failing to open, missing weather, or settings that didn't carry over.
 
 ***Still in this build***
 - Open at Launch: choose a city for WeatherFast to open to, from a city's Actions menu, by touching and holding a city in List view, or in Settings, Display Options, Open at Launch.
