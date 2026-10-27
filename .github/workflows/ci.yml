@@ -82,3 +82,25 @@ jobs:
         with:
           name: coverage-report
           path: webapp/coverage/
+
+  windows-tests:
+    name: Windows Tests
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        working-directory: windows
+        run: pip install -r requirements.txt pytest
+
+      # These tests build no windows (they test the wx-free modules), so they
+      # run headless on the runner.
+      - name: Run tests
+        working-directory: windows
+        run: python -m pytest -q tests

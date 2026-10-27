@@ -37,7 +37,7 @@ class MarineDialog(wx.Dialog):
         vbox = wx.BoxSizer(wx.VERTICAL)
         self.status = wx.StaticText(panel, label="Loading marine conditions...")
         vbox.Add(self.status, 0, wx.ALL, 8)
-        self.lines = AccessibleLinesPanel(panel)
+        self.lines = AccessibleLinesPanel(panel, name="Marine forecast")
         vbox.Add(self.lines, 1, wx.EXPAND | wx.ALL, 8)
         btns = wx.StdDialogButtonSizer()
         btns.AddButton(wx.Button(panel, wx.ID_CLOSE))
@@ -45,6 +45,9 @@ class MarineDialog(wx.Dialog):
         vbox.Add(btns, 0, wx.ALIGN_CENTER | wx.ALL, 8)
         panel.SetSizer(vbox)
         self.Bind(wx.EVT_BUTTON, lambda e: self.Close(), id=wx.ID_CLOSE)
+        # Escape presses Close: without an escape id, a dialog with no Cancel
+        # button ignores Escape.
+        self.SetEscapeId(wx.ID_CLOSE)
         self.Bind(wx.EVT_CLOSE, self._on_close)
 
         wx.CallAfter(self.load)

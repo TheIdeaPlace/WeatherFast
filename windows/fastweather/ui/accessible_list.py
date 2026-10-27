@@ -13,14 +13,48 @@ def _is_visible_line(line):
     return bool(stripped) and not all(c in "-=" for c in stripped)
 
 
+class _ListName(wx.Accessible):
+    """Name a list box for screen readers.
+
+    A Win32 list box has no name of its own: screen readers borrow the
+    nearest label, so result lists were read as "List box" with no name, or
+    under the wrong label ("Years back: List box" in Historical Weather).
+    ``SetName`` doesn't reach MSAA, so the name comes from here. childId 0 is
+    the list itself; its rows defer to wx, so each row still reads as its own
+    text.
+    """
+
+    def __init__(self, window, label):
+        super().__init__(window)
+        self._label = label
+
+    def GetName(self, childId):
+        if childId:
+            return (wx.ACC_NOT_IMPLEMENTED, "")
+        return (wx.ACC_OK, self._label)
+
+
+def name_list(listbox, label):
+    """Give a wx.ListBox (or any control) a screen reader name."""
+    listbox.SetName(label)
+    try:
+        acc = _ListName(listbox, label)
+        listbox.SetAccessible(acc)
+        listbox._fw_accessible = acc  # keep it alive as long as the control
+    except (NotImplementedError, AttributeError):
+        pass  # a wx build without accessibility support: keep the default
+
+
 class AccessibleLinesPanel(wx.Panel):
     """A monospace single-select ListBox that renders a list of text lines."""
 
-    def __init__(self, parent, activatable=False):
+    def __init__(self, parent, activatable=False, name=None):
         """``activatable`` enables Enter on rows carrying a payload (see
         set_lines). It is opt-in because it requires wx.WANTS_CHARS, which
         stops Enter from reaching a dialog's default button; panels that are
         pure output keep the plain style and their existing key behavior.
+
+        ``name`` is what a screen reader calls the list ("Moon", "Results").
         """
         super().__init__(parent)
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -35,6 +69,8 @@ class AccessibleLinesPanel(wx.Panel):
         )
         sizer.Add(self.listbox, 1, wx.EXPAND)
         self.SetSizer(sizer)
+        if name:
+            name_list(self.listbox, name)
 
         self._row_data = {}       # listbox row -> caller payload
         self._on_activate = None

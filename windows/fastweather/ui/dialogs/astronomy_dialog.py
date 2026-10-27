@@ -11,7 +11,7 @@ class AstronomyDialog(wx.Dialog):
         super().__init__(parent, title=f"Astronomy - {center[0]}", size=(480, 360))
         panel = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
-        lines = AccessibleLinesPanel(panel)
+        lines = AccessibleLinesPanel(panel, name="Moon")
         vbox.Add(lines, 1, wx.EXPAND | wx.ALL, 10)
         btns = wx.StdDialogButtonSizer()
         btns.AddButton(wx.Button(panel, wx.ID_CLOSE))
@@ -19,6 +19,9 @@ class AstronomyDialog(wx.Dialog):
         vbox.Add(btns, 0, wx.ALIGN_CENTER | wx.ALL, 8)
         panel.SetSizer(vbox)
         self.Bind(wx.EVT_BUTTON, lambda e: self.Close(), id=wx.ID_CLOSE)
+        # Escape presses Close: without an escape id, a dialog with no Cancel
+        # button ignores Escape.
+        self.SetEscapeId(wx.ID_CLOSE)
 
         s = astronomy.summary()
         lines.set_lines([

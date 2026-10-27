@@ -36,6 +36,10 @@ class CitySelectionDialog(wx.Dialog):
 
         btns = wx.StdDialogButtonSizer()
         add_btn = wx.Button(panel, wx.ID_OK, "Add")
+        # The default button, so Enter in the list adds the selected place, as
+        # the prompt says. The list's own key handler never saw Enter: a dialog
+        # takes it for its default button, and there wasn't one.
+        add_btn.SetDefault()
         btns.AddButton(add_btn)
         btns.AddButton(wx.Button(panel, wx.ID_CANCEL))
         btns.Realize()
@@ -45,7 +49,6 @@ class CitySelectionDialog(wx.Dialog):
 
         self.Bind(wx.EVT_BUTTON, self.on_ok, id=wx.ID_OK)
         self.city_list.Bind(wx.EVT_LISTBOX_DCLICK, self.on_ok)
-        self.city_list.Bind(wx.EVT_KEY_DOWN, self.on_list_key)
         # Land focus on the list so a screen reader starts on the results.
         wx.CallAfter(self.city_list.SetFocus)
 
@@ -54,12 +57,5 @@ class CitySelectionDialog(wx.Dialog):
         if sel != wx.NOT_FOUND:
             self.selected_match = self.matches[sel]
             self.EndModal(wx.ID_OK)
-        else:
-            event.Skip()
-
-    def on_list_key(self, event):
-        keycode = event.GetKeyCode()
-        if keycode == wx.WXK_RETURN or keycode == wx.WXK_NUMPAD_ENTER:
-            self.on_ok(event)
         else:
             event.Skip()

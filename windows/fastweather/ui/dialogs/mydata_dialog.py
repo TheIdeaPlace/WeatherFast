@@ -73,7 +73,7 @@ class MyDataDialog(wx.Dialog):
         self.status = wx.StaticText(panel, label="")
         vbox.Add(self.status, 0, wx.LEFT | wx.BOTTOM, 8)
 
-        self.lines = AccessibleLinesPanel(panel)
+        self.lines = AccessibleLinesPanel(panel, name="My data")
         vbox.Add(self.lines, 1, wx.EXPAND | wx.ALL, 8)
 
         btns = wx.StdDialogButtonSizer()
@@ -85,6 +85,9 @@ class MyDataDialog(wx.Dialog):
         self.choose_btn.Bind(wx.EVT_BUTTON, self.on_choose)
         self.refresh_btn.Bind(wx.EVT_BUTTON, lambda e: self.load())
         self.Bind(wx.EVT_BUTTON, lambda e: self.Close(), id=wx.ID_CLOSE)
+        # Escape presses Close: without an escape id, a dialog with no Cancel
+        # button ignores Escape.
+        self.SetEscapeId(wx.ID_CLOSE)
         self.Bind(wx.EVT_CLOSE, self._on_close)
 
         wx.CallAfter(self.load)
