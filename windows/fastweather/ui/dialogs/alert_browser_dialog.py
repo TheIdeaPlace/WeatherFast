@@ -29,6 +29,7 @@ class AlertBrowserDialog(wx.Dialog):
         self.severity_filter = "All"
         self.hazard_filter = None
         self._alive = True
+        self._enter_handlers = {}   # list -> what Enter on it does (the pages fill it)
 
         panel = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -49,7 +50,6 @@ class AlertBrowserDialog(wx.Dialog):
         # button ignores Escape.
         self.SetEscapeId(wx.ID_CLOSE)
         self.Bind(wx.EVT_CLOSE, self._on_close)
-        self._enter_handlers = {}   # list -> what Enter on it does
         self.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
 
         wx.CallAfter(self._load_counts)

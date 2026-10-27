@@ -90,17 +90,26 @@ class AccessibleLinesPanel(wx.Panel):
         rather than its index, so a background refresh that inserts lines above
         the reading position doesn't move the user.
         """
-        prev = (self.listbox.GetStringSelection()
-                if keep_selection and self.listbox.GetSelection() != wx.NOT_FOUND
-                else None)
-        self.listbox.Clear()
-        self._row_data = {}
+        visible, data = [], {}
         for i, line in enumerate(lines):
             if not _is_visible_line(line):
                 continue
             if row_data and i in row_data:
-                self._row_data[self.listbox.GetCount()] = row_data[i]
-            self.listbox.Append(line)
+                data[len(visible)] = row_data[i]
+            visible.append(line)
+        if keep_selection and visible == list(self.listbox.GetStrings()):
+            # Nothing changed (a refresh that brought the same report): leave
+            # the list alone. Rebuilding it made the screen reader re-read the
+            # current line once per refresh.
+            self._row_data = data
+            return
+        prev = (self.listbox.GetStringSelection()
+                if keep_selection and self.listbox.GetSelection() != wx.NOT_FOUND
+                else None)
+        self.listbox.Clear()
+        self._row_data = data
+        if visible:
+            self.listbox.Append(visible)
         if self.listbox.GetCount() > 0:
             restored = self.listbox.FindString(prev) if prev else wx.NOT_FOUND
             self.listbox.SetSelection(restored if restored != wx.NOT_FOUND else 0)
