@@ -73,7 +73,11 @@ class CityRowTests(unittest.TestCase):
         self.assertNotIn("High", city_row_text("X", data, _fmt()))
 
     def test_no_current_conditions(self):
+        # None tells the caller to show the error row (it used to stay on
+        # "Loading..."), and a null temperature must not raise.
         self.assertIsNone(city_row_text("X", {"daily": {}}, _fmt()))
+        self.assertIsNone(city_row_text("X", {"current": {}}, _fmt()))
+        self.assertIsNone(city_row_text("X", _basic(temperature_2m=None), _fmt()))
 
     def test_error_row_keeps_the_city_prefix(self):
         # _refresh_city_row finds a row by "<city> - ".

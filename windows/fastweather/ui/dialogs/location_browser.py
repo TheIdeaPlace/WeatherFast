@@ -57,6 +57,8 @@ class _CheckList(wx.ListCtrl):
         return self.IsItemChecked(i)
 
 
+_LIST_LABEL = "Select cities to add (check multiple cities):"
+
 _SORTS = [
     "Name (A-Z)", "Name (Z-A)",
     "North to South", "South to North",
@@ -99,8 +101,8 @@ class LocationBrowserDialog(wx.Dialog):
         ctrl_row.Add(self.fav_btn, 0)
         vbox.Add(ctrl_row, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
 
-        vbox.Add(wx.StaticText(panel, label="Select cities to add (check multiple cities):"),
-                 0, wx.LEFT | wx.RIGHT, 8)
+        self.list_label = wx.StaticText(panel, label=_LIST_LABEL)
+        vbox.Add(self.list_label, 0, wx.LEFT | wx.RIGHT, 8)
         self.cities_list = _CheckList(panel)
         vbox.Add(self.cities_list, 1, wx.EXPAND | wx.ALL, 8)
 
@@ -272,6 +274,11 @@ class LocationBrowserDialog(wx.Dialog):
         return cities
 
     def _fill_list(self, cities):
+        # Keep what was checked when the list is re-sorted.
+        checked = {id(self.cities_list.GetClientData(i))
+                   for i in range(self.cities_list.GetCount())
+                   if self.cities_list.IsChecked(i)}
+        self.list_label.SetLabel(_LIST_LABEL)
         self.cities_list.Clear()
         for c in cities:
             label = c["display"]
@@ -279,11 +286,14 @@ class LocationBrowserDialog(wx.Dialog):
                 temp = (self.fmt.temperature_short(c["temp"]) if self.fmt
                         else f"{c['temp']:.0f}°C")
                 label += f"  ({temp})"
-            self.cities_list.Append(label, c)
+            i = self.cities_list.Append(label, c)
+            if id(c) in checked:
+                self.cities_list.Check(i, True)
 
     def _fetch_temps_then_populate(self):
-        self.cities_list.Clear()
-        self.cities_list.Append("Fetching temperatures for sorting...")
+        # Said in the label, not as a row: a row here would be a checkable
+        # "city" (and Clear would drop the checks, which _fill_list keeps).
+        self.list_label.SetLabel("Fetching temperatures for sorting...")
         cities = self.loaded_cities
 
         def work():

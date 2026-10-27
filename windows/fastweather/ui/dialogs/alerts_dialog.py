@@ -64,7 +64,7 @@ class AlertsDialog(wx.Dialog):
         # list keeps the system's Tab and Escape handling.
         self.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
         self.back_btn.Bind(wx.EVT_BUTTON, self.on_back)
-        self.Bind(wx.EVT_BUTTON, lambda e: self.Close(), id=wx.ID_CLOSE)
+        self.Bind(wx.EVT_BUTTON, self._on_close_button, id=wx.ID_CLOSE)
         # Escape presses Close: without an escape id, a dialog with no Cancel
         # button ignores Escape.
         self.SetEscapeId(wx.ID_CLOSE)
@@ -135,6 +135,14 @@ class AlertsDialog(wx.Dialog):
     def on_back(self, event):
         self.book.SetSelection(0)
         self.list_box.SetFocus()
+
+    def _on_close_button(self, event):
+        # EndModal rather than Close(): with Escape mapped to ID_CLOSE, Close()
+        # sends EVT_CLOSE, whose default handler presses ID_CLOSE again, and
+        # wx's re-entry guard then leaves the dialog open. Escape and the
+        # title bar's X both come here too.
+        self._alive = False
+        self.EndModal(wx.ID_CLOSE)
 
     def _on_close(self, event):
         self._alive = False

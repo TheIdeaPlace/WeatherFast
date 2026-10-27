@@ -82,7 +82,7 @@ Type into the **Enter city** field and press Enter (or click **Add City**). You 
 - A street address
 - A specific place name such as an airport, university, or landmark
 
-A **Search Results** window opens listing what was found (up to eight matches), even when there is only one result, so you can review and confirm before anything is added. Use the arrow keys to choose a result and press Enter (or **Add**) to add it; press Escape or **Cancel** to back out. If nothing matches, the app tells you and returns you to the search field.
+A **Search Results** window opens listing what was found (up to eight matches), even when there is only one result, so you can review and confirm before anything is added. Use the arrow keys to choose a result and press Enter (or **Add**) to add it; you land on the new city in your list. Press Escape or **Cancel** to back out. If nothing matches, the app tells you and returns you to the search field. If the place is already in your list, the app says so.
 
 ### Specific place names
 
@@ -98,7 +98,7 @@ The dialog has tabs:
 - **International** — pick a country, then **Load Cities**.
 - **Favorites** — your saved regions; pick one and **Load Favorite** to jump straight to it.
 
-Once a region is loaded, its cities appear in a checklist. Check any number of them (or use **Select All** / **Deselect All**), then choose **Add Selected Cities** to add them to your list. Cities already in your list are skipped, and the app reports how many were added.
+Once a region is loaded, its cities appear in a checklist, and Load Cities takes you there. Press Space to check or uncheck a city. Check any number of them (or use **Select All** / **Deselect All**), then choose **Add Selected Cities** to add them to your list. Cities already in your list are skipped, and the app reports how many were added.
 
 Use the **Sort** control to order the loaded cities by:
 
@@ -133,7 +133,7 @@ At the top of the view are navigation buttons:
 | Next Day | Show the next day's detail. |
 | Configure | Open display and units settings. |
 
-**Prev Day** and **Next Day** browse other days (up to about a week in either direction). When you move off today, the view shows that day's summary and its hour-by-hour detail. Press Escape or **Back** to return to the list.
+**Prev Day** and **Next Day** browse other days (up to about a week in either direction). When you move off today, the view shows that day's summary and its hour-by-hour detail. Press Escape or **Back** to return to the list. F5 refreshes the report you're reading.
 
 ### Alerts in the report
 
@@ -187,7 +187,7 @@ Use **OK** to apply and close, **Apply** to preview changes without closing, or 
 
 ## Per-City Weather Features
 
-The **Weather** menu holds specialized reports that apply to the city currently selected (or the city shown in Full Weather). Select a city first; if none is selected, the app prompts you to choose one.
+The **Weather** menu (Alt+W) holds specialized reports that apply to the city currently selected (or the city shown in Full Weather). Select a city first; if none is selected, the app prompts you to choose one. Each item has its own access key: Weather **A**lerts, **E**xpected Precipitation, Weather Around **M**e, **H**istorical Weather, My **D**ata, Ma**r**ine Forecast and As**t**ronomy. Escape closes each of these windows.
 
 ### Weather Alerts
 
@@ -272,8 +272,8 @@ The menu bar is reachable with Alt, then the underlined letter of a menu.
 
 | Key | Action |
 |-----|--------|
-| F5 or Ctrl+R | Refresh the selected city |
-| Delete | Remove the selected city |
+| F5 or Ctrl+R | Refresh the selected city (in Full Weather, the whole report) |
+| Delete (in the city list) | Remove the selected city |
 | Alt+U | Move the selected city up |
 | Alt+D | Move the selected city down |
 | Alt+F | Open Full Weather for the selected city |
@@ -281,7 +281,7 @@ The menu bar is reachable with Alt, then the underlined letter of a menu.
 | Alt+C | Open Configure Display & Units |
 | Enter (in the city list) | Open Full Weather for the selected city |
 | Enter (in a results or alert list) | Add the selected result, or open the next level of detail |
-| Escape | Return from Full Weather to the city list |
+| Escape | Return from Full Weather to the city list, or close a window |
 | F1 | Open this user guide in your browser |
 
 ## Data and Privacy

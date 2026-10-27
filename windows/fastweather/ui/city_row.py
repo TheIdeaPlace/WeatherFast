@@ -22,12 +22,13 @@ def city_row_text(city, data, fmt):
     The sky word is the same one Full Weather's Condition line uses (the
     weather code, falling back to cloud cover), so the list and the report
     can't disagree ("mostly cloudy" in the list, "Mainly clear" in the report).
-    Returns None when the data has no current conditions.
+    Returns None when the data has no current temperature (the caller
+    shows the error row rather than leaving "Loading...").
     """
     curr = data.get("current") or data.get("current_weather") or {}
-    if not curr:
+    temp_c = curr.get("temperature_2m", curr.get("temperature"))
+    if temp_c is None:
         return None
-    temp_c = curr.get("temperature_2m", curr.get("temperature", 0))
     text = f"{city} - {fmt.temperature_short(temp_c)}"
 
     sky = condition_summary(curr.get("weather_code"), curr.get("cloud_cover"))
