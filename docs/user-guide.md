@@ -98,7 +98,7 @@ The dialog has tabs:
 - **International** — pick a country, then **Load Cities**.
 - **Favorites** — your saved regions; pick one and **Load Favorite** to jump straight to it.
 
-Once a region is loaded, its cities appear in a checklist, and Load Cities takes you there. Each city shows its current weather, like your own list, as soon as it arrives. Press Space to check or uncheck a city. Check any number of them (or use **Select All** / **Deselect All**), then choose **Add Selected Cities** to add them to your list. Cities already in your list are skipped, and the app reports how many were added.
+Once a region is loaded, its cities appear in a checklist, and Load Cities takes you there. Each city shows the same line as your own list (temperature, sky, today's high and low, and for US cities the most serious alert) as soon as its weather arrives, or "weather unavailable" if it couldn't be fetched. Press Space to check or uncheck a city. Check any number of them (or use **Select All** / **Deselect All**), then choose **Add Selected Cities** to add them to your list. Cities already in your list are skipped, and the app reports how many were added.
 
 Use the **Sort** control to order the loaded cities by:
 

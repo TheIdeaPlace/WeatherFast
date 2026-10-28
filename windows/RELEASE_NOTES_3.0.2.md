@@ -1,4 +1,8 @@
-WeatherFast 3.0.2 for Windows is a bug-fix release. It updates 3.0.1, and WeatherFast offers it to you the next time it starts.
+WeatherFast 3.0.2 for Windows mostly fixes bugs, and Browse Cities now shows the weather. It updates 3.0.1, and WeatherFast offers it to you the next time it starts.
+
+## Added
+
+- **Browse Cities by State/Country** shows each city's weather, the same line as in your own list: the temperature, the sky, today's high and low, and for US cities the most serious weather alert. Each line fills in as its weather arrives; a city whose weather can't be fetched says "weather unavailable".
 
 ## Fixed
 
@@ -23,7 +27,7 @@ WeatherFast 3.0.2 for Windows is a bug-fix release. It updates 3.0.1, and Weathe
 - **Search Results:** Enter adds the selected place, as the window says.
 - **Configure:** OK now updates the list (for example, after you change to Celsius), and Enter means OK. OK no longer opens Full Weather when you started from the list.
 - **Escape** closes Expected Precipitation, Weather Around Me, Historical Weather, Astronomy, Marine Forecast, My Data, Weather Alerts and Browse Weather Alerts.
-- **Browse Cities by State/Country:** each city now shows its weather (temperature, sky, and today's high and low), so you can tell which ones you want. Screen readers say whether each city is checked, and Load Cities takes you to the list.
+- **Browse Cities by State/Country:** screen readers say whether each city is checked, and Load Cities takes you to the list.
 - **Browse Weather Alerts:** choosing a region takes you to its alerts and reads the first one, and Tab no longer skips the list of alert types.
 - The lists in these windows have names, so screen readers announce "Moon", "Multi-year results" and so on, instead of no name or the wrong label.
 - The Weather menu items have their own access keys: Weather **A**lerts, **E**xpected Precipitation, Weather Around **M**e, **H**istorical Weather, My **D**ata, Ma**r**ine Forecast and As**t**ronomy.
