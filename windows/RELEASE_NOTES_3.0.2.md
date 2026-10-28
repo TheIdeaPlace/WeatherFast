@@ -16,7 +16,7 @@ WeatherFast 3.0.2 for Windows is a bug-fix release. It updates 3.0.1, and Weathe
 ### Full Weather
 
 - F5 in Full Weather refreshes the whole report. It used to drop the hourly and daily sections.
-- Opening Full Weather reads the report once, instead of reading its heading two or three times as the forecast and alerts arrive.
+- Opening Full Weather repeats itself less while the forecast and alerts arrive, and F5 no longer re-reads the line you're on when nothing has changed.
 
 ### Dialogs
 
