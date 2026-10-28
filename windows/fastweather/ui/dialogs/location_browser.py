@@ -1,6 +1,7 @@
 """Browse cities by US state or country, with sorting and region favorites."""
 
 import threading
+import time
 import types
 from concurrent.futures import ThreadPoolExecutor
 
@@ -11,7 +12,22 @@ from ...services import alert_service, weather_service
 from ..alert_format import city_row_badge
 from ..city_row import city_row_text
 
-_BATCH = 50   # places per Open-Meteo request
+_BATCH = 50          # places per Open-Meteo request
+_BATCH_GAP = 1.0     # seconds between them: each place counts against the free tier
+_ALERT_GAP = 0.25    # seconds between NWS checks, two at a time, so NWS doesn't throttle
+                     # the IP (the main list's alerts share it)
+
+
+def row_label(c):
+    """A Browse Cities row: the same line as Your Cities, as if the city were
+    in your list ("<city> - Loading..." until its weather arrives)."""
+    if c["row"]:
+        text = c["row"]
+    elif c["failed"]:
+        text = f"{c['display']} - weather unavailable"
+    else:
+        text = f"{c['display']} - Loading..."
+    return text + c["badge"]
 
 
 def _deliver(state, gen, fn, *args):
@@ -261,6 +277,7 @@ class LocationBrowserDialog(wx.Dialog):
                     "state": c.get("state", ""), "country": c.get("country", region),
                     "display": ", ".join(parts),
                     "temp": None, "row": None, "badge": "", "failed": False,
+                    "alerts_checked": False,
                 })
             self._regions[(kind, region)] = cities
         self.loaded_cities = cities
@@ -326,13 +343,7 @@ class LocationBrowserDialog(wx.Dialog):
         return cities
 
     def _label(self, c):
-        if c["row"]:
-            text = c["row"]
-        elif c["failed"]:
-            text = f"{c['display']} - weather unavailable"
-        else:
-            text = c["display"]
-        return text + c["badge"]
+        return row_label(c)
 
     def _fill_list(self, cities):
         # Keep what was checked, and the city you were on, when the list is
@@ -366,8 +377,14 @@ class LocationBrowserDialog(wx.Dialog):
         close the dialog.
         """
         todo = [c for c in cities if c["row"] is None]   # new, or failed last time
+        for c in todo:
+            c["failed"] = False   # trying again: "Loading..." until it answers
+        # Alerts separately: a check cut short by loading another region, or
+        # one that failed, is done again, so a missing marker never wrongly
+        # means "no alerts".
+        alert_todo = [c for c in cities if not c["alerts_checked"]] if kind == "us" else []
         self._weather_pending = len(todo)
-        if not todo:
+        if not todo and not alert_todo:
             return
         state = self._state
         gen = state.gen
@@ -378,6 +395,8 @@ class LocationBrowserDialog(wx.Dialog):
             for i in range(0, len(todo), _BATCH):
                 if gen != state.gen:
                     return
+                if i:
+                    time.sleep(_BATCH_GAP)
                 batch = todo[i:i + _BATCH]
                 try:
                     datas = weather_service.fetch_basic_many(
@@ -385,20 +404,21 @@ class LocationBrowserDialog(wx.Dialog):
                 except Exception:  # noqa: BLE001 - those cities say "weather unavailable"
                     datas = [None] * len(batch)
                 wx.CallAfter(_deliver, state, gen, weather_ready, batch, datas)
-            if kind != "us":
-                return  # NWS alerts cover the US only, as in Your Cities
-
+            # NWS alerts cover the US only, as in Your Cities (alert_todo is
+            # empty elsewhere).
             def badge(c):
                 if gen != state.gen:
                     return
                 try:
                     alerts = alert_service.fetch_alerts(c["lat"], c["lon"])
-                except Exception:  # noqa: BLE001 - no marker if the check fails, as in Your Cities
+                except Exception:  # noqa: BLE001 - no marker; checked again on reload
                     return
+                finally:
+                    time.sleep(_ALERT_GAP)
                 wx.CallAfter(_deliver, state, gen, badge_ready, c, alerts)
 
-            with ThreadPoolExecutor(max_workers=4) as ex:
-                list(ex.map(badge, todo))
+            with ThreadPoolExecutor(max_workers=2) as ex:
+                list(ex.map(badge, alert_todo))
 
         threading.Thread(target=work, daemon=True).start()
 
@@ -418,6 +438,7 @@ class LocationBrowserDialog(wx.Dialog):
                 self._fill_list(self._sorted(self.sort_choice.GetStringSelection()))
 
     def _badge_ready(self, c, alerts):
+        c["alerts_checked"] = True
         c["badge"] = city_row_badge(alerts)
         if c["badge"]:
             self.cities_list.SetLabelFor(c, self._label(c))

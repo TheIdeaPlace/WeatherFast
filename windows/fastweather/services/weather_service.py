@@ -58,21 +58,25 @@ def fetch_weather(lat, lon, detail="basic", forecast_days=16, past_days=7):
     return http.get_json(OPEN_METEO_API_URL, params=params)
 
 
+# What ui/city_row.city_row_text reads from "current" (plus today's high/low).
+_ROW_CURRENT_FIELDS = "temperature_2m,weather_code,cloud_cover,rain,showers,snowfall"
+
+
 def fetch_basic_many(coords):
     """Today's basic weather for many places in one request.
 
     Open-Meteo takes comma-separated coordinates and answers with one result
-    per place, in the same order. Browse Cities uses it so a state's hundred
-    or more cities cost a few requests rather than one each (the free tier
-    allows 600 a minute, shared with the main list). Returns a list as long as
-    ``coords``; raises on a network error or an answer of the wrong length.
+    per place, in the same order. It still counts each place as an API call
+    (and more for requests over 10 variables), so this asks only for what a
+    city row reads: 8 variables. Returns a list as long as ``coords``; raises
+    on a network error or an answer of the wrong length.
     """
     if not coords:
         return []
     params = {
         "latitude": ",".join(f"{lat:.4f}" for lat, _ in coords),
         "longitude": ",".join(f"{lon:.4f}" for _, lon in coords),
-        "current": _CURRENT_FIELDS,
+        "current": _ROW_CURRENT_FIELDS,
         "daily": "temperature_2m_max,temperature_2m_min",
         "forecast_days": 1,
         "timezone": "auto",
