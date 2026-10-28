@@ -60,6 +60,10 @@
     img {
       max-width: 100%;
     }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
     h1, h2, h3, h4, h5, h6 {
       margin-top: 1.4em;
     }
@@ -103,8 +107,8 @@
      overflow: visible;
     }
     hr {
-      background-color: #1a1a1a;
       border: none;
+      border-top: 1px solid #1a1a1a;
       height: 1px;
       margin: 1em 0;
     }
@@ -252,18 +256,18 @@ time WeatherFast runs.</p>
 <p>WeatherFast accepts two optional command-line arguments:</p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th>Option</th>
 <th>Effect</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><code>--reset</code></td>
 <td>Delete the saved city list before starting (the app then starts with
 defaults).</td>
 </tr>
-<tr class="even">
+<tr>
 <td><code>-c &lt;path&gt;</code> or
 <code>--config &lt;path&gt;</code></td>
 <td>Use a specific city-list JSON file instead of the default. Useful
@@ -299,33 +303,33 @@ to read the alert itself.</p>
 <p>Below the list are buttons that act on the selected city:</p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th>Button</th>
 <th>Action</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Move Up</td>
 <td>Move the selected city one place earlier in the list.</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Move Down</td>
 <td>Move the selected city one place later in the list.</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Remove</td>
 <td>Remove the selected city (asks for confirmation).</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Refresh</td>
 <td>Re-fetch current weather for the selected city.</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Full Weather</td>
 <td>Open the detailed forecast for the selected city.</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Configure</td>
 <td>Open the display and units settings.</td>
 </tr>
@@ -346,9 +350,11 @@ landmark</li>
 <p>A <strong>Search Results</strong> window opens listing what was found
 (up to eight matches), even when there is only one result, so you can
 review and confirm before anything is added. Use the arrow keys to
-choose a result and press Enter (or <strong>Add</strong>) to add it;
-press Escape or <strong>Cancel</strong> to back out. If nothing matches,
-the app tells you and returns you to the search field.</p>
+choose a result and press Enter (or <strong>Add</strong>) to add it; you
+land on the new city in your list. Press Escape or
+<strong>Cancel</strong> to back out. If nothing matches, the app tells
+you and returns you to the search field. If the place is already in your
+list, the app says so.</p>
 <h3 id="specific-place-names">Specific place names</h3>
 <p>The <strong>Settings</strong> menu has a <strong>Search: Use Specific
 Place Names (airports, landmarks)</strong> option, on by default. When
@@ -371,11 +377,12 @@ Cities</strong>.</li>
 <li><strong>Favorites</strong> — your saved regions; pick one and
 <strong>Load Favorite</strong> to jump straight to it.</li>
 </ul>
-<p>Once a region is loaded, its cities appear in a checklist. Check any
-number of them (or use <strong>Select All</strong> / <strong>Deselect
-All</strong>), then choose <strong>Add Selected Cities</strong> to add
-them to your list. Cities already in your list are skipped, and the app
-reports how many were added.</p>
+<p>Once a region is loaded, its cities appear in a checklist, and Load
+Cities takes you there. Press Space to check or uncheck a city. Check
+any number of them (or use <strong>Select All</strong> /
+<strong>Deselect All</strong>), then choose <strong>Add Selected
+Cities</strong> to add them to your list. Cities already in your list
+are skipped, and the app reports how many were added.</p>
 <p>Use the <strong>Sort</strong> control to order the loaded cities
 by:</p>
 <ul>
@@ -418,29 +425,29 @@ day.</li>
 <p>At the top of the view are navigation buttons:</p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th>Button</th>
 <th>Action</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Back</td>
 <td>Return to your city list.</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Prev Day</td>
 <td>Show the previous day's detail.</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Today</td>
 <td>Return to today.</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Next Day</td>
 <td>Show the next day's detail.</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Configure</td>
 <td>Open display and units settings.</td>
 </tr>
@@ -449,7 +456,8 @@ day.</li>
 <p><strong>Prev Day</strong> and <strong>Next Day</strong> browse other
 days (up to about a week in either direction). When you move off today,
 the view shows that day's summary and its hour-by-hour detail. Press
-Escape or <strong>Back</strong> to return to the list.</p>
+Escape or <strong>Back</strong> to return to the list. F5 refreshes the
+report you're reading.</p>
 <h3 id="alerts-in-the-report">Alerts in the report</h3>
 <p>When a US place has active National Weather Service warnings, they
 appear at the top of the report, under the city name and ahead of the
@@ -511,29 +519,29 @@ rain, and showers totals.</li>
 throughout the app:</p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th>Measure</th>
 <th>Choices</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Temperature</td>
 <td>Fahrenheit (°F) or Celsius (°C)</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Wind speed</td>
 <td>Miles per hour, kilometers per hour, or meters per second</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Precipitation</td>
 <td>Inches or millimeters</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Distance</td>
 <td>Miles or kilometers</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Pressure</td>
 <td>Inches of mercury (inHg), hectopascals (hPa), or millimeters of
 mercury (mmHg)</td>
@@ -544,10 +552,14 @@ mercury (mmHg)</td>
 preview changes without closing, or <strong>Cancel</strong> to discard
 them. Your choices are saved and persist between sessions.</p>
 <h2 id="per-city-weather-features">Per-City Weather Features</h2>
-<p>The <strong>Weather</strong> menu holds specialized reports that
-apply to the city currently selected (or the city shown in Full
+<p>The <strong>Weather</strong> menu (Alt+W) holds specialized reports
+that apply to the city currently selected (or the city shown in Full
 Weather). Select a city first; if none is selected, the app prompts you
-to choose one.</p>
+to choose one. Each item has its own access key: Weather
+<strong>A</strong>lerts, <strong>E</strong>xpected Precipitation,
+Weather Around <strong>M</strong>e, <strong>H</strong>istorical Weather,
+My <strong>D</strong>ata, Ma<strong>r</strong>ine Forecast and
+As<strong>t</strong>ronomy. Escape closes each of these windows.</p>
 <h3 id="weather-alerts">Weather Alerts</h3>
 <p>Shows active US National Weather Service alerts for the selected city
 in a separate window. Alerts are listed with the most serious first;
@@ -663,29 +675,29 @@ self-installation apply to the installed build.</p>
 <h3 id="menus">Menus</h3>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th>Menu</th>
 <th>Items</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Cities</td>
 <td>Add City, Browse Cities by State/Country, Add My Location, Browse
 Weather Alerts, Full Weather, Refresh, Remove City, Move Up, Move Down,
 Copy Weather Report, Save Weather Report, Exit</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Weather</td>
 <td>Weather Alerts, Expected Precipitation, Weather Around Me,
 Historical Weather, My Data, Marine Forecast, Astronomy (Moon) — each
 acts on the selected city</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Settings</td>
 <td>Configure Display &amp; Units, Search: Use Specific Place Names</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Help</td>
 <td>User Guide, Check for Updates, Automatically Check for Updates,
 About</td>
@@ -697,53 +709,53 @@ menu.</p>
 <h3 id="keyboard-shortcuts">Keyboard shortcuts</h3>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th>Key</th>
 <th>Action</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>F5 or Ctrl+R</td>
-<td>Refresh the selected city</td>
+<td>Refresh the selected city (in Full Weather, the whole report)</td>
 </tr>
-<tr class="even">
-<td>Delete</td>
+<tr>
+<td>Delete (in the city list)</td>
 <td>Remove the selected city</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Alt+U</td>
 <td>Move the selected city up</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Alt+D</td>
 <td>Move the selected city down</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Alt+F</td>
 <td>Open Full Weather for the selected city</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Alt+N</td>
 <td>Move focus to the add-city field</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Alt+C</td>
 <td>Open Configure Display &amp; Units</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Enter (in the city list)</td>
 <td>Open Full Weather for the selected city</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Enter (in a results or alert list)</td>
 <td>Add the selected result, or open the next level of detail</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Escape</td>
-<td>Return from Full Weather to the city list</td>
+<td>Return from Full Weather to the city list, or close a window</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>F1</td>
 <td>Open this user guide in your browser</td>
 </tr>
