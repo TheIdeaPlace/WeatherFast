@@ -7,7 +7,7 @@ WeatherFast 3.0.2 for Windows is a bug-fix release. It updates 3.0.1, and Weathe
 - After you opened Full Weather and came back, a city's high and low were a week old. The list now always shows today's.
 - Removing a city no longer leaves the other cities saying "Loading...". After you remove one, you stay at the same place in the list.
 - The word for the sky in the list now matches the Condition line in Full Weather, so the list can't say "mostly cloudy" while the report says "Mainly clear".
-- If a city's weather can't be fetched, its line says so and suggests F5, instead of saying "Loading..." for good.
+- If a city's weather can't be fetched, its line says so and suggests F5, instead of saying "Loading..." for good. If a refresh fails, the line keeps its last weather and adds "couldn't refresh".
 - After you add a city from Search Results, you land on it in the list.
 - Searching for a city that's already in your list tells you so.
 - Delete removes a city only from the list. It used to take Delete away from the search box too.

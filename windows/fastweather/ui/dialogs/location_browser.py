@@ -305,12 +305,14 @@ class LocationBrowserDialog(wx.Dialog):
                     c["temp"] = None
             with ThreadPoolExecutor(max_workers=8) as ex:
                 list(ex.map(one, cities))
-            wx.CallAfter(self._after_temps)
+            wx.CallAfter(self._after_temps, cities)
 
         threading.Thread(target=work, daemon=True).start()
 
-    def _after_temps(self):
-        if not self._alive:
+    def _after_temps(self, cities):
+        # Ignore a fetch for a region that's no longer loaded: it would fill
+        # the list with the new region, unsorted, and drop the "Fetching" label.
+        if not self._alive or cities is not self.loaded_cities:
             return
         self._fill_list(self._sorted(self.sort_choice.GetStringSelection()))
 

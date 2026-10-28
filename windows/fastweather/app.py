@@ -70,6 +70,8 @@ class MainFrame(wx.Frame):
         # is never rendered as "no alerts".
         self._row_text = {}        # city -> weather line, without the badge
         self._row_badges = {}      # city -> badge suffix ("" when clear)
+        self._row_seq = {}         # city -> number of its newest basic fetch
+        self._row_stale = set()    # cities whose last refresh failed (old weather shown)
         self.full_alert_state = "off"
         self.full_alerts = []
         self.full_alert_error = ""
@@ -589,8 +591,8 @@ class MainFrame(wx.Frame):
         # Remember the selected row's full display string so selection can be
         # restored after the rebuild. Match by full key (names may contain
         # ' - '), not a split prefix.
-        prev = (self.city_list.GetStringSelection()
-                if self.city_list.GetSelection() != wx.NOT_FOUND else None)
+        sel = self.city_list.GetSelection()
+        prev = self._city_key_at(sel) if sel != wx.NOT_FOUND else None
         self.city_list.Clear()
         names = self.cities.names()
         for city in names:
@@ -601,14 +603,9 @@ class MainFrame(wx.Frame):
         if reload:
             self.load_all_weather()
 
-        restored = False
-        if prev:
-            for i, key in enumerate(names):
-                if prev.startswith(key + " - "):
-                    self.city_list.SetSelection(i)
-                    restored = True
-                    break
-        if not restored and self.city_list.GetCount() > 0:
+        if prev in names:
+            self.city_list.SetSelection(names.index(prev))
+        elif self.city_list.GetCount() > 0:
             self.city_list.SetSelection(0)
         self.update_buttons()
 
@@ -616,7 +613,8 @@ class MainFrame(wx.Frame):
         base = self._row_text.get(city)
         if base is None:
             return f"{city} - Loading..."
-        return base + self._row_badges.get(city, "")
+        stale = " (couldn't refresh)" if city in self._row_stale else ""
+        return base + stale + self._row_badges.get(city, "")
 
     def _on_list_page(self):
         """True when the city list is showing. List commands (Delete, Alt+U,
@@ -630,6 +628,13 @@ class MainFrame(wx.Frame):
             self._fetch_weather(city, lat, lon, "basic")
 
     def _fetch_weather(self, city, lat, lon, detail):
+        if detail == "basic":
+            # Numbered, so a slow result (good or bad) can't overwrite a newer one.
+            seq = self._row_seq.get(city, 0) + 1
+            self._row_seq[city] = seq
+            request_id = (city, seq)
+        else:
+            request_id = city
         # Basic results feed the list rows; full results feed Full Weather.
         # They used to share one handler, so a full result rewrote the row
         # from its first daily entry (a week ago), and a basic result (F5)
@@ -637,7 +642,7 @@ class MainFrame(wx.Frame):
         self.fetch.submit(
             "weather" if detail == "basic" else "weather_full",
             lambda: weather_service.fetch_weather(lat, lon, detail),
-            request_id=city,
+            request_id=request_id,
         )
 
     # -- add / browse ---------------------------------------------------------
@@ -778,8 +783,9 @@ class MainFrame(wx.Frame):
             return
         if wx.MessageBox(f"Remove {city}?", "Confirm", wx.YES_NO) == wx.YES:
             self.cities.remove(city)
-            self._row_text.pop(city, None)
-            self._row_badges.pop(city, None)
+            for d in (self._row_text, self._row_badges, self._row_seq):
+                d.pop(city, None)
+            self._row_stale.discard(city)
             self.update_city_list(False)
             # Stay at the same place in the list: the next city, or the new
             # last one, rather than jumping back to the top.
@@ -816,6 +822,7 @@ class MainFrame(wx.Frame):
             # F5 in Full Weather refreshes the report being read.
             if hasattr(self, "current_full_city"):
                 city, lat, lon = self.current_full_city
+                self.current_full_error = None
                 self._fetch_weather(city, lat, lon, "full")
                 self._fetch_full_alerts(city, lat, lon)
             return
@@ -953,6 +960,12 @@ class MainFrame(wx.Frame):
         keep = key == getattr(self, "_last_render_key", None)
         self._last_render_key = key
 
+        # A failed refresh of a report that's showing: keep the old report
+        # and say the refresh failed at the end.
+        err = getattr(self, "current_full_error", None)
+        if data is not None and err:
+            weather_lines = list(weather_lines) + [f"Error: couldn't refresh ({err})"]
+
         # Splice the alerts in after the "Report for <city>" heading and its
         # rule, shifting the activation map to match their new positions.
         lines = list(weather_lines)
@@ -1006,10 +1019,13 @@ class MainFrame(wx.Frame):
     # -- async result dispatch ------------------------------------------------
     def on_fetch_result(self, event):
         if event.kind == "weather":
+            city, seq = event.request_id
+            if seq != self._row_seq.get(city):
+                return  # superseded by a newer fetch for this city
             if event.error:
-                self.on_weather_error(event.request_id, event.error)
+                self.on_weather_error(city, event.error)
             else:
-                self.on_weather_ready(event.request_id, event.payload)
+                self.on_weather_ready(city, event.payload)
         elif event.kind == "weather_full":
             if event.error:
                 self.on_full_weather_error(event.request_id, event.error)
@@ -1094,10 +1110,9 @@ class MainFrame(wx.Frame):
         from both rather than appended to in place - otherwise a weather
         refresh silently drops the badge.
         """
-        base = self._row_text.get(city)
-        if base is None:
+        if self._row_text.get(city) is None:
             return
-        text = base + self._row_badges.get(city, "")
+        text = self._row_display(city)
         # By position (the list is in CityStore order), not by text: one name
         # can be the start of another ("X" and "X - Y").
         names = self.cities.names()
@@ -1113,6 +1128,7 @@ class MainFrame(wx.Frame):
             self.on_weather_error(city, "no current conditions")
             return
         self._row_text[city] = text
+        self._row_stale.discard(city)
         self._refresh_city_row(city)
         # Best-effort alert badge for US cities (cached 5 min).
         if city in self.cities:
@@ -1122,15 +1138,17 @@ class MainFrame(wx.Frame):
     def on_weather_error(self, city, err):
         """A basic fetch failed: say so on the row, instead of Loading for good.
 
-        Only when the row has nothing better: results aren't sequenced, so a
-        slow failure (or one blip during a reload) must not replace good
-        weather that's already there.
+        A row that already has weather keeps it, marked as not refreshed, so
+        F5 offline still says something and the old numbers aren't taken as
+        current.
         """
         if city not in self.cities:
             return
-        if self._row_text.get(city, city_row_error(city)) != city_row_error(city):
-            return
-        self._row_text[city] = city_row_error(city)
+        if self._row_text.get(city, city_row_error(city)) == city_row_error(city):
+            self._row_text[city] = city_row_error(city)
+        else:
+            self._row_stale.add(city)
+        self.statusbar.SetStatusText(f"Couldn't refresh {city}", 0)
         self._refresh_city_row(city)
 
     def _showing_full(self, city):
@@ -1141,18 +1159,16 @@ class MainFrame(wx.Frame):
     def on_full_weather_ready(self, city, data):
         if self._showing_full(city):
             self.current_full_data = data
+            self.current_full_error = None
             self._render_full()
 
     def on_full_weather_error(self, city, err):
         if not self._showing_full(city):
             return
-        if self.current_full_data is None:
-            # Render it, so alerts that arrive (or arrived) are still shown
-            # with the error rather than lost behind it.
-            self.current_full_error = err
-            self._render_full()
-        else:
-            self.full_display.append(f"Error: {err}")
+        # Kept in state and rendered, so alerts that arrive (or arrived) are
+        # still shown, and a later redraw doesn't drop the error.
+        self.current_full_error = err
+        self._render_full()
 
     def on_close(self, event):
         self.fetch.shutdown()

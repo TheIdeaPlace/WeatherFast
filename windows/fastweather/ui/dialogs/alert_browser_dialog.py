@@ -30,6 +30,7 @@ class AlertBrowserDialog(wx.Dialog):
         self.hazard_filter = None
         self._alive = True
         self._enter_handlers = {}   # list -> what Enter on it does (the pages fill it)
+        self._load_state = "idle"   # idle | loading | error | ok, for the region shown
 
         panel = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -204,6 +205,7 @@ class AlertBrowserDialog(wx.Dialog):
         # would otherwise open the previous region's first alert.
         self.groups = []
         self.region_alerts = []
+        self._load_state = "loading"
         self.open_group_btn.Disable()
         self.digest_title.SetLabel(f"{region['name']} - active alerts")
         self.digest_status.SetLabel("Loading alerts...")
@@ -218,24 +220,31 @@ class AlertBrowserDialog(wx.Dialog):
             try:
                 alerts = svc.fetch_region_alerts(region["id"])
             except Exception as e:  # noqa: BLE001
-                wx.CallAfter(self._region_error, str(e))
+                wx.CallAfter(self._region_error, region["id"], str(e))
                 return
-            wx.CallAfter(self._region_ready, alerts)
+            wx.CallAfter(self._region_ready, region["id"], alerts)
 
         threading.Thread(target=work, daemon=True).start()
 
-    def _region_error(self, err):
-        if not self._alive:
+    def _is_current(self, region_id):
+        """A late result for a region you've since left is dropped."""
+        return (self._alive and getattr(self, "current_region", None) is not None
+                and self.current_region["id"] == region_id)
+
+    def _region_error(self, region_id, err):
+        if not self._is_current(region_id):
             return
+        self._load_state = "error"
         self.digest_status.SetLabel("Could not load alerts.")
         self.group_list.Clear()
         self.group_list.Append(f"Could not load alerts: {err}")
         self.group_list.Append("This does NOT mean there are none - try again.")
         self.group_list.SetSelection(0)
 
-    def _region_ready(self, alerts):
-        if not self._alive:
+    def _region_ready(self, region_id, alerts):
+        if not self._is_current(region_id):
             return
+        self._load_state = "ok"
         self.region_alerts = alerts
         # Seed filters from saved defaults (once per open is fine here).
         opts = self.settings["options"]
@@ -267,6 +276,10 @@ class AlertBrowserDialog(wx.Dialog):
             self.hazard_choice.SetSelection(0)
 
     def on_filter_change(self, event):
+        if self._load_state != "ok":
+            # Nothing to filter yet (loading, or the load failed): rebuilding
+            # now would claim "No active alerts", which isn't known.
+            return
         self.severity_filter = self.sev_radio.GetStringSelection()
         sel = self.hazard_choice.GetStringSelection()
         self.hazard_filter = None if sel == _ALL_TYPES else sel.rsplit(" (", 1)[0]

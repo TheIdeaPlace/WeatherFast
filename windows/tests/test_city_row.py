@@ -80,7 +80,7 @@ class CityRowTests(unittest.TestCase):
         self.assertIsNone(city_row_text("X", _basic(temperature_2m=None), _fmt()))
 
     def test_error_row_keeps_the_city_prefix(self):
-        # _refresh_city_row finds a row by "<city> - ".
+        # Every row starts "<city> - " (the list is read as "name - weather").
         self.assertTrue(city_row_error("Sydney").startswith("Sydney - "))
         self.assertIn("F5", city_row_error("Sydney"))
 
