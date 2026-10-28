@@ -98,14 +98,14 @@ The dialog has tabs:
 - **International** — pick a country, then **Load Cities**.
 - **Favorites** — your saved regions; pick one and **Load Favorite** to jump straight to it.
 
-Once a region is loaded, its cities appear in a checklist, and Load Cities takes you there. Press Space to check or uncheck a city. Check any number of them (or use **Select All** / **Deselect All**), then choose **Add Selected Cities** to add them to your list. Cities already in your list are skipped, and the app reports how many were added.
+Once a region is loaded, its cities appear in a checklist, and Load Cities takes you there. Each city shows the same line as your own list (temperature, sky, today's high and low, and for US cities the most serious alert) as soon as its weather arrives, or "weather unavailable" if it couldn't be fetched. Press Space to check or uncheck a city. Check any number of them (or use **Select All** / **Deselect All**), then choose **Add Selected Cities** to add them to your list. Cities already in your list are skipped, and the app reports how many were added.
 
 Use the **Sort** control to order the loaded cities by:
 
 - Name A-Z or Z-A
 - North to South or South to North
 - East to West or West to East
-- Temperature, warmest-to-coldest or coldest-to-warmest (this fetches current temperatures for the region first)
+- Temperature, warmest-to-coldest or coldest-to-warmest (if the weather is still arriving, the list is sorted once it has)
 
 **Add Region to Favorites** saves the currently loaded state or country so you can reload it quickly from the Favorites tab later; the button toggles to remove it again. Favorites are saved whether you close the dialog with OK or Cancel.
 
