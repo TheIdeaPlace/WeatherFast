@@ -7,6 +7,7 @@ import wx
 
 from ... import browse_favorites
 from ...services import weather_service
+from ..city_row import city_row_text
 
 class _CheckList(wx.ListCtrl):
     """A one-column list of checkable rows that screen readers can read.
@@ -47,6 +48,14 @@ class _CheckList(wx.ListCtrl):
     def GetCount(self):
         return self.GetItemCount()
 
+    def SetLabelFor(self, data, label):
+        """Change the text of the row holding ``data``, in place."""
+        for i, d in enumerate(self._data):
+            if d is data:
+                if self.GetItemText(i) != label:
+                    self.SetItemText(i, label)
+                return
+
     def GetClientData(self, i):
         return self._data[i]
 
@@ -80,6 +89,8 @@ class LocationBrowserDialog(wx.Dialog):
         self.loaded_cities = []           # list of dicts for the current region
         self.loaded_region = None         # (kind, region_name)
         self._alive = True
+        self._weather_pending = 0   # cities whose weather hasn't arrived yet
+        self._sort_waiting = False  # a Temperature sort waiting for that weather
 
         panel = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -217,9 +228,11 @@ class LocationBrowserDialog(wx.Dialog):
             self.loaded_cities.append({
                 "name": c["name"], "lat": c["lat"], "lon": c["lon"],
                 "state": c.get("state", ""), "country": c.get("country", region),
-                "display": ", ".join(parts), "temp": None,
+                "display": ", ".join(parts), "temp": None, "row": None,
             })
         self._update_fav_button()
+        self._sort_waiting = False
+        self._fetch_weather(self.loaded_cities)
         self._populate()
         # Go to the cities: Load Cities used to fill the list silently and leave
         # focus on the button.
@@ -248,8 +261,12 @@ class LocationBrowserDialog(wx.Dialog):
         if not self.loaded_cities:
             return
         sort = self.sort_choice.GetStringSelection()
-        if sort.startswith("Temperature") and any(c["temp"] is None for c in self.loaded_cities):
-            self._fetch_temps_then_populate()
+        if sort.startswith("Temperature") and self._weather_pending:
+            # Sorted once every city's weather is in (_weather_ready).
+            self._sort_waiting = True
+            self.list_label.SetLabel("Getting the weather, then sorting by temperature...")
+            if not self.cities_list.GetCount():
+                self._fill_list(self._sorted("Name (A-Z)"))
             return
         self._fill_list(self._sorted(sort))
 
@@ -281,40 +298,48 @@ class LocationBrowserDialog(wx.Dialog):
         self.list_label.SetLabel(_LIST_LABEL)
         self.cities_list.Clear()
         for c in cities:
-            label = c["display"]
-            if c["temp"] is not None:
-                temp = (self.fmt.temperature_short(c["temp"]) if self.fmt
-                        else f"{c['temp']:.0f}°C")
-                label += f"  ({temp})"
-            i = self.cities_list.Append(label, c)
+            i = self.cities_list.Append(c["row"] or c["display"], c)
             if id(c) in checked:
                 self.cities_list.Check(i, True)
 
-    def _fetch_temps_then_populate(self):
-        # Said in the label, not as a row: a row here would be a checkable
-        # "city" (and Clear would drop the checks, which _fill_list keeps).
-        self.list_label.SetLabel("Fetching temperatures for sorting...")
-        cities = self.loaded_cities
+    def _fetch_weather(self, cities):
+        """Get today's weather for every city in the region, so each row says
+        what it's like there ("Algoma, ... - 45°F, Overcast (High: ..., Low:
+        ...)"), as the Your Cities list does. Rows fill in as results arrive;
+        the text changes in place, so checks and position are kept. Before,
+        only a Temperature sort fetched anything, and then only the
+        temperature."""
+        self._weather_pending = len(cities)
+        if not cities:
+            return
+
+        def one(c):
+            try:
+                data = weather_service.fetch_weather(c["lat"], c["lon"], "basic")
+            except Exception:  # noqa: BLE001 - a city without weather keeps its name
+                data = None
+            wx.CallAfter(self._weather_ready, cities, c, data)
 
         def work():
-            def one(c):
-                try:
-                    d = weather_service.fetch_weather(c["lat"], c["lon"], "basic")
-                    c["temp"] = d.get("current", {}).get("temperature_2m")
-                except Exception:
-                    c["temp"] = None
             with ThreadPoolExecutor(max_workers=8) as ex:
                 list(ex.map(one, cities))
-            wx.CallAfter(self._after_temps, cities)
 
         threading.Thread(target=work, daemon=True).start()
 
-    def _after_temps(self, cities):
-        # Ignore a fetch for a region that's no longer loaded: it would fill
-        # the list with the new region, unsorted, and drop the "Fetching" label.
+    def _weather_ready(self, cities, c, data):
+        # A result for a region that's no longer loaded is dropped.
         if not self._alive or cities is not self.loaded_cities:
             return
-        self._fill_list(self._sorted(self.sort_choice.GetStringSelection()))
+        if data:
+            c["temp"] = (data.get("current") or {}).get("temperature_2m")
+            if self.fmt:
+                c["row"] = city_row_text(c["display"], data, self.fmt)
+            if c["row"]:
+                self.cities_list.SetLabelFor(c, c["row"])
+        self._weather_pending -= 1
+        if self._weather_pending == 0 and self._sort_waiting:
+            self._sort_waiting = False
+            self._fill_list(self._sorted(self.sort_choice.GetStringSelection()))
 
     # -- selection ------------------------------------------------------------
     def on_select_all(self, event):
