@@ -73,7 +73,7 @@ class MyDataDialog(wx.Dialog):
         self.status = wx.StaticText(panel, label="")
         vbox.Add(self.status, 0, wx.LEFT | wx.BOTTOM, 8)
 
-        self.lines = AccessibleLinesPanel(panel)
+        self.lines = AccessibleLinesPanel(panel, name="My data")
         vbox.Add(self.lines, 1, wx.EXPAND | wx.ALL, 8)
 
         btns = wx.StdDialogButtonSizer()
@@ -84,7 +84,10 @@ class MyDataDialog(wx.Dialog):
 
         self.choose_btn.Bind(wx.EVT_BUTTON, self.on_choose)
         self.refresh_btn.Bind(wx.EVT_BUTTON, lambda e: self.load())
-        self.Bind(wx.EVT_BUTTON, lambda e: self.Close(), id=wx.ID_CLOSE)
+        self.Bind(wx.EVT_BUTTON, self._on_close_button, id=wx.ID_CLOSE)
+        # Escape presses Close: without an escape id, a dialog with no Cancel
+        # button ignores Escape.
+        self.SetEscapeId(wx.ID_CLOSE)
         self.Bind(wx.EVT_CLOSE, self._on_close)
 
         wx.CallAfter(self.load)
@@ -147,6 +150,14 @@ class MyDataDialog(wx.Dialog):
         self.status.SetLabel(f"My Data for {self.center[0]}.")
         self.lines.set_lines(lines)
         self.lines.set_focus()
+
+    def _on_close_button(self, event):
+        # EndModal rather than Close(): with Escape mapped to ID_CLOSE, Close()
+        # sends EVT_CLOSE, whose default handler presses ID_CLOSE again, and
+        # wx's re-entry guard then leaves the dialog open. Escape and the
+        # title bar's X both come here too.
+        self._alive = False
+        self.EndModal(wx.ID_CLOSE)
 
     def _on_close(self, event):
         self._alive = False

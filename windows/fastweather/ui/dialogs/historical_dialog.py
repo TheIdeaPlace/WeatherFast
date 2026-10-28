@@ -55,7 +55,10 @@ class HistoricalDialog(wx.Dialog):
         btns.Realize()
         vbox.Add(btns, 0, wx.ALIGN_CENTER | wx.ALL, 8)
         panel.SetSizer(vbox)
-        self.Bind(wx.EVT_BUTTON, lambda e: self.Close(), id=wx.ID_CLOSE)
+        self.Bind(wx.EVT_BUTTON, self._on_close_button, id=wx.ID_CLOSE)
+        # Escape presses Close: without an escape id, a dialog with no Cancel
+        # button ignores Escape.
+        self.SetEscapeId(wx.ID_CLOSE)
         self.Bind(wx.EVT_CLOSE, self._on_close)
 
     # -- tabs -----------------------------------------------------------------
@@ -71,7 +74,7 @@ class HistoricalDialog(wx.Dialog):
         b = wx.Button(p, label="Load")
         row.Add(b, 0)
         s.Add(row, 0, wx.ALL, 8)
-        self.single_lines = AccessibleLinesPanel(p)
+        self.single_lines = AccessibleLinesPanel(p, name="Single day results")
         s.Add(self.single_lines, 1, wx.EXPAND | wx.ALL, 8)
         p.SetSizer(s)
         self.nb.AddPage(p, "Single Day")
@@ -91,7 +94,7 @@ class HistoricalDialog(wx.Dialog):
         b = wx.Button(p, label="Load")
         row.Add(b, 0)
         s.Add(row, 0, wx.ALL, 8)
-        self.my_lines = AccessibleLinesPanel(p)
+        self.my_lines = AccessibleLinesPanel(p, name="Multi-year results")
         s.Add(self.my_lines, 1, wx.EXPAND | wx.ALL, 8)
         p.SetSizer(s)
         self.nb.AddPage(p, "Multi-Year")
@@ -112,7 +115,7 @@ class HistoricalDialog(wx.Dialog):
         b = wx.Button(p, label="Load")
         row.Add(b, 0)
         s.Add(row, 0, wx.ALL, 8)
-        self.browse_lines = AccessibleLinesPanel(p)
+        self.browse_lines = AccessibleLinesPanel(p, name="Daily results")
         s.Add(self.browse_lines, 1, wx.EXPAND | wx.ALL, 8)
         p.SetSizer(s)
         self.nb.AddPage(p, "Daily Browse")
@@ -161,6 +164,14 @@ class HistoricalDialog(wx.Dialog):
         end = (date.fromisoformat(start) + timedelta(days=n - 1)).isoformat()
         self._run(self.browse_lines,
                   lambda lat, lon: historical_service.fetch_range(lat, lon, start, end))
+
+    def _on_close_button(self, event):
+        # EndModal rather than Close(): with Escape mapped to ID_CLOSE, Close()
+        # sends EVT_CLOSE, whose default handler presses ID_CLOSE again, and
+        # wx's re-entry guard then leaves the dialog open. Escape and the
+        # title bar's X both come here too.
+        self._alive = False
+        self.EndModal(wx.ID_CLOSE)
 
     def _on_close(self, event):
         self._alive = False

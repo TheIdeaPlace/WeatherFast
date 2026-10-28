@@ -41,7 +41,10 @@ class AroundMeDialog(wx.Dialog):
         btns.Realize()
         vbox.Add(btns, 0, wx.ALIGN_CENTER | wx.ALL, 8)
         panel.SetSizer(vbox)
-        self.Bind(wx.EVT_BUTTON, lambda e: self.Close(), id=wx.ID_CLOSE)
+        self.Bind(wx.EVT_BUTTON, self._on_close_button, id=wx.ID_CLOSE)
+        # Escape presses Close: without an escape id, a dialog with no Cancel
+        # button ignores Escape.
+        self.SetEscapeId(wx.ID_CLOSE)
         self.Bind(wx.EVT_CLOSE, self._on_close)
 
     # -- Around Me tab --------------------------------------------------------
@@ -66,7 +69,7 @@ class AroundMeDialog(wx.Dialog):
         self.around_status = wx.StaticText(p, label="Choose a radius and load.")
         s.Add(self.around_status, 0, wx.LEFT | wx.BOTTOM, 8)
 
-        self.around_lines = AccessibleLinesPanel(p)
+        self.around_lines = AccessibleLinesPanel(p, name="Weather around")
         s.Add(self.around_lines, 1, wx.EXPAND | wx.ALL, 8)
         p.SetSizer(s)
         self.nb.AddPage(p, "Around Me")
@@ -101,7 +104,7 @@ class AroundMeDialog(wx.Dialog):
         self.explore_status = wx.StaticText(p, label="Pick a direction and explore.")
         s.Add(self.explore_status, 0, wx.LEFT | wx.BOTTOM, 8)
 
-        self.explore_lines = AccessibleLinesPanel(p)
+        self.explore_lines = AccessibleLinesPanel(p, name="Cities in that direction")
         s.Add(self.explore_lines, 1, wx.EXPAND | wx.ALL, 8)
         p.SetSizer(s)
         self.nb.AddPage(p, "Directional Explorer")
@@ -215,6 +218,14 @@ class AroundMeDialog(wx.Dialog):
             f"{len(cities)} cities {direction} of {self.center[0]}.")
         self.explore_lines.set_lines(lines)
         self.explore_lines.set_focus()
+
+    def _on_close_button(self, event):
+        # EndModal rather than Close(): with Escape mapped to ID_CLOSE, Close()
+        # sends EVT_CLOSE, whose default handler presses ID_CLOSE again, and
+        # wx's re-entry guard then leaves the dialog open. Escape and the
+        # title bar's X both come here too.
+        self._alive = False
+        self.EndModal(wx.ID_CLOSE)
 
     def _on_close(self, event):
         self._alive = False

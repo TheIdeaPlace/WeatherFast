@@ -8,6 +8,57 @@ import wx
 from ... import browse_favorites
 from ...services import weather_service
 
+class _CheckList(wx.ListCtrl):
+    """A one-column list of checkable rows that screen readers can read.
+
+    It replaces wx.CheckListBox, whose check boxes are drawn by wx and never
+    reach MSAA or UI Automation: Space checked a city silently, and arrowing
+    back gave no hint which cities were checked. A native list view with
+    check boxes is read as "checked" / "not checked" by JAWS, NVDA and
+    Narrator, and Space toggles the focused row. The methods mirror the
+    CheckListBox ones the dialog used.
+    """
+
+    def __init__(self, parent):
+        super().__init__(parent, style=wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL)
+        self.EnableCheckBoxes(True)
+        self.InsertColumn(0, "City")
+        self._data = []
+        self.Bind(wx.EVT_SIZE, self._on_size)
+
+    def _on_size(self, event):
+        self.SetColumnWidth(0, max(100, self.GetClientSize().width - 4))
+        event.Skip()
+
+    def Clear(self):
+        self.DeleteAllItems()
+        self._data = []
+
+    def Append(self, label, data=None):
+        i = self.InsertItem(self.GetItemCount(), label)
+        self._data.append(data)
+        if i == 0:
+            # Select and focus the first row, so arriving in the list reads a
+            # city rather than an empty list.
+            self.SetItemState(0, wx.LIST_STATE_SELECTED | wx.LIST_STATE_FOCUSED,
+                              wx.LIST_STATE_SELECTED | wx.LIST_STATE_FOCUSED)
+        return i
+
+    def GetCount(self):
+        return self.GetItemCount()
+
+    def GetClientData(self, i):
+        return self._data[i]
+
+    def Check(self, i, check=True):
+        self.CheckItem(i, check)
+
+    def IsChecked(self, i):
+        return self.IsItemChecked(i)
+
+
+_LIST_LABEL = "Select cities to add (check multiple cities):"
+
 _SORTS = [
     "Name (A-Z)", "Name (Z-A)",
     "North to South", "South to North",
@@ -50,9 +101,9 @@ class LocationBrowserDialog(wx.Dialog):
         ctrl_row.Add(self.fav_btn, 0)
         vbox.Add(ctrl_row, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
 
-        vbox.Add(wx.StaticText(panel, label="Select cities to add (check multiple cities):"),
-                 0, wx.LEFT | wx.RIGHT, 8)
-        self.cities_list = wx.CheckListBox(panel)
+        self.list_label = wx.StaticText(panel, label=_LIST_LABEL)
+        vbox.Add(self.list_label, 0, wx.LEFT | wx.RIGHT, 8)
+        self.cities_list = _CheckList(panel)
         vbox.Add(self.cities_list, 1, wx.EXPAND | wx.ALL, 8)
 
         sel_box = wx.BoxSizer(wx.HORIZONTAL)
@@ -170,6 +221,9 @@ class LocationBrowserDialog(wx.Dialog):
             })
         self._update_fav_button()
         self._populate()
+        # Go to the cities: Load Cities used to fill the list silently and leave
+        # focus on the button.
+        self.cities_list.SetFocus()
 
     def _update_fav_button(self):
         if not self.loaded_region:
@@ -220,6 +274,11 @@ class LocationBrowserDialog(wx.Dialog):
         return cities
 
     def _fill_list(self, cities):
+        # Keep what was checked when the list is re-sorted.
+        checked = {id(self.cities_list.GetClientData(i))
+                   for i in range(self.cities_list.GetCount())
+                   if self.cities_list.IsChecked(i)}
+        self.list_label.SetLabel(_LIST_LABEL)
         self.cities_list.Clear()
         for c in cities:
             label = c["display"]
@@ -227,12 +286,14 @@ class LocationBrowserDialog(wx.Dialog):
                 temp = (self.fmt.temperature_short(c["temp"]) if self.fmt
                         else f"{c['temp']:.0f}°C")
                 label += f"  ({temp})"
-            self.cities_list.Append(label)
-            self.cities_list.SetClientData(self.cities_list.GetCount() - 1, c)
+            i = self.cities_list.Append(label, c)
+            if id(c) in checked:
+                self.cities_list.Check(i, True)
 
     def _fetch_temps_then_populate(self):
-        self.cities_list.Clear()
-        self.cities_list.Append("Fetching temperatures for sorting...")
+        # Said in the label, not as a row: a row here would be a checkable
+        # "city" (and Clear would drop the checks, which _fill_list keeps).
+        self.list_label.SetLabel("Fetching temperatures for sorting...")
         cities = self.loaded_cities
 
         def work():
@@ -244,12 +305,14 @@ class LocationBrowserDialog(wx.Dialog):
                     c["temp"] = None
             with ThreadPoolExecutor(max_workers=8) as ex:
                 list(ex.map(one, cities))
-            wx.CallAfter(self._after_temps)
+            wx.CallAfter(self._after_temps, cities)
 
         threading.Thread(target=work, daemon=True).start()
 
-    def _after_temps(self):
-        if not self._alive:
+    def _after_temps(self, cities):
+        # Ignore a fetch for a region that's no longer loaded: it would fill
+        # the list with the new region, unsorted, and drop the "Fetching" label.
+        if not self._alive or cities is not self.loaded_cities:
             return
         self._fill_list(self._sorted(self.sort_choice.GetStringSelection()))
 

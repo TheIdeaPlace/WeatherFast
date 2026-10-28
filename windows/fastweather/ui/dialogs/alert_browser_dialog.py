@@ -29,6 +29,8 @@ class AlertBrowserDialog(wx.Dialog):
         self.severity_filter = "All"
         self.hazard_filter = None
         self._alive = True
+        self._enter_handlers = {}   # list -> what Enter on it does (the pages fill it)
+        self._load_state = "idle"   # idle | loading | error | ok, for the region shown
 
         panel = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -44,8 +46,12 @@ class AlertBrowserDialog(wx.Dialog):
         btns.Realize()
         vbox.Add(btns, 0, wx.ALIGN_CENTER | wx.ALL, 8)
         panel.SetSizer(vbox)
-        self.Bind(wx.EVT_BUTTON, lambda e: self.Close(), id=wx.ID_CLOSE)
+        self.Bind(wx.EVT_BUTTON, self._on_close_button, id=wx.ID_CLOSE)
+        # Escape presses Close: without an escape id, a dialog with no Cancel
+        # button ignores Escape.
+        self.SetEscapeId(wx.ID_CLOSE)
         self.Bind(wx.EVT_CLOSE, self._on_close)
+        self.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
 
         wx.CallAfter(self._load_counts)
 
@@ -55,7 +61,7 @@ class AlertBrowserDialog(wx.Dialog):
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(wx.StaticText(p, label="Choose a region to browse active alerts:"),
               0, wx.ALL, 8)
-        self.region_list = wx.ListBox(p, style=wx.LB_SINGLE | wx.WANTS_CHARS)
+        self.region_list = wx.ListBox(p, style=wx.LB_SINGLE)
         for r in svc.REGIONS:
             self.region_list.Append(r["name"])
         self.region_list.SetSelection(0)
@@ -112,7 +118,7 @@ class AlertBrowserDialog(wx.Dialog):
 
         self.digest_status = wx.StaticText(p, label="")
         s.Add(self.digest_status, 0, wx.LEFT | wx.BOTTOM, 8)
-        self.group_list = wx.ListBox(p, style=wx.LB_SINGLE | wx.WANTS_CHARS)
+        self.group_list = wx.ListBox(p, style=wx.LB_SINGLE)
         s.Add(self.group_list, 1, wx.EXPAND | wx.ALL, 8)
         self.open_group_btn = wx.Button(p, label="View Affected Areas")
         self.open_group_btn.Disable()
@@ -138,7 +144,7 @@ class AlertBrowserDialog(wx.Dialog):
         s.Add(self.group_back, 0, wx.ALL, 8)
         self.group_title = wx.StaticText(p, label="")
         s.Add(self.group_title, 0, wx.LEFT | wx.BOTTOM, 8)
-        self.area_list = wx.ListBox(p, style=wx.LB_SINGLE | wx.WANTS_CHARS)
+        self.area_list = wx.ListBox(p, style=wx.LB_SINGLE)
         s.Add(self.area_list, 1, wx.EXPAND | wx.ALL, 8)
         self.open_area_btn = wx.Button(p, label="View Details")
         self.open_area_btn.Disable()
@@ -159,7 +165,7 @@ class AlertBrowserDialog(wx.Dialog):
         s = wx.BoxSizer(wx.VERTICAL)
         self.detail_back = wx.Button(p, label="<- Areas")
         s.Add(self.detail_back, 0, wx.ALL, 8)
-        self.detail = AccessibleLinesPanel(p)
+        self.detail = AccessibleLinesPanel(p, name="Alert")
         s.Add(self.detail, 1, wx.EXPAND | wx.ALL, 8)
         p.SetSizer(s)
         self.book.AddPage(p, "Detail")
@@ -173,21 +179,20 @@ class AlertBrowserDialog(wx.Dialog):
     def _bind_enter(self, ctrl, handler):
         """Enter on a list advances to the next level (as elsewhere in the app).
 
-        The list must be created with wx.WANTS_CHARS, or the dialog consumes
-        Enter/Tab for navigation and this handler never sees them. Tab is
-        re-implemented here so keyboard focus can still leave the list.
+        Enter is caught at the dialog (EVT_CHAR_HOOK) before the dialog's own
+        navigation sees it, so the lists keep the system's Tab handling. They
+        used to be WANTS_CHARS with Tab re-implemented, and Tab from the filter
+        buttons could skip straight past the alert list.
         """
-        def on_key(evt):
-            kc = evt.GetKeyCode()
-            if kc in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
+        self._enter_handlers[ctrl] = handler
+
+    def _on_char_hook(self, evt):
+        if evt.GetKeyCode() in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
+            handler = self._enter_handlers.get(wx.Window.FindFocus())
+            if handler is not None:
                 handler(evt)
-            elif kc == wx.WXK_TAB:
-                flags = (wx.NavigationKeyEvent.IsBackward if evt.ShiftDown()
-                         else wx.NavigationKeyEvent.IsForward)
-                ctrl.Navigate(flags)
-            else:
-                evt.Skip()
-        ctrl.Bind(wx.EVT_KEY_DOWN, on_key)
+                return
+        evt.Skip()
 
     # -- region selected ------------------------------------------------------
     def on_pick_region(self, event):
@@ -196,33 +201,50 @@ class AlertBrowserDialog(wx.Dialog):
             return
         region = svc.REGIONS[sel]
         self.current_region = region
+        # Forget the last region's groups: with "Loading..." selected, Enter
+        # would otherwise open the previous region's first alert.
+        self.groups = []
+        self.region_alerts = []
+        self._load_state = "loading"
+        self.open_group_btn.Disable()
         self.digest_title.SetLabel(f"{region['name']} - active alerts")
         self.digest_status.SetLabel("Loading alerts...")
         self.group_list.Clear()
         self.group_list.Append("Loading...")
-        self._goto(1)
+        self.group_list.SetSelection(0)
+        # Focus the alert list now: leaving it on the hidden region list meant
+        # the screen reader said nothing at all when the page changed.
+        self._goto(1, self.group_list)
 
         def work():
             try:
                 alerts = svc.fetch_region_alerts(region["id"])
             except Exception as e:  # noqa: BLE001
-                wx.CallAfter(self._region_error, str(e))
+                wx.CallAfter(self._region_error, region["id"], str(e))
                 return
-            wx.CallAfter(self._region_ready, alerts)
+            wx.CallAfter(self._region_ready, region["id"], alerts)
 
         threading.Thread(target=work, daemon=True).start()
 
-    def _region_error(self, err):
-        if not self._alive:
+    def _is_current(self, region_id):
+        """A late result for a region you've since left is dropped."""
+        return (self._alive and getattr(self, "current_region", None) is not None
+                and self.current_region["id"] == region_id)
+
+    def _region_error(self, region_id, err):
+        if not self._is_current(region_id):
             return
+        self._load_state = "error"
         self.digest_status.SetLabel("Could not load alerts.")
         self.group_list.Clear()
         self.group_list.Append(f"Could not load alerts: {err}")
         self.group_list.Append("This does NOT mean there are none - try again.")
+        self.group_list.SetSelection(0)
 
-    def _region_ready(self, alerts):
-        if not self._alive:
+    def _region_ready(self, region_id, alerts):
+        if not self._is_current(region_id):
             return
+        self._load_state = "ok"
         self.region_alerts = alerts
         # Seed filters from saved defaults (once per open is fine here).
         opts = self.settings["options"]
@@ -254,6 +276,10 @@ class AlertBrowserDialog(wx.Dialog):
             self.hazard_choice.SetSelection(0)
 
     def on_filter_change(self, event):
+        if self._load_state != "ok":
+            # Nothing to filter yet (loading, or the load failed): rebuilding
+            # now would claim "No active alerts", which isn't known.
+            return
         self.severity_filter = self.sev_radio.GetStringSelection()
         sel = self.hazard_choice.GetStringSelection()
         self.hazard_filter = None if sel == _ALL_TYPES else sel.rsplit(" (", 1)[0]
@@ -265,11 +291,13 @@ class AlertBrowserDialog(wx.Dialog):
         if not self.region_alerts:
             self.digest_status.SetLabel("No active alerts right now.")
             self.group_list.Append("No active alerts for this region.")
+            self.group_list.SetSelection(0)  # selected, so it's read on arrival
             self.open_group_btn.Disable()
             return
         if not self.groups:
             self.digest_status.SetLabel("No alerts match this filter.")
             self.group_list.Append("No alerts match. Try All severities or All types.")
+            self.group_list.SetSelection(0)
             self.open_group_btn.Disable()
             return
         total = sum(g.count for g in self.groups)
@@ -319,6 +347,14 @@ class AlertBrowserDialog(wx.Dialog):
         self.detail.set_lines(detail_lines(self.current_group.alerts[sel]))
         self._goto(3, None)
         self.detail.set_focus()
+
+    def _on_close_button(self, event):
+        # EndModal rather than Close(): with Escape mapped to ID_CLOSE, Close()
+        # sends EVT_CLOSE, whose default handler presses ID_CLOSE again, and
+        # wx's re-entry guard then leaves the dialog open. Escape and the
+        # title bar's X both come here too.
+        self._alive = False
+        self.EndModal(wx.ID_CLOSE)
 
     def _on_close(self, event):
         self._alive = False

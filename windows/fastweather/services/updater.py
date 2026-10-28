@@ -93,6 +93,7 @@ def launch_installer(path):
     """Launch the downloaded installer (Windows).
 
     The installer is downloaded over HTTPS from the project's GitHub release
-    assets. Note it is not yet code-signed, so Windows SmartScreen may prompt.
+    assets. It is code-signed (Azure Artifact Signing); SmartScreen may still
+    prompt while the signature builds reputation (#115).
     """
     os.startfile(path)  # noqa: S606

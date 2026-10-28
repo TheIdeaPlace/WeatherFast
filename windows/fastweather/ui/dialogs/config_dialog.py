@@ -154,6 +154,9 @@ class WeatherConfigDialog(wx.Dialog):
         ok_btn = wx.Button(panel, wx.ID_OK)
         apply_btn = wx.Button(panel, wx.ID_APPLY, "Apply")
         cancel_btn = wx.Button(panel, wx.ID_CANCEL)
+        # OK is the default, so Enter on a checkbox or radio button means OK.
+        # Without one, Enter did nothing, or pressed Apply if Tab had passed it.
+        ok_btn.SetDefault()
         btns.AddButton(ok_btn)
         btns.AddButton(apply_btn)
         btns.AddButton(cancel_btn)

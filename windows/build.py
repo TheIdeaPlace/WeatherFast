@@ -60,7 +60,7 @@ def main():
 
     
     # Remove spec file if it exists
-    spec_file = "fastweather.spec"
+    spec_file = "WeatherFast.spec"  # PyInstaller names it after --name
     if os.path.exists(spec_file):
         os.remove(spec_file)
         print(f"  Removed {spec_file}")

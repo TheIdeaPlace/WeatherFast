@@ -17,10 +17,10 @@ from .city_data import flatten_cities, load_cached_cities
 from .locale_units import locale_default_units
 from .models.city import CityStore
 from .models.settings import AppSettings
-from .models.weather import describe_cloud_cover
 from .services import geocoding_service, weather_service
 from .services.fetch_manager import FetchManager
 from .ui.accessible_list import AccessibleLinesPanel
+from .ui.city_row import city_row_error, city_row_text
 from .ui.dialogs.city_select import CitySelectionDialog
 from .ui.dialogs.config_dialog import WeatherConfigDialog
 from .ui.dialogs.location_browser import LocationBrowserDialog
@@ -70,6 +70,8 @@ class MainFrame(wx.Frame):
         # is never rendered as "no alerts".
         self._row_text = {}        # city -> weather line, without the badge
         self._row_badges = {}      # city -> badge suffix ("" when clear)
+        self._row_seq = {}         # city -> number of its newest basic fetch
+        self._row_stale = set()    # cities whose last refresh failed (old weather shown)
         self.full_alert_state = "off"
         self.full_alerts = []
         self.full_alert_error = ""
@@ -186,7 +188,8 @@ class MainFrame(wx.Frame):
         head_row.Add(self.btn_config, 0, wx.ALIGN_CENTER_VERTICAL)
         fv_sizer.Add(head_row, 0, wx.EXPAND | wx.ALL, 10)
 
-        self.full_display = AccessibleLinesPanel(self.full_view, activatable=True)
+        self.full_display = AccessibleLinesPanel(self.full_view, activatable=True,
+                                                  name="Weather report")
         self.full_display.set_activate_handler(self._open_alert)
         fv_sizer.Add(self.full_display, 1, wx.EXPAND | wx.ALL, 10)
         self.full_view.SetSizer(fv_sizer)
@@ -228,6 +231,10 @@ class MainFrame(wx.Frame):
         keycode = event.GetKeyCode()
         if keycode == wx.WXK_RETURN or keycode == wx.WXK_NUMPAD_ENTER:
             self.on_full_weather(event)
+        elif keycode == wx.WXK_DELETE and not event.HasAnyModifiers():
+            # Delete belongs to the list: as a window-wide accelerator it also
+            # took Delete away from the search box.
+            self.on_remove(event)
         elif keycode == wx.WXK_TAB:
             flags = wx.NavigationKeyEvent.IsForward
             if event.ShiftDown():
@@ -239,8 +246,10 @@ class MainFrame(wx.Frame):
     def create_menubar(self):
         """Menu bar for discoverable, accessible access to all actions.
 
-        Menu mnemonics deliberately avoid C/F/U/D/N so they don't collide with
-        the Alt+C/F/U/D/N accelerators in the accelerator table. Feature sheets
+        Top-level menu mnemonics deliberately avoid C/F/U/D/N so they don't
+        collide with the Alt+C/F/U/D/N accelerators in the accelerator table.
+        Items inside an open menu are chosen without Alt, so they can use any
+        letter. Feature sheets
         are added to the Weather menu by their respective phases via
         add_weather_menu_item().
         """
@@ -313,13 +322,15 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_about, mi_about)
 
         # Feature sheets (registered per phase).
-        self.add_weather_menu_item("Weather Alerts...", self.on_alerts)
-        self.add_weather_menu_item("Expected Precipitation...", self.on_radar)
-        self.add_weather_menu_item("Weather Around Me...", self.on_weather_around_me)
-        self.add_weather_menu_item("Historical Weather...", self.on_historical)
-        self.add_weather_menu_item("My Data...", self.on_mydata)
-        self.add_weather_menu_item("Marine Forecast...", self.on_marine)
-        self.add_weather_menu_item("Astronomy (Moon)...", self.on_astronomy)
+        # Each item has its own access key; first letters repeat (Weather
+        # Alerts / Weather Around Me, My Data / Marine Forecast).
+        self.add_weather_menu_item("Weather &Alerts...", self.on_alerts)
+        self.add_weather_menu_item("&Expected Precipitation...", self.on_radar)
+        self.add_weather_menu_item("Weather Around &Me...", self.on_weather_around_me)
+        self.add_weather_menu_item("&Historical Weather...", self.on_historical)
+        self.add_weather_menu_item("My &Data...", self.on_mydata)
+        self.add_weather_menu_item("Ma&rine Forecast...", self.on_marine)
+        self.add_weather_menu_item("As&tronomy (Moon)...", self.on_astronomy)
 
     def all_cities(self):
         """Flattened list of every cached city (built once, lazily)."""
@@ -523,7 +534,6 @@ class MainFrame(wx.Frame):
 
     def setup_shortcuts(self):
         self.ID_REFRESH = wx.NewIdRef()
-        self.ID_REMOVE = wx.NewIdRef()
         self.ID_MOVE_UP = wx.NewIdRef()
         self.ID_MOVE_DOWN = wx.NewIdRef()
         self.ID_ESCAPE = wx.NewIdRef()
@@ -532,7 +542,6 @@ class MainFrame(wx.Frame):
         self.ID_CONFIGURE = wx.NewIdRef()
 
         self.Bind(wx.EVT_MENU, self.on_refresh, id=self.ID_REFRESH)
-        self.Bind(wx.EVT_MENU, self.on_remove, id=self.ID_REMOVE)
         self.Bind(wx.EVT_MENU, self.on_move_up, id=self.ID_MOVE_UP)
         self.Bind(wx.EVT_MENU, self.on_move_down, id=self.ID_MOVE_DOWN)
         self.Bind(wx.EVT_MENU, self.on_escape, id=self.ID_ESCAPE)
@@ -543,7 +552,6 @@ class MainFrame(wx.Frame):
         accel = [
             (wx.ACCEL_NORMAL, wx.WXK_F5, self.ID_REFRESH),
             (wx.ACCEL_CTRL, ord("R"), self.ID_REFRESH),
-            (wx.ACCEL_NORMAL, wx.WXK_DELETE, self.ID_REMOVE),
             (wx.ACCEL_ALT, ord("U"), self.ID_MOVE_UP),
             (wx.ACCEL_ALT, ord("D"), self.ID_MOVE_DOWN),
             (wx.ACCEL_NORMAL, wx.WXK_ESCAPE, self.ID_ESCAPE),
@@ -583,25 +591,36 @@ class MainFrame(wx.Frame):
         # Remember the selected row's full display string so selection can be
         # restored after the rebuild. Match by full key (names may contain
         # ' - '), not a split prefix.
-        prev = (self.city_list.GetStringSelection()
-                if self.city_list.GetSelection() != wx.NOT_FOUND else None)
+        sel = self.city_list.GetSelection()
+        prev = self._city_key_at(sel) if sel != wx.NOT_FOUND else None
         self.city_list.Clear()
         names = self.cities.names()
         for city in names:
-            self.city_list.Append(f"{city} - Loading...")
+            # Repaint what we already know; only a city with no weather yet
+            # says Loading. (Removing a city used to put every other row back
+            # to "Loading..." for good, because nothing refetched them.)
+            self.city_list.Append(self._row_display(city))
         if reload:
             self.load_all_weather()
 
-        restored = False
-        if prev:
-            for i, key in enumerate(names):
-                if prev.startswith(key + " - "):
-                    self.city_list.SetSelection(i)
-                    restored = True
-                    break
-        if not restored and self.city_list.GetCount() > 0:
+        if prev in names:
+            self.city_list.SetSelection(names.index(prev))
+        elif self.city_list.GetCount() > 0:
             self.city_list.SetSelection(0)
         self.update_buttons()
+
+    def _row_display(self, city):
+        base = self._row_text.get(city)
+        if base is None:
+            return f"{city} - Loading..."
+        stale = " (couldn't refresh)" if city in self._row_stale else ""
+        return base + stale + self._row_badges.get(city, "")
+
+    def _on_list_page(self):
+        """True when the city list is showing. List commands (Delete, Alt+U,
+        Alt+D) act on the list's selection, so they must do nothing while Full
+        Weather hides it."""
+        return self.book.GetSelection() == 0
 
     def load_all_weather(self):
         for city in self.cities.names():
@@ -609,10 +628,21 @@ class MainFrame(wx.Frame):
             self._fetch_weather(city, lat, lon, "basic")
 
     def _fetch_weather(self, city, lat, lon, detail):
+        if detail == "basic":
+            # Numbered, so a slow result (good or bad) can't overwrite a newer one.
+            seq = self._row_seq.get(city, 0) + 1
+            self._row_seq[city] = seq
+            request_id = (city, seq)
+        else:
+            request_id = city
+        # Basic results feed the list rows; full results feed Full Weather.
+        # They used to share one handler, so a full result rewrote the row
+        # from its first daily entry (a week ago), and a basic result (F5)
+        # replaced the Full Weather report, dropping its hourly and daily parts.
         self.fetch.submit(
-            "weather",
+            "weather" if detail == "basic" else "weather_full",
             lambda: weather_service.fetch_weather(lat, lon, detail),
-            request_id=city,
+            request_id=request_id,
         )
 
     # -- add / browse ---------------------------------------------------------
@@ -656,14 +686,16 @@ class MainFrame(wx.Frame):
     def add_city_match(self, match):
         name = match["display"]
         if name in self.cities:
-            return
-        self.cities.add(name, match["lat"], match["lon"])
-        self.update_city_list()
-        self.city_input.Clear()
-        for i in range(self.city_list.GetCount()):
-            if self.city_list.GetString(i).startswith(name):
-                self.city_list.SetSelection(i)
-                break
+            wx.MessageBox(f"{name} is already in your list.", "Already Added",
+                          wx.OK | wx.ICON_INFORMATION)
+        else:
+            self.cities.add(name, match["lat"], match["lon"])
+            self.update_city_list()
+            self.city_input.Clear()
+        # Land on the city in the list, so the screen reader says what was
+        # added (focus used to go back to the empty search box).
+        self.city_list.SetSelection(self.cities.names().index(name))
+        self.city_list.SetFocus()
         self.update_buttons()
 
     def on_browse_alerts(self, event):
@@ -741,6 +773,8 @@ class MainFrame(wx.Frame):
         self.update_buttons()
 
     def on_remove(self, event):
+        if not self._on_list_page():
+            return
         sel = self.city_list.GetSelection()
         if sel == wx.NOT_FOUND:
             return
@@ -749,7 +783,16 @@ class MainFrame(wx.Frame):
             return
         if wx.MessageBox(f"Remove {city}?", "Confirm", wx.YES_NO) == wx.YES:
             self.cities.remove(city)
+            for d in (self._row_text, self._row_badges, self._row_seq):
+                d.pop(city, None)
+            self._row_stale.discard(city)
             self.update_city_list(False)
+            # Stay at the same place in the list: the next city, or the new
+            # last one, rather than jumping back to the top.
+            if self.city_list.GetCount():
+                self.city_list.SetSelection(min(sel, self.city_list.GetCount() - 1))
+            self.city_list.SetFocus()
+            self.update_buttons()
 
     def on_move_up(self, event):
         self.move_city(-1)
@@ -758,6 +801,8 @@ class MainFrame(wx.Frame):
         self.move_city(1)
 
     def move_city(self, direction):
+        if not self._on_list_page():
+            return
         sel = self.city_list.GetSelection()
         if sel == wx.NOT_FOUND:
             return
@@ -773,6 +818,14 @@ class MainFrame(wx.Frame):
         self.update_buttons()
 
     def on_refresh(self, event):
+        if not self._on_list_page():
+            # F5 in Full Weather refreshes the report being read.
+            if hasattr(self, "current_full_city"):
+                city, lat, lon = self.current_full_city
+                self.current_full_error = None
+                self._fetch_weather(city, lat, lon, "full")
+                self._fetch_full_alerts(city, lat, lon)
+            return
         sel = self.city_list.GetSelection()
         if sel != wx.NOT_FOUND:
             city = self._city_key_at(sel)
@@ -782,6 +835,8 @@ class MainFrame(wx.Frame):
             self._fetch_weather(city, lat, lon, "basic")
 
     def on_full_weather(self, event):
+        if not self._on_list_page() and event is not None:
+            return  # Alt+F or the menu while Full Weather is already showing
         sel = self.city_list.GetSelection()
         if sel == wx.NOT_FOUND:
             return
@@ -792,6 +847,7 @@ class MainFrame(wx.Frame):
         self.current_full_city = (city, lat, lon)
         self.day_offset = 0
         self.current_full_data = None
+        self.current_full_error = None
         self.lbl_full_title.SetLabel(f"Full Weather - {city}")
         self.full_display.set_message("Loading...")
         self.book.SetSelection(1)
@@ -831,7 +887,12 @@ class MainFrame(wx.Frame):
             self.statusbar.SetStatusText(
                 f"{n} active alert{'s' if n != 1 else ''} for {city}" if n
                 else f"No active alerts for {city}", 0)
-        self._render_full()
+        # Until the forecast arrives the report is just "Loading...". Drawing
+        # the alerts into it then rebuilt the list an extra time, and the
+        # screen reader re-read the heading for each rebuild. The forecast's
+        # render includes them.
+        if self.current_full_data is not None or getattr(self, "current_full_error", None):
+            self._render_full()
 
     def _open_alert(self, payload):
         """Activate a data row in the detailed view (alert sheet, or retry)."""
@@ -877,7 +938,9 @@ class MainFrame(wx.Frame):
             alert_lines, alert_rows = [], {}
 
         if data is None:
-            weather_lines = [f"Report for {city}", "=" * 40, "Loading forecast..."]
+            err = getattr(self, "current_full_error", None)
+            weather_lines = [f"Report for {city}", "=" * 40,
+                             f"Error: {err}" if err else "Loading forecast..."]
         elif self.day_offset == 0:
             weather_lines = build_full_weather_lines(city, data, self.settings, self.fmt)
         else:
@@ -896,6 +959,12 @@ class MainFrame(wx.Frame):
         key = (city, self.day_offset)
         keep = key == getattr(self, "_last_render_key", None)
         self._last_render_key = key
+
+        # A failed refresh of a report that's showing: keep the old report
+        # and say the refresh failed at the end.
+        err = getattr(self, "current_full_error", None)
+        if data is not None and err:
+            weather_lines = list(weather_lines) + [f"Error: couldn't refresh ({err})"]
 
         # Splice the alerts in after the "Report for <city>" heading and its
         # rule, shifting the activation map to match their new positions.
@@ -935,10 +1004,9 @@ class MainFrame(wx.Frame):
     def on_config(self, event):
         dlg = WeatherConfigDialog(self, self.settings.to_dict())
         if dlg.ShowModal() == wx.ID_OK:
-            self.settings.replace(dlg.get_configuration())
-            self.save_config()
-            if hasattr(self, "current_full_city"):
-                self.on_full_weather(None)
+            # The same as Apply: OK used to save without reloading, so the list
+            # kept the old units, and it opened Full Weather even from the list.
+            self.apply_config_changes(dlg.get_configuration())
         dlg.Destroy()
 
     def apply_config_changes(self, new_config):
@@ -951,10 +1019,18 @@ class MainFrame(wx.Frame):
     # -- async result dispatch ------------------------------------------------
     def on_fetch_result(self, event):
         if event.kind == "weather":
+            city, seq = event.request_id
+            if seq != self._row_seq.get(city):
+                return  # superseded by a newer fetch for this city
             if event.error:
-                self.on_weather_error(event.request_id, event.error)
+                self.on_weather_error(city, event.error)
             else:
-                self.on_weather_ready(event.request_id, event.payload)
+                self.on_weather_ready(city, event.payload)
+        elif event.kind == "weather_full":
+            if event.error:
+                self.on_full_weather_error(event.request_id, event.error)
+            else:
+                self.on_full_weather_ready(event.request_id, event.payload)
         elif event.kind == "geo":
             if event.error:
                 self.on_geo_error(event.error)
@@ -1022,6 +1098,8 @@ class MainFrame(wx.Frame):
         )
 
     def _apply_alert_badge(self, city, alerts):
+        if city not in self.cities:
+            return  # removed while the check was in flight
         self._row_badges[city] = city_row_badge(alerts)
         self._refresh_city_row(city)
 
@@ -1032,85 +1110,65 @@ class MainFrame(wx.Frame):
         from both rather than appended to in place - otherwise a weather
         refresh silently drops the badge.
         """
-        base = self._row_text.get(city)
-        if base is None:
+        if self._row_text.get(city) is None:
             return
-        text = base + self._row_badges.get(city, "")
-        for i in range(self.city_list.GetCount()):
-            if self.city_list.GetString(i).startswith(city + " - "):
-                self.city_list.SetString(i, text)
-                break
+        text = self._row_display(city)
+        # By position (the list is in CityStore order), not by text: one name
+        # can be the start of another ("X" and "X - Y").
+        names = self.cities.names()
+        if city in names and names.index(city) < self.city_list.GetCount():
+            self.city_list.SetString(names.index(city), text)
 
     def on_weather_ready(self, city, data):
-        curr = data.get("current", data.get("current_weather", {}))
-        if curr:
-            temp_c = curr.get("temperature_2m", curr.get("temperature", 0))
-
-            cloud_text = ""
-            if "cloud_cover" in curr:
-                cloud_text = f", {describe_cloud_cover(curr['cloud_cover'])}"
-            else:
-                hourly = data.get("hourly", {})
-                if hourly and "time" in hourly and "cloudcover" in hourly:
-                    times = hourly["time"]
-                    cloudcover = hourly["cloudcover"]
-                    curr_time_str = curr.get("time")
-                    idx = -1
-                    if curr_time_str in times:
-                        idx = times.index(curr_time_str)
-                    else:
-                        try:
-                            from datetime import datetime
-                            curr_dt = datetime.strptime(curr_time_str, "%Y-%m-%dT%H:%M")
-                            for i, t_str in enumerate(times):
-                                try:
-                                    t_dt = datetime.strptime(t_str, "%Y-%m-%dT%H:%M")
-                                    if t_dt.replace(minute=0) == curr_dt.replace(minute=0):
-                                        idx = i
-                                        break
-                                except Exception:
-                                    continue
-                        except Exception:
-                            pass
-                    if idx != -1 and idx < len(cloudcover):
-                        cloud_text = f", {describe_cloud_cover(cloudcover[idx])}"
-
-            daily_temps = ""
-            daily = data.get("daily", {})
-            if daily and daily.get("temperature_2m_max") and daily.get("temperature_2m_min"):
-                temp_max = self.fmt.temperature_short(daily["temperature_2m_max"][0])
-                temp_min = self.fmt.temperature_short(daily["temperature_2m_min"][0])
-                daily_temps = f" (High: {temp_max}, Low: {temp_min})"
-
-            precip_text = ""
-            snowfall = curr.get("snowfall", 0)
-            rain = curr.get("rain", 0)
-            showers = curr.get("showers", 0)
-            if snowfall >= 0.01:
-                precip_text = " [Snow]"
-            elif rain >= 0.01 or showers >= 0.01:
-                precip_text = " [Rain]"
-
-            temp_display = self.fmt.temperature_short(temp_c)
-            self._row_text[city] = (
-                f"{city} - {temp_display}{cloud_text}{precip_text}{daily_temps}")
-            self._refresh_city_row(city)
-
-            # Best-effort alert badge for US cities (cached 5 min).
-            if city in self.cities:
-                lat, lon = self.cities.coords(city)
-                self._check_alert_badge(city, lat, lon)
-
-        if (hasattr(self, "current_full_city")
-                and self.current_full_city[0] == city
-                and self.book.GetSelection() == 1):
-            self.current_full_data = data
-            self._render_full()
+        """A basic result: today's summary for the city's row."""
+        if city not in self.cities:
+            return  # removed while the fetch was in flight
+        text = city_row_text(city, data, self.fmt)
+        if text is None:
+            self.on_weather_error(city, "no current conditions")
+            return
+        self._row_text[city] = text
+        self._row_stale.discard(city)
+        self._refresh_city_row(city)
+        # Best-effort alert badge for US cities (cached 5 min).
+        if city in self.cities:
+            lat, lon = self.cities.coords(city)
+            self._check_alert_badge(city, lat, lon)
 
     def on_weather_error(self, city, err):
-        if (self.book.GetSelection() == 1
-                and self.lbl_full_title.GetLabel().endswith(city)):
-            self.full_display.append(f"Error: {err}")
+        """A basic fetch failed: say so on the row, instead of Loading for good.
+
+        A row that already has weather keeps it, marked as not refreshed, so
+        F5 offline still says something and the old numbers aren't taken as
+        current.
+        """
+        if city not in self.cities:
+            return
+        if self._row_text.get(city, city_row_error(city)) == city_row_error(city):
+            self._row_text[city] = city_row_error(city)
+        else:
+            self._row_stale.add(city)
+        self.statusbar.SetStatusText(f"Couldn't refresh {city}", 0)
+        self._refresh_city_row(city)
+
+    def _showing_full(self, city):
+        return (self.book.GetSelection() == 1
+                and hasattr(self, "current_full_city")
+                and self.current_full_city[0] == city)
+
+    def on_full_weather_ready(self, city, data):
+        if self._showing_full(city):
+            self.current_full_data = data
+            self.current_full_error = None
+            self._render_full()
+
+    def on_full_weather_error(self, city, err):
+        if not self._showing_full(city):
+            return
+        # Kept in state and rendered, so alerts that arrive (or arrived) are
+        # still shown, and a later redraw doesn't drop the error.
+        self.current_full_error = err
+        self._render_full()
 
     def on_close(self, event):
         self.fetch.shutdown()

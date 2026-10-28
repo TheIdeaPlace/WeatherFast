@@ -18,7 +18,7 @@ class AlertDetailDialog(wx.Dialog):
         panel = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
 
-        self.lines = AccessibleLinesPanel(panel)
+        self.lines = AccessibleLinesPanel(panel, name="Alert")
         self.lines.set_lines(detail_lines(alert))
         vbox.Add(self.lines, 1, wx.EXPAND | wx.ALL, 8)
 

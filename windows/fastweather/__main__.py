@@ -14,7 +14,13 @@ def _hold_app_mutex():
     detect a running instance and wait for it to close during an update."""
     try:
         import ctypes
-        return ctypes.windll.kernel32.CreateMutexW(None, False, "WeatherFastRunning")
+        from ctypes import wintypes
+        create = ctypes.windll.kernel32.CreateMutexW
+        # HANDLE is pointer-sized: without restype, ctypes returned a 32-bit
+        # int, truncating the handle on 64-bit Windows (#115).
+        create.argtypes = (ctypes.c_void_p, wintypes.BOOL, wintypes.LPCWSTR)
+        create.restype = wintypes.HANDLE
+        return create(None, False, "WeatherFastRunning")
     except Exception:
         return None
 
