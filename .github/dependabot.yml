@@ -22,3 +22,17 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+
+  # tools/quickradar/requirements.txt, a developer tool rather than part of
+  # an app. No UI toolkit in it (requests, ollama, Pillow), so one group
+  # carries every package and a week's changes arrive as one PR.
+  - package-ecosystem: pip
+    directory: "/tools/quickradar"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: deps
+    groups:
+      quickradar:
+        patterns:
+          - "*"
