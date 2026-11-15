@@ -7,20 +7,26 @@
 One command builds, uploads, and wires a new build into TestFlight — no Xcode
 Organizer, no manual App Store Connect clicking.
 
-## One-time setup (already done)
+## One-time setup
 
-Credentials and the App Store Connect API client live **outside the repo** in
-`~/.fastweather-keys/` (never committed):
+The App Store Connect API key comes from the **signing kit**, outside the repo
+(never committed). See
+[`signing/README.md`](https://github.com/kellylford/The-Idea-Place-Projects/blob/main/signing/README.md)
+in the projects repo.
 
-- `asc.json` — key id, issuer id, `.p8` path, app bundle id, team id
-- `asc.py` — ASC REST client (signs its own ES256 JWT; stdlib + `cryptography`)
-- `AuthKey_38ANZ53D9L.p8` — the ASC API private key (also in
-  `~/.appstoreconnect/private_keys/`, where `altool` looks for it)
+- **The key:** `~/.signing-kit/asc-api-key.p8`, key ID `38ANZ53D9L`, issuer ID
+  `d36bb41d-a198-401d-b36c-2e4fd15163e1`. On a new Mac, restore the folder from
+  the vault with `python3 <projects repo>/signing/sync-secrets.py pull-kit`. The
+  script uses those values by default; override them with `ASC_KEY_PATH` (or
+  `SIGNING_KIT` for the folder), `ASC_KEY_ID` and `ASC_ISSUER_ID`. It points
+  `altool` at the key itself, so nothing goes in `~/.appstoreconnect/private_keys/`.
+- **The client:** `asc.py`, the ASC REST client (signs its own ES256 JWT; stdlib +
+  `cryptography`), isn't in this repo. Set `ASC_PY` to its path. It's needed for
+  the TestFlight wiring, not for `--upload-only`.
 
-If the key is ever rotated, drop the new `.p8` in
-`~/.appstoreconnect/private_keys/` and update `key_id` / `issuer_id` in
-`asc.json`. The **Issuer ID** is only shown in App Store Connect →
-Users and Access → Integrations.
+`~/.fastweather-keys/` is retired, and the key that lived there is revoked. If
+the key is ever rotated, it's replaced in the kit (see `signing/README.md`), and
+the new key ID goes in `ASC_KEY_ID` until this script's default is updated.
 
 ## Cut a release
 
@@ -49,6 +55,7 @@ Internal testers get it immediately; external testers once review clears.
 | `--groups "A,B"` | which beta groups to assign (default `Internal test,External`) |
 | `--no-external-review` | assign groups but don't submit for Beta App Review |
 | `--wire-only --version X --build Y` | skip build/upload; just wire an already-uploaded build (e.g. one uploaded from Xcode) |
+| `--upload-only` | build and upload, but skip the TestFlight wiring (doesn't need `asc.py`) |
 
 ## Just the TestFlight wiring
 
@@ -62,8 +69,8 @@ scripts/release-testflight.sh --wire-only --version 1.5.9 --build 4 \
 ## Inspect state
 
 ```bash
-python3 ~/.fastweather-keys/asc.py probe      # auth check
-python3 ~/.fastweather-keys/asc.py discover   # app, recent builds, beta groups
+python3 "$ASC_PY" probe      # auth check
+python3 "$ASC_PY" discover   # app, recent builds, beta groups
 ```
 
 ## Notes / gotchas

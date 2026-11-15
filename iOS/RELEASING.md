@@ -63,32 +63,53 @@ That's it. Do **not** run a local `xcodebuild archive` for an App Store build.
 
 ## Credentials & tooling (all OUTSIDE the repo)
 
-Nothing secret is committed. Everything lives in `~/.fastweather-keys/`:
+Nothing secret is committed. Apple signing credentials live in Kelly's **signing
+kit**, kept in the Azure Key Vault `theideaplace-kit`. The guide to it is
+[`signing/README.md`](https://github.com/kellylford/The-Idea-Place-Projects/blob/main/signing/README.md)
+in the projects repo; read that for anything about keys, certificates or renewals.
 
-| File | What |
-|------|------|
-| `asc.json` | App Store Connect API config: `key_id`, `issuer_id`, `p8_path`, `app_bundle_id`, `team_id`. **The Issuer ID exists only here and in Apple's web UI** (Users and Access → Integrations) — it is not in the `.p8`. |
-| `asc.py` | App Store Connect REST client. Signs its own ES256 JWT with the `cryptography` lib (no PyJWT). Reads `asc.json`. |
-| `AuthKey_*.p8` | The ASC API private key (also in `~/.appstoreconnect/private_keys/`, where `altool` looks). |
+On a Mac the kit is the folder `~/.signing-kit/` (never in git). Restore it from
+the vault on a new Mac with
+`python3 <projects repo>/signing/sync-secrets.py pull-kit`. What a local release
+uses from it:
 
-`asc.py` subcommands:
+- `asc-api-key.p8`: the App Store Connect API key, key ID `38ANZ53D9L` (Admin).
+  The issuer ID is `d36bb41d-a198-401d-b36c-2e4fd15163e1`. Both identifiers are
+  also in the projects repo's `signing/repos.json`.
+- `apple-distribution.p12`: the Apple Distribution certificate, with its password
+  in the macOS Keychain (service `signing-kit`). Local TestFlight builds use
+  automatic signing, so they don't read this file; it's the source of the CI
+  secret.
+
+`~/.fastweather-keys/` is retired, and the key that lived there is revoked. Don't
+recreate it, and don't copy keys into `~/.appstoreconnect/private_keys/`:
+`release-testflight.sh` points `altool` at the kit's key itself.
+
+`asc.py`, the App Store Connect REST client (signs its own ES256 JWT with the
+`cryptography` lib), is not in this repo or the kit. It used to sit in
+`~/.fastweather-keys/` next to an `asc.json` config. Tell the scripts where it is
+with the `ASC_PY` environment variable. Its subcommands:
 ```bash
-python3 ~/.fastweather-keys/asc.py probe       # auth check — list visible apps
-python3 ~/.fastweather-keys/asc.py discover    # app id, recent builds, beta group ids
-python3 ~/.fastweather-keys/asc.py testflight --version 1.5.8 --build 6 \
+python3 "$ASC_PY" probe       # auth check — list visible apps
+python3 "$ASC_PY" discover    # app id, recent builds, beta group ids
+python3 "$ASC_PY" testflight --version 1.5.8 --build 6 \
         --notes-file scripts/RELEASE_NOTES.txt --groups "Internal test,External"
 ```
-For one-off calls: `import asc; asc.api(method, path, body=, query=)`.
+For one-off calls: `import asc; asc.api(method, path, body=, query=)`. If your
+copy still reads an `asc.json`, make sure it names key `38ANZ53D9L` and the kit's
+`.p8`, not the revoked key.
 
-### GitHub Actions secrets (already configured)
-`ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8_BASE64`, `DIST_CERT_P12_BASE64`,
-`DIST_CERT_PASSWORD`, `OPENMETEO_API_KEY`. To (re)set them — e.g. after a cert
-renewal — run **`scripts/setup-release-secrets.sh`** (or double-click the Desktop
-`Setup FastWeather Release Secrets.command`). It reads the local `.p8` and a
-distribution `.p12`, prompts for the `.p12` password, verifies the cert is an
-**Apple Distribution** cert via `security import` (see gotchas), and sets each
-secret with `gh secret set`. **A human runs it** so the password never lands in a
-transcript.
+### GitHub Actions secrets
+`ios-release.yml` reads `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8_BASE64`,
+`DIST_CERT_P12_BASE64` and `DIST_CERT_PASSWORD`. These are **TheIdeaPlace
+organization secrets**, shared with WeatherFast and Scores, and set from the kit
+by `sync-secrets.py --apply` in the projects repo. Don't set them on this repo by
+hand: a repo secret with the same name overrides the organization one. After a
+certificate renewal, follow "Renewing an Apple certificate" in `signing/README.md`.
+
+`OPENMETEO_API_KEY` (optional) is the one repo secret that's still set by hand,
+since it isn't a signing secret. Run `gh secret set OPENMETEO_API_KEY` in the
+Terminal app and paste the key when asked, so it never lands in a transcript.
 
 ---
 
@@ -98,7 +119,7 @@ transcript.
 |--------|---------|
 | `.github/workflows/ios-release.yml` (repo root) | **App Store build** on a released-macOS runner. The only correct way to build for the App Store from this environment. |
 | `scripts/release-testflight.sh` | **Local TestFlight** pipeline. `--upload-only` = build+upload only; `--wire-only --version X --build Y` = skip build, just wire an already-uploaded build (notes + groups + beta review). **Do not use for App Store** — see the golden rule. |
-| `scripts/setup-release-secrets.sh` | (Re)set the GitHub Actions secrets from local files. Human-run. |
+| `scripts/setup-release-secrets.sh` | Retired. Prints where the signing secrets come from now (`sync-secrets.py`) and sets nothing. Kept so the old Desktop launcher doesn't just fail. |
 | `scripts/ExportOptions.plist` | App Store export options (method `app-store-connect`, automatic signing, team). |
 | `scripts/RELEASE_NOTES.txt` | Working TestFlight "What to Test" text. |
 
@@ -144,8 +165,9 @@ scripts/release-testflight.sh --notes scripts/RELEASE_NOTES.txt
 ```
 Builds, uploads, sets the What-to-Test notes, assigns the **Internal test** and
 **External** beta groups, and submits external Beta App Review. Internal testers
-get it immediately; external testers after beta review. Run
-`python3 ~/.fastweather-keys/asc.py discover` to see group ids. See
+get it immediately; external testers after beta review. It needs the kit's key
+at `~/.signing-kit/asc-api-key.p8` and `ASC_PY` set (see Credentials above). Run
+`python3 "$ASC_PY" discover` to see group ids. See
 `scripts/RELEASE.md` for flag details.
 
 ---
@@ -158,7 +180,8 @@ get it immediately; external testers after beta review. Run
   label goes on the store version record only.
 - **OpenSSL 3 cannot read a Keychain-exported `.p12`** (legacy encryption) — it
   false-fails "password wrong." Verify/import with Apple's `security` tool
-  instead (that's also what the CI runner uses).
+  instead (that's also what the CI runner uses). `sync-secrets.py kit` checks
+  the kit's certificates and passwords for you.
 - **`GROUPS` is a reserved bash array** (the user's group IDs). A shell var named
   `GROUPS` silently becomes `20` (the `staff` gid) on macOS. Name it anything
   else (`BETA_GROUPS`).

@@ -12,32 +12,31 @@ builds, which is why your local TestFlight path still works.)
 The workflow even guards against this: it aborts if the runner's selected iOS SDK
 or Xcode is a beta seed.
 
-## One-time setup: repo secrets
+## Secrets
 
-Add these under **Settings → Secrets and variables → Actions → New repository secret**.
+The signing secrets are **TheIdeaPlace organization secrets**, shared with
+WeatherFast and Scores. Nobody sets them on this repo by hand any more, and a
+repo secret with the same name would override the organization one, so don't add
+one. They're set from Kelly's signing kit (Azure Key Vault `theideaplace-kit`) by
+`sync-secrets.py --apply` in the projects repo. The guide, including renewing the
+Distribution certificate, is
+[`signing/README.md`](https://github.com/kellylford/The-Idea-Place-Projects/blob/main/signing/README.md).
 
-| Secret | What it is | How to get it |
-|--------|-----------|---------------|
-| `ASC_KEY_ID` | App Store Connect API key ID | The `key_id` in your `~/.fastweather-keys/asc.json` |
-| `ASC_ISSUER_ID` | ASC API issuer ID | The `issuer_id` in that same `asc.json` |
-| `ASC_KEY_P8_BASE64` | The `.p8` API key, base64-encoded | `base64 -i <the AuthKey_<ASC_KEY_ID>.p8> \| pbcopy` |
-| `DIST_CERT_P12_BASE64` | "Apple Distribution" cert **+ its private key**, base64-encoded | Export a `.p12` (below), then `base64 -i dist.p12 \| pbcopy` |
-| `DIST_CERT_PASSWORD` | The password you set on that `.p12` | Whatever you typed during export |
-| `OPENMETEO_API_KEY` | *(optional)* Your paid Open-Meteo key | The value in your local `Secrets.swift`. Omit to ship the free tier. |
+What the workflow reads:
 
-### Exporting the distribution `.p12`
+- `ASC_KEY_ID`: App Store Connect API key ID, `38ANZ53D9L`.
+- `ASC_ISSUER_ID`: App Store Connect issuer ID.
+- `ASC_KEY_P8_BASE64`: the `.p8` API key, base64. From the kit's `asc-api-key.p8`.
+- `DIST_CERT_P12_BASE64`: the Apple Distribution certificate and its private key,
+  base64. From the kit's `apple-distribution.p12`.
+- `DIST_CERT_PASSWORD`: that `.p12`'s password, from the kit.
+- `OPENMETEO_API_KEY` *(optional)*: the paid Open-Meteo key, the value in your
+  local `Secrets.swift`. This one is a repo secret, set by hand, since it isn't a
+  signing secret: run `gh secret set OPENMETEO_API_KEY` in the Terminal app and
+  paste the key when asked. Omit it to ship the free tier.
 
-Easiest via **Keychain Access** (the private key can't be reliably exported from the CLI):
-
-1. Open **Keychain Access** → **login** keychain → **My Certificates**.
-2. Find **"Apple Distribution: Kelly Ford (P887QF74N8)"**. Expand it — it must have a
-   private key underneath (the disclosure triangle). If it doesn't, that Mac can't
-   export a usable cert; create a new distribution cert in Xcode first.
-3. Right-click it → **Export "Apple Distribution…"** → **Personal Information Exchange (.p12)**.
-4. Save as `dist.p12`, set a password → that password is `DIST_CERT_PASSWORD`.
-5. `base64 -i dist.p12 | pbcopy` → paste as `DIST_CERT_P12_BASE64`.
-
-Then delete `dist.p12` when you're done.
+To check that the signing secrets are set and shared with this repo, run
+`python3 <projects repo>/signing/sync-secrets.py` (it changes nothing).
 
 ## Running it
 
