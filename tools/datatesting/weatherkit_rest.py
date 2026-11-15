@@ -7,13 +7,18 @@ https://weatherkit.apple.com/. Auth is an ES256 JWT signed with a WeatherKit
 key from the Apple Developer portal. Stdlib-only; signing shells out to the
 system openssl (DER signature converted to the raw r||s JOSE form).
 
-Credentials (never committed): ~/.fastweather-keys/weatherkit.json
+Credentials (never committed): weatherkit.json in the signing kit,
+$SIGNING_KIT (default ~/.signing-kit), or ~/.fastweather-keys/weatherkit.json
+if the kit doesn't have one. Restore the kit on a new Mac with
+`python3 <projects repo>/signing/sync-secrets.py pull-kit`.
     {
       "team_id":    "<10-char team id>",
       "key_id":     "<10-char key id>",
       "service_id": "com.weatherfast.app",
       "p8_path":    "~/.fastweather-keys/AuthKey_<keyid>.p8"
     }
+The key file is looked for in the kit folder under p8_path's file name first,
+then at p8_path itself, so the same weatherkit.json works from either place.
 If the config or key is missing, is_configured() returns False and callers
 should skip WeatherKit sampling gracefully.
 
@@ -27,16 +32,27 @@ import subprocess
 import time
 import urllib.request
 
-CONFIG_PATH = os.path.expanduser("~/.fastweather-keys/weatherkit.json")
+KIT = os.path.expanduser(os.environ.get("SIGNING_KIT") or "~/.signing-kit")
+OLD_CONFIG_PATH = os.path.expanduser("~/.fastweather-keys/weatherkit.json")
+CONFIG_PATH = os.path.join(KIT, "weatherkit.json")
+if not os.path.isfile(CONFIG_PATH):
+    CONFIG_PATH = OLD_CONFIG_PATH
 _token_cache = {"token": None, "expires": 0}
+
+
+def key_path(cfg):
+    """The WeatherKit .p8: the kit's copy under p8_path's file name, else p8_path."""
+    in_kit = os.path.join(KIT, os.path.basename(os.path.expanduser(cfg["p8_path"])))
+    return in_kit if os.path.isfile(in_kit) else os.path.expanduser(cfg["p8_path"])
 
 
 def is_configured():
     if not os.path.isfile(CONFIG_PATH):
         return False
     try:
-        cfg = json.load(open(CONFIG_PATH))
-        return os.path.isfile(os.path.expanduser(cfg["p8_path"]))
+        with open(CONFIG_PATH) as f:
+            cfg = json.load(f)
+        return os.path.isfile(key_path(cfg))
     except Exception:  # noqa: BLE001
         return False
 
@@ -65,8 +81,9 @@ def token():
     now = time.time()
     if _token_cache["token"] and now < _token_cache["expires"] - 300:
         return _token_cache["token"]
-    cfg = json.load(open(CONFIG_PATH))
-    p8 = os.path.expanduser(cfg["p8_path"])
+    with open(CONFIG_PATH) as f:
+        cfg = json.load(f)
+    p8 = key_path(cfg)
     header = {"alg": "ES256", "kid": cfg["key_id"],
               "id": "%s.%s" % (cfg["team_id"], cfg["service_id"])}
     payload = {"iss": cfg["team_id"], "iat": int(now),

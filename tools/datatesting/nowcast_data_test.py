@@ -1499,7 +1499,7 @@ def main():
         check_results_by_data_name=checks,
         deviations_from_app=[
             "unixtime indexing on the legacy path (equivalent index math; app uses DateParser on local ISO)",
-            "WeatherKit sampled via REST (same backend as the app's framework) when ~/.fastweather-keys/weatherkit.json exists; REST minutes lack a precipitation-type field so per-minute active = intensity>0 (approximation of the Swift path)",
+            "WeatherKit sampled via REST (same backend as the app's framework) when weatherkit.json is in the signing kit (or ~/.fastweather-keys); REST minutes lack a precipitation-type field so per-minute active = intensity>0 (approximation of the Swift path)",
             "pseudo-saved cities: 3 nearest bundled cities 40-250 km stand in for user's saved list",
         ])
     with open(os.path.join(run_dir, "summary.json"), "w") as f:

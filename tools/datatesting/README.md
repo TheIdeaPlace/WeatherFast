@@ -58,8 +58,11 @@ No dependencies beyond Python 3 stdlib. Uses the paid Open-Meteo key from
 
 ## WeatherKit sampling (the seam instrument)
 
-When `~/.fastweather-keys/weatherkit.json` exists (team_id, key_id,
-service_id, p8_path — a WeatherKit key from the Apple Developer portal), the
+When `weatherkit.json` is in the signing kit (`~/.signing-kit`, or
+`$SIGNING_KIT`; restore it with `python3 <projects repo>/signing/sync-secrets.py
+pull-kit`), or failing that in `~/.fastweather-keys/` (team_id, key_id,
+service_id, p8_path — a WeatherKit key from the Apple Developer portal, whose
+`.p8` sits beside it in the kit), the
 harness also samples **WeatherKit via REST** (`weatherkit_rest.py`, same
 backend as the app's Swift framework) for cities in the app's minute-coverage
 set (US, CA, GB, IE, AU, NZ). Each such city gets a

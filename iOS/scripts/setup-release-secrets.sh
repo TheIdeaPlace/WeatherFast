@@ -11,7 +11,7 @@
 #   TheIdeaPlace organization secrets. They are set from the signing kit (Azure
 #   Key Vault theideaplace-kit) by sync-secrets.py in the projects repo. A repo
 #   secret with the same name would override them, so don't set these per repo.
-# - ~/.fastweather-keys/ is retired, and the key that lived there is revoked.
+# - ~/.fastweather-keys/ is retired; release credentials come from the signing kit.
 #
 # The file is kept, rather than deleted, so the old Desktop launcher
 # ("Setup FastWeather Release Secrets.command") says where to go instead of

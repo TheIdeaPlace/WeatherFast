@@ -20,16 +20,15 @@ in the projects repo.
   script uses those values by default for the build and upload; override them with `ASC_KEY_PATH` (or
   `SIGNING_KIT` for the folder), `ASC_KEY_ID` and `ASC_ISSUER_ID`. It points
   `altool` at the key itself, so nothing goes in `~/.appstoreconnect/private_keys/`.
-- **The client:** `asc.py`, the ASC REST client (signs its own ES256 JWT; stdlib +
-  `cryptography`), isn't in this repo. Set `ASC_PY` to its path. It's needed for
-  the TestFlight wiring, not for `--upload-only`. The script exports
-  `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_PATH` for it, but older copies read
-  their own `asc.json` instead; if yours does, that file must name key
-  `38ANZ53D9L` and the kit's `.p8`, or the wiring fails after the upload.
+- **The client:** `scripts/asc.py`, the ASC REST client (signs its own ES256 JWT;
+  stdlib + `cryptography`). It reads the same kit key and variables as this
+  script. It's needed for the TestFlight wiring, not for `--upload-only`;
+  `ASC_PY` points the script at another copy. `python3 scripts/asc.py check`
+  signs in and finds the app without changing anything.
 
-`~/.fastweather-keys/` is retired for release credentials, and the key that lived
-there is revoked. (The WeatherKit test tool in `tools/datatesting` still reads
-its own `weatherkit.json` from that folder; that's a separate key.) If
+`~/.fastweather-keys/` is retired. Its `.p8`, `Y83SZ2YWY2`, is the WeatherKit key
+the `tools/datatesting` tools use, not an App Store Connect key; it and its
+`weatherkit.json` are in the kit now. If
 the key is ever rotated, it's replaced in the kit (see `signing/README.md`), and
 the new key ID goes in `ASC_KEY_ID` until this script's default is updated.
 
@@ -74,8 +73,9 @@ scripts/release-testflight.sh --wire-only --version 1.5.9 --build 4 \
 ## Inspect state
 
 ```bash
-python3 "$ASC_PY" probe      # auth check
-python3 "$ASC_PY" discover   # app, recent builds, beta groups
+python3 scripts/asc.py check      # read-only: sign in and find the app
+python3 scripts/asc.py probe      # auth check
+python3 scripts/asc.py discover   # app, recent builds, beta groups
 ```
 
 ## Notes / gotchas
