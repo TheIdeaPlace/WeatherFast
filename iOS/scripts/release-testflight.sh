@@ -13,9 +13,9 @@
 #                  `python3 <projects repo>/signing/sync-secrets.py pull-kit`)
 #   ASC_KEY_ID     default 38ANZ53D9L
 #   ASC_ISSUER_ID  default d36bb41d-a198-401d-b36c-2e4fd15163e1
-#   ASC_PY         path to the App Store Connect REST client (asc.py), which
-#                  is not in this repo. Needed for TestFlight wiring, not for
-#                  --upload-only.
+#   ASC_PY         path to the App Store Connect REST client; default
+#                  scripts/asc.py next to this script. Needed for TestFlight
+#                  wiring, not for --upload-only.
 #
 # Usage:
 #   scripts/release-testflight.sh --notes RELEASE_NOTES.txt
@@ -34,7 +34,7 @@ SIGNING_KIT="${SIGNING_KIT:-$HOME/.signing-kit}"
 ASC_KEY_PATH="${ASC_KEY_PATH:-$SIGNING_KIT/asc-api-key.p8}"
 KEY_ID="${ASC_KEY_ID:-38ANZ53D9L}"
 ISSUER="${ASC_ISSUER_ID:-d36bb41d-a198-401d-b36c-2e4fd15163e1}"
-ASC="${ASC_PY:-}"
+ASC="${ASC_PY:-$SCRIPT_DIR/asc.py}"
 
 PROJECT="$IOS_DIR/FastWeather.xcodeproj"
 SCHEME="FastWeather"
@@ -77,8 +77,9 @@ if [[ "$WIRE_ONLY" -eq 0 ]]; then
   [[ -f "$ASC_KEY_PATH" ]] || die "App Store Connect key not found at $ASC_KEY_PATH. Restore the signing kit with: python3 <projects repo>/signing/sync-secrets.py pull-kit (or set ASC_KEY_PATH)"
 fi
 if [[ "$UPLOAD_ONLY" -eq 0 ]]; then
-  [[ -n "$ASC" ]] || die "set ASC_PY to the path of the App Store Connect client (asc.py) for TestFlight wiring, or pass --upload-only"
-  [[ -f "$ASC" ]] || die "ASC_PY points at $ASC, which doesn't exist"
+  [[ -f "$ASC" ]] || die "the App Store Connect client isn't at $ASC (set ASC_PY), or pass --upload-only"
+  # Checked before anything uploads: a build number is single-use, so failing at the wiring step costs one.
+  python3 -c 'import cryptography' 2>/dev/null || die "asc.py needs the cryptography library: pip3 install --user cryptography (or pass --upload-only)"
 fi
 # Notes are the TestFlight What-to-Test text; not needed for --upload-only.
 if [[ "$UPLOAD_ONLY" -eq 0 ]]; then
@@ -88,9 +89,7 @@ if [[ "$UPLOAD_ONLY" -eq 0 ]]; then
   [[ -s "$NOTES" ]] || die "notes file is empty: $NOTES"
 fi
 
-# Also export the kit's key details for asc.py. Whether asc.py uses them is up
-# to asc.py (it isn't in this repo; older copies read their own asc.json), so
-# check that it names key 38ANZ53D9L before relying on the wiring step.
+# asc.py reads the same key details, so the upload and the wiring use one key.
 export ASC_KEY_ID="$KEY_ID" ASC_ISSUER_ID="$ISSUER" ASC_KEY_PATH
 
 wire_testflight() {

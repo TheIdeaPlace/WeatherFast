@@ -81,27 +81,28 @@ uses from it:
   automatic signing, so they don't read this file; it's the source of the CI
   secret.
 
-`~/.fastweather-keys/` is retired for release credentials, and the key that lived
-there is revoked. Don't put release keys back in it, and don't copy keys into
-`~/.appstoreconnect/private_keys/`: `release-testflight.sh` points `altool` at the
-kit's key itself. (The WeatherKit test tool in `tools/datatesting` still reads its
-own `weatherkit.json` from that folder; that's a separate key the kit doesn't hold.)
+- `weatherkit.json` and the WeatherKit key it names (`AuthKey_<keyid>.p8`): used
+  only by the data tools in `tools/datatesting`, not by releases.
 
-`asc.py`, the App Store Connect REST client (signs its own ES256 JWT with the
-`cryptography` lib), is not in this repo or the kit. It used to sit in
-`~/.fastweather-keys/` next to an `asc.json` config. Tell the scripts where it is
-with the `ASC_PY` environment variable. Its subcommands:
+`~/.fastweather-keys/` is retired. Don't put keys back in it, and don't copy keys into
+`~/.appstoreconnect/private_keys/`: `release-testflight.sh` points `altool` at the
+kit's key itself. The `.p8` that lived there, `Y83SZ2YWY2`, is the WeatherKit key,
+not an App Store Connect key, and it still works; it's in the kit now.
+
+`scripts/asc.py` is the App Store Connect REST client (signs its own ES256 JWT with
+the `cryptography` lib). It reads the kit's key the same way `release-testflight.sh`
+does (`ASC_KEY_PATH`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, with the same defaults), and
+`release-testflight.sh` uses it unless `ASC_PY` names another copy, and checks before
+uploading that `python3` has the library it needs (`pip3 install --user cryptography`
+on a new Mac). Its subcommands:
 ```bash
-python3 "$ASC_PY" probe       # auth check — list visible apps
-python3 "$ASC_PY" discover    # app id, recent builds, beta group ids
-python3 "$ASC_PY" testflight --version 1.5.8 --build 6 \
+python3 scripts/asc.py check       # read-only: sign in and look up WeatherFast
+python3 scripts/asc.py probe       # auth check — list visible apps
+python3 scripts/asc.py discover    # app id, recent builds, beta group ids
+python3 scripts/asc.py testflight --version 1.5.8 --build 6 \
         --notes-file scripts/RELEASE_NOTES.txt --groups "Internal test,External"
 ```
 For one-off calls: `import asc; asc.api(method, path, body=, query=)`.
-`release-testflight.sh` exports `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_PATH`
-for it, but older copies of `asc.py` read their own `asc.json` instead. If yours
-does, that file must name key `38ANZ53D9L` and the kit's `.p8`, not the revoked
-key, or the TestFlight wiring fails after the upload has already happened.
 
 ### GitHub Actions secrets
 `ios-release.yml` reads `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8_BASE64`,
@@ -171,8 +172,8 @@ scripts/release-testflight.sh --notes scripts/RELEASE_NOTES.txt
 Builds, uploads, sets the What-to-Test notes, assigns the **Internal test** and
 **External** beta groups, and submits external Beta App Review. Internal testers
 get it immediately; external testers after beta review. It needs the kit's key
-at `~/.signing-kit/asc-api-key.p8` and `ASC_PY` set (see Credentials above). Run
-`python3 "$ASC_PY" discover` to see group ids. See
+at `~/.signing-kit/asc-api-key.p8` (see Credentials above). Run
+`python3 scripts/asc.py discover` to see group ids. See
 `scripts/RELEASE.md` for flag details.
 
 ---

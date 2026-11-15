@@ -131,13 +131,14 @@ All flags are toggled in `DeveloperSettingsView` (Settings → Developer Setting
 locally is rejected as `INVALID_BINARY` (regardless of Xcode). **App Store builds must
 come from the GitHub Actions workflow** `.github/workflows/ios-release.yml` (released-macOS
 runner): `gh workflow run ios-release.yml -f build_number=<N>`, then attach the build to the
-App Store version and submit via `asc.py` (the App Store Connect client, not in the repo;
-its path goes in `ASC_PY`). **TestFlight** builds may be local:
+App Store version and submit via `iOS/scripts/asc.py` (the App Store Connect client;
+`python3 iOS/scripts/asc.py check` signs in and finds the app, read-only). **TestFlight** builds may be local:
 `iOS/scripts/release-testflight.sh`. The App Store Connect key comes from the signing kit,
 `~/.signing-kit/asc-api-key.p8` (key `38ANZ53D9L`; restore the folder with
 `python3 <projects repo>/signing/sync-secrets.py pull-kit`). The CI signing secrets are
 TheIdeaPlace organization secrets set by `sync-secrets.py`; never set them on this repo by
-hand. `~/.fastweather-keys/` is retired and its key revoked. See `signing/README.md` in
+hand. `~/.fastweather-keys/` is retired: its `asc.py` is now in the repo, and the WeatherKit
+key the data tools use is in the kit too. See `signing/README.md` in
 kellylford/The-Idea-Place-Projects. Key gotchas: binary `CFBundleShortVersionString` ≤ 3 integers (the 4-part
 `X.Y.Z.build` label goes on the store version record only); build numbers are single-use.
 
