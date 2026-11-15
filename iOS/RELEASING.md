@@ -92,7 +92,9 @@ not an App Store Connect key, and it still works; it's in the kit now.
 `scripts/asc.py` is the App Store Connect REST client (signs its own ES256 JWT with
 the `cryptography` lib). It reads the kit's key the same way `release-testflight.sh`
 does (`ASC_KEY_PATH`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, with the same defaults), and
-`release-testflight.sh` uses it unless `ASC_PY` names another copy. Its subcommands:
+`release-testflight.sh` uses it unless `ASC_PY` names another copy, and checks before
+uploading that `python3` has the library it needs (`pip3 install --user cryptography`
+on a new Mac). Its subcommands:
 ```bash
 python3 scripts/asc.py check       # read-only: sign in and look up WeatherFast
 python3 scripts/asc.py probe       # auth check — list visible apps

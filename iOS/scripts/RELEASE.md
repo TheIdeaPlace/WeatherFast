@@ -23,8 +23,10 @@ in the projects repo.
 - **The client:** `scripts/asc.py`, the ASC REST client (signs its own ES256 JWT;
   stdlib + `cryptography`). It reads the same kit key and variables as this
   script. It's needed for the TestFlight wiring, not for `--upload-only`;
-  `ASC_PY` points the script at another copy. `python3 scripts/asc.py check`
-  signs in and finds the app without changing anything.
+  `ASC_PY` points the script at another copy. It needs `cryptography`
+  (`pip3 install --user cryptography` on a new Mac); the script checks for it
+  before uploading. `python3 scripts/asc.py check` signs in and finds the app
+  without changing anything.
 
 `~/.fastweather-keys/` is retired. Its `.p8`, `Y83SZ2YWY2`, is the WeatherKit key
 the `tools/datatesting` tools use, not an App Store Connect key; it and its

@@ -78,6 +78,8 @@ if [[ "$WIRE_ONLY" -eq 0 ]]; then
 fi
 if [[ "$UPLOAD_ONLY" -eq 0 ]]; then
   [[ -f "$ASC" ]] || die "the App Store Connect client isn't at $ASC (set ASC_PY), or pass --upload-only"
+  # Checked before anything uploads: a build number is single-use, so failing at the wiring step costs one.
+  python3 -c 'import cryptography' 2>/dev/null || die "asc.py needs the cryptography library: pip3 install --user cryptography (or pass --upload-only)"
 fi
 # Notes are the TestFlight What-to-Test text; not needed for --upload-only.
 if [[ "$UPLOAD_ONLY" -eq 0 ]]; then
