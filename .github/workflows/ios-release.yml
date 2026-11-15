@@ -7,8 +7,12 @@ name: iOS App Store Release
 #
 # Trigger it manually: Actions tab -> "iOS App Store Release" -> Run workflow.
 #
-# Required repo secrets (Settings -> Secrets and variables -> Actions).
-# See .github/workflows/README-ios-release.md for how to produce each value.
+# Required secrets. The five signing ones are TheIdeaPlace organization
+# secrets, set from the signing kit by sync-secrets.py in
+# kellylford/The-Idea-Place-Projects (see signing/README.md there); don't set
+# them on this repo. OPENMETEO_API_KEY and AIRNOW_API_KEY (both optional) are
+# repo secrets, set by hand.
+# See .github/workflows/README-ios-release.md.
 #   ASC_KEY_ID             App Store Connect API key ID
 #   ASC_ISSUER_ID          App Store Connect API issuer ID
 #   ASC_KEY_P8_BASE64      base64 of the AuthKey_XXXXXXXXXX.p8 file
