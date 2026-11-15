@@ -21,17 +21,23 @@ cat >&2 <<'EOF'
 setup-release-secrets.sh is retired. It sets nothing.
 
 WeatherFast's iOS signing secrets are TheIdeaPlace organization secrets now,
-set from the signing kit in Azure Key Vault. To check or (re)set them, from any
-computer signed in with `az login` and `gh auth login`:
+set from the signing kit in Azure Key Vault. Sign in first as "A new computer"
+in the guide says (az login with the tenant, gh with the admin:org scope).
+Then, to check them (changes nothing) and to (re)set them:
 
   python3 <projects repo>/signing/sync-secrets.py
   python3 <projects repo>/signing/sync-secrets.py --apply --repo WeatherFast
 
+--apply sets the organization secrets, which Scores shares, so it updates
+Scores too.
+
 The guide: https://github.com/kellylford/The-Idea-Place-Projects/blob/main/signing/README.md
 
-The optional OPENMETEO_API_KEY secret isn't a signing secret, so the kit doesn't
-manage it. To set it, run this in the Terminal app and paste the key when asked:
+The optional OPENMETEO_API_KEY and AIRNOW_API_KEY secrets aren't signing
+secrets, so the kit doesn't manage them. To set one, run this in the Terminal
+app and paste the key when asked:
 
   gh secret set OPENMETEO_API_KEY -R TheIdeaPlace/WeatherFast
+  gh secret set AIRNOW_API_KEY -R TheIdeaPlace/WeatherFast
 EOF
 exit 1

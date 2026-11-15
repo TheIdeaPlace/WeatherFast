@@ -70,6 +70,9 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [[ "$WIRE_ONLY" -eq 1 && "$UPLOAD_ONLY" -eq 1 ]]; then
+  die "--wire-only and --upload-only can't be combined"
+fi
 if [[ "$WIRE_ONLY" -eq 0 ]]; then
   [[ -f "$ASC_KEY_PATH" ]] || die "App Store Connect key not found at $ASC_KEY_PATH. Restore the signing kit with: python3 <projects repo>/signing/sync-secrets.py pull-kit (or set ASC_KEY_PATH)"
 fi
@@ -85,8 +88,9 @@ if [[ "$UPLOAD_ONLY" -eq 0 ]]; then
   [[ -s "$NOTES" ]] || die "notes file is empty: $NOTES"
 fi
 
-# Hand the kit's key details to asc.py too, in case it reads them from the
-# environment rather than its own config.
+# Also export the kit's key details for asc.py. Whether asc.py uses them is up
+# to asc.py (it isn't in this repo; older copies read their own asc.json), so
+# check that it names key 38ANZ53D9L before relying on the wiring step.
 export ASC_KEY_ID="$KEY_ID" ASC_ISSUER_ID="$ISSUER" ASC_KEY_PATH
 
 wire_testflight() {
@@ -136,11 +140,12 @@ echo "  IPA: $IPA"
 
 # --- validate then upload via altool ---
 # altool finds the key by file name (AuthKey_<id>.p8) in a private_keys folder.
-# Point it at a throwaway folder holding a link to the kit's key, so nothing
-# has to be copied into ~/.appstoreconnect/private_keys.
+# Point it at a throwaway folder (mode 700, deleted on exit) holding a copy of
+# the kit's key, so nothing has to go in ~/.appstoreconnect/private_keys.
 ALTOOL_KEYS="$(mktemp -d "${TMPDIR:-/tmp}/fw-asc-keys.XXXXXX")"
 trap 'rm -rf "$ALTOOL_KEYS"' EXIT
-ln -s "$ASC_KEY_PATH" "$ALTOOL_KEYS/AuthKey_${KEY_ID}.p8"
+cp "$ASC_KEY_PATH" "$ALTOOL_KEYS/AuthKey_${KEY_ID}.p8"
+chmod 600 "$ALTOOL_KEYS/AuthKey_${KEY_ID}.p8"
 export API_PRIVATE_KEYS_DIR="$ALTOOL_KEYS"
 
 step "Validating with App Store Connect"

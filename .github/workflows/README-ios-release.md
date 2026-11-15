@@ -34,6 +34,8 @@ What the workflow reads:
   local `Secrets.swift`. This one is a repo secret, set by hand, since it isn't a
   signing secret: run `gh secret set OPENMETEO_API_KEY` in the Terminal app and
   paste the key when asked. Omit it to ship the free tier.
+- `AIRNOW_API_KEY` *(optional)*: the AirNow air quality key, also a repo secret
+  set by hand the same way (`gh secret set AIRNOW_API_KEY`).
 
 To check that the signing secrets are set and shared with this repo, run
 `python3 <projects repo>/signing/sync-secrets.py` (it changes nothing).

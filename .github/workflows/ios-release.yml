@@ -10,7 +10,8 @@ name: iOS App Store Release
 # Required secrets. The five signing ones are TheIdeaPlace organization
 # secrets, set from the signing kit by sync-secrets.py in
 # kellylford/The-Idea-Place-Projects (see signing/README.md there); don't set
-# them on this repo. OPENMETEO_API_KEY is a repo secret, set by hand.
+# them on this repo. OPENMETEO_API_KEY and AIRNOW_API_KEY (both optional) are
+# repo secrets, set by hand.
 # See .github/workflows/README-ios-release.md.
 #   ASC_KEY_ID             App Store Connect API key ID
 #   ASC_ISSUER_ID          App Store Connect API issuer ID

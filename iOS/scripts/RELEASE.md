@@ -17,14 +17,19 @@ in the projects repo.
 - **The key:** `~/.signing-kit/asc-api-key.p8`, key ID `38ANZ53D9L`, issuer ID
   `d36bb41d-a198-401d-b36c-2e4fd15163e1`. On a new Mac, restore the folder from
   the vault with `python3 <projects repo>/signing/sync-secrets.py pull-kit`. The
-  script uses those values by default; override them with `ASC_KEY_PATH` (or
+  script uses those values by default for the build and upload; override them with `ASC_KEY_PATH` (or
   `SIGNING_KIT` for the folder), `ASC_KEY_ID` and `ASC_ISSUER_ID`. It points
   `altool` at the key itself, so nothing goes in `~/.appstoreconnect/private_keys/`.
 - **The client:** `asc.py`, the ASC REST client (signs its own ES256 JWT; stdlib +
   `cryptography`), isn't in this repo. Set `ASC_PY` to its path. It's needed for
-  the TestFlight wiring, not for `--upload-only`.
+  the TestFlight wiring, not for `--upload-only`. The script exports
+  `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_PATH` for it, but older copies read
+  their own `asc.json` instead; if yours does, that file must name key
+  `38ANZ53D9L` and the kit's `.p8`, or the wiring fails after the upload.
 
-`~/.fastweather-keys/` is retired, and the key that lived there is revoked. If
+`~/.fastweather-keys/` is retired for release credentials, and the key that lived
+there is revoked. (The WeatherKit test tool in `tools/datatesting` still reads
+its own `weatherkit.json` from that folder; that's a separate key.) If
 the key is ever rotated, it's replaced in the kit (see `signing/README.md`), and
 the new key ID goes in `ASC_KEY_ID` until this script's default is updated.
 

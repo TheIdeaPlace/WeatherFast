@@ -81,9 +81,11 @@ uses from it:
   automatic signing, so they don't read this file; it's the source of the CI
   secret.
 
-`~/.fastweather-keys/` is retired, and the key that lived there is revoked. Don't
-recreate it, and don't copy keys into `~/.appstoreconnect/private_keys/`:
-`release-testflight.sh` points `altool` at the kit's key itself.
+`~/.fastweather-keys/` is retired for release credentials, and the key that lived
+there is revoked. Don't put release keys back in it, and don't copy keys into
+`~/.appstoreconnect/private_keys/`: `release-testflight.sh` points `altool` at the
+kit's key itself. (The WeatherKit test tool in `tools/datatesting` still reads its
+own `weatherkit.json` from that folder; that's a separate key the kit doesn't hold.)
 
 `asc.py`, the App Store Connect REST client (signs its own ES256 JWT with the
 `cryptography` lib), is not in this repo or the kit. It used to sit in
@@ -95,9 +97,11 @@ python3 "$ASC_PY" discover    # app id, recent builds, beta group ids
 python3 "$ASC_PY" testflight --version 1.5.8 --build 6 \
         --notes-file scripts/RELEASE_NOTES.txt --groups "Internal test,External"
 ```
-For one-off calls: `import asc; asc.api(method, path, body=, query=)`. If your
-copy still reads an `asc.json`, make sure it names key `38ANZ53D9L` and the kit's
-`.p8`, not the revoked key.
+For one-off calls: `import asc; asc.api(method, path, body=, query=)`.
+`release-testflight.sh` exports `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_PATH`
+for it, but older copies of `asc.py` read their own `asc.json` instead. If yours
+does, that file must name key `38ANZ53D9L` and the kit's `.p8`, not the revoked
+key, or the TestFlight wiring fails after the upload has already happened.
 
 ### GitHub Actions secrets
 `ios-release.yml` reads `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8_BASE64`,
@@ -107,9 +111,10 @@ by `sync-secrets.py --apply` in the projects repo. Don't set them on this repo b
 hand: a repo secret with the same name overrides the organization one. After a
 certificate renewal, follow "Renewing an Apple certificate" in `signing/README.md`.
 
-`OPENMETEO_API_KEY` (optional) is the one repo secret that's still set by hand,
-since it isn't a signing secret. Run `gh secret set OPENMETEO_API_KEY` in the
-Terminal app and paste the key when asked, so it never lands in a transcript.
+`OPENMETEO_API_KEY` and `AIRNOW_API_KEY` (both optional) are repo secrets that
+are still set by hand, since they aren't signing secrets. Run
+`gh secret set OPENMETEO_API_KEY` (or `AIRNOW_API_KEY`) in the Terminal app and
+paste the key when asked, so it never lands in a transcript.
 
 ---
 
