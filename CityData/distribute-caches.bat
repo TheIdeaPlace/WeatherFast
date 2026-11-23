@@ -28,6 +28,8 @@ if not exist "..\iOS\FastWeather\Resources\" (
 ) else (
     copy /Y international-cities-cached.json "..\iOS\FastWeather\Resources\"
     copy /Y us-cities-cached.json "..\iOS\FastWeather\Resources\"
+    REM Places of the World is iOS-only for now
+    if exist "places-of-the-world.json" copy /Y places-of-the-world.json "..\iOS\FastWeather\Resources\"
     echo   Done: iOS\FastWeather\Resources\
 )
 echo.

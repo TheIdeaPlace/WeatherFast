@@ -1,13 +1,17 @@
 New in this build
 
-Air Quality (US cities): City detail now has an Air Quality section for US locations. It leads with the observed air quality index and category (Good, Moderate, Unhealthy, and so on) from EPA AirNow ground monitors, followed by plain-language health guidance and a pollutant breakdown. When an official air quality alert is active for the city, the section shows it and defers to it — so the reading reflects real conditions (for example, wildfire-smoke events) rather than a forecast model that can lag.
+Places of the World: the Browse tab has a new entry next to United States and International. It opens curated lists of famous places around the world, and you can check the weather at any of them the same way you browse a state or a country.
 
-The section is fully VoiceOver-labeled: the category word and health guidance carry the meaning, not color. You can reorder or hide it like any other detail section (Settings, then the detail section list), and it can be toggled under Developer Settings, "Air Quality Section."
+Three lists to start:
+- Famous Bridges: about 150 bridges, from the Golden Gate to the Millau Viaduct.
+- Extreme Weather: about 150 places known for heat, cold, wind, rain, snow, lightning and more, including summits and Antarctic stations.
+- Beaches of the World: about 145 famous beaches on every continent.
 
-For now this is US-only, since the observed data and alerts are US sources. International support will come once it can use the correct regional index.
+Each place shows its current weather, where it is, and a one-line note on why it's notable. Open one for the full forecast, or use the Add to My Cities action to save it. Saved places keep their name, for example "Golden Gate Bridge, San Francisco". Lists can be sorted, searched by name or country, and added to Browse favorites with the star button.
 
 What to test
-- Open a US city and find the Air Quality section (just under Weather Alerts).
-- Check that the number, category, and health guidance read correctly with VoiceOver.
-- If your area has an active air quality alert, confirm it appears and opens full details.
-- Confirm non-US cities do not show the section.
+- Browse, then Places of the World: open each list and check that weather loads.
+- With VoiceOver, check that each place reads its name, weather, location and note, and that the Add to My Cities action works.
+- Search a list by a country or state name, for example Japan or Hawaii.
+- Open a few places and check the forecast looks right for where they are.
+- Tell us about any place that seems to be in the wrong spot or has a wrong note.

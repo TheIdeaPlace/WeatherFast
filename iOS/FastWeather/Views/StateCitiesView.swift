@@ -8,11 +8,11 @@
 import SwiftUI
 
 // Primary geography sort; use secondary axis only when primary values are exactly equal
-private func geographySort(
-    _ a: CityLocation, _ b: CityLocation,
-    primary: KeyPath<CityLocation, Double>,
+func geographySort<T>(
+    _ a: T, _ b: T,
+    primary: KeyPath<T, Double>,
     primaryDescending: Bool,
-    secondary: KeyPath<CityLocation, Double>,
+    secondary: KeyPath<T, Double>,
     secondaryDescending: Bool
 ) -> Bool {
     let aP = a[keyPath: primary]
@@ -797,13 +797,15 @@ struct CityLocationDetailView: View {
 /// Wraps CityDetailView for browse mode, ensuring a stable City UUID for caching
 /// and triggering a weather fetch when the browse city hasn't been loaded yet.
 struct BrowseCityDetailDestination: View {
-    let cityLocation: CityLocation
     @EnvironmentObject var weatherService: WeatherService
     @State private var browseCity: City
-    
+
     init(cityLocation: CityLocation) {
-        self.cityLocation = cityLocation
         _browseCity = State(initialValue: cityLocation.toCity())
+    }
+
+    init(city: City) {
+        _browseCity = State(initialValue: city)
     }
     
     var body: some View {

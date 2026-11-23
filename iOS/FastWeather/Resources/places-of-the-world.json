@@ -1,0 +1,3605 @@
+{
+  "categories": [
+    {
+      "name": "Famous Bridges",
+      "description": "Iconic, historic and record-setting bridges around the world",
+      "places": [
+        {
+          "name": "Golden Gate Bridge",
+          "description": "Art Deco suspension bridge across the Golden Gate strait",
+          "city": "San Francisco",
+          "state": "California",
+          "country": "United States",
+          "lat": 37.8197,
+          "lon": -122.4786
+        },
+        {
+          "name": "Brooklyn Bridge",
+          "description": "Pioneering 1883 steel wire suspension bridge over the East River",
+          "city": "New York",
+          "state": "New York",
+          "country": "United States",
+          "lat": 40.7057,
+          "lon": -73.9964
+        },
+        {
+          "name": "San Francisco Oakland Bay Bridge",
+          "description": "Twin span bridge linking San Francisco and Oakland across the bay",
+          "city": "San Francisco",
+          "state": "California",
+          "country": "United States",
+          "lat": 37.8181,
+          "lon": -122.3467
+        },
+        {
+          "name": "Verrazzano-Narrows Bridge",
+          "description": "Suspension bridge at the gateway to New York Harbor",
+          "city": "New York",
+          "state": "New York",
+          "country": "United States",
+          "lat": 40.6064,
+          "lon": -74.0456
+        },
+        {
+          "name": "George Washington Bridge",
+          "description": "One of the world's busiest bridges, spanning the Hudson River",
+          "city": "New York",
+          "state": "New York",
+          "country": "United States",
+          "lat": 40.8517,
+          "lon": -73.9525
+        },
+        {
+          "name": "Mackinac Bridge",
+          "description": "Five mile suspension bridge joining Michigan's two peninsulas",
+          "city": "Mackinaw City",
+          "state": "Michigan",
+          "country": "United States",
+          "lat": 45.8171,
+          "lon": -84.7278
+        },
+        {
+          "name": "Chesapeake Bay Bridge",
+          "description": "Dramatic four mile twin span crossing of the Chesapeake Bay",
+          "city": "Annapolis",
+          "state": "Maryland",
+          "country": "United States",
+          "lat": 38.9917,
+          "lon": -76.3722
+        },
+        {
+          "name": "Lake Pontchartrain Causeway",
+          "description": "Nearly 24 mile causeway, among the longest bridges over water",
+          "city": "Metairie",
+          "state": "Louisiana",
+          "country": "United States",
+          "lat": 30.1997,
+          "lon": -90.1228
+        },
+        {
+          "name": "New River Gorge Bridge",
+          "description": "Soaring steel arch high above the New River Gorge",
+          "city": "Fayetteville",
+          "state": "West Virginia",
+          "country": "United States",
+          "lat": 38.0683,
+          "lon": -81.0833
+        },
+        {
+          "name": "Sunshine Skyway Bridge",
+          "description": "Golden cable stayed bridge across the mouth of Tampa Bay",
+          "city": "St. Petersburg",
+          "state": "Florida",
+          "country": "United States",
+          "lat": 27.625,
+          "lon": -82.6586
+        },
+        {
+          "name": "Seven Mile Bridge",
+          "description": "Long bridge across open water in the Florida Keys",
+          "city": "Marathon",
+          "state": "Florida",
+          "country": "United States",
+          "lat": 24.698,
+          "lon": -81.17
+        },
+        {
+          "name": "Hoover Dam Bypass Bridge",
+          "description": "Concrete arch bridge soaring beside the Hoover Dam",
+          "city": "Boulder City",
+          "state": "Nevada",
+          "country": "United States",
+          "lat": 36.0125,
+          "lon": -114.7414
+        },
+        {
+          "name": "Royal Gorge Bridge",
+          "description": "Suspension bridge nearly a thousand feet above the Arkansas River",
+          "city": "Cañon City",
+          "state": "Colorado",
+          "country": "United States",
+          "lat": 38.4617,
+          "lon": -105.325
+        },
+        {
+          "name": "Tacoma Narrows Bridge",
+          "description": "Twin suspension bridges replacing the infamous Galloping Gertie",
+          "city": "Tacoma",
+          "state": "Washington",
+          "country": "United States",
+          "lat": 47.2681,
+          "lon": -122.5506
+        },
+        {
+          "name": "Bixby Creek Bridge",
+          "description": "Graceful concrete arch on the Big Sur coast",
+          "city": "Big Sur",
+          "state": "California",
+          "country": "United States",
+          "lat": 36.3714,
+          "lon": -121.9019
+        },
+        {
+          "name": "Eads Bridge",
+          "description": "Pioneering 1874 steel arch bridge over the Mississippi River",
+          "city": "St. Louis",
+          "state": "Missouri",
+          "country": "United States",
+          "lat": 38.6281,
+          "lon": -90.1714
+        },
+        {
+          "name": "Coronado Bridge",
+          "description": "Sweeping curved bridge across San Diego Bay",
+          "city": "San Diego",
+          "state": "California",
+          "country": "United States",
+          "lat": 32.6865,
+          "lon": -117.1583
+        },
+        {
+          "name": "Roebling Suspension Bridge",
+          "description": "Ohio River forerunner of the Brooklyn Bridge",
+          "city": "Cincinnati",
+          "state": "Ohio",
+          "country": "United States",
+          "lat": 39.0922,
+          "lon": -84.5096
+        },
+        {
+          "name": "Zakim Bunker Hill Bridge",
+          "description": "Striking cable stayed bridge on Boston's skyline",
+          "city": "Boston",
+          "state": "Massachusetts",
+          "country": "United States",
+          "lat": 42.3689,
+          "lon": -71.0633
+        },
+        {
+          "name": "Cornish-Windsor Covered Bridge",
+          "description": "Historic wooden covered bridge over the Connecticut River",
+          "city": "Windsor",
+          "state": "Vermont",
+          "country": "United States",
+          "lat": 43.4736,
+          "lon": -72.3839
+        },
+        {
+          "name": "St. Johns Bridge",
+          "description": "Gothic towered suspension bridge over the Willamette River",
+          "city": "Portland",
+          "state": "Oregon",
+          "country": "United States",
+          "lat": 45.5851,
+          "lon": -122.7648
+        },
+        {
+          "name": "Confederation Bridge",
+          "description": "Eight mile bridge over ice covered waters to Prince Edward Island",
+          "city": "Borden-Carleton",
+          "state": "Prince Edward Island",
+          "country": "Canada",
+          "lat": 46.2153,
+          "lon": -63.7458
+        },
+        {
+          "name": "Lions Gate Bridge",
+          "description": "Suspension bridge across the First Narrows of Burrard Inlet",
+          "city": "Vancouver",
+          "state": "British Columbia",
+          "country": "Canada",
+          "lat": 49.3153,
+          "lon": -123.1383
+        },
+        {
+          "name": "Capilano Suspension Bridge",
+          "description": "Famous swaying footbridge high above a rainforest canyon",
+          "city": "North Vancouver",
+          "state": "British Columbia",
+          "country": "Canada",
+          "lat": 49.3429,
+          "lon": -123.1151
+        },
+        {
+          "name": "Quebec Bridge",
+          "description": "World's longest cantilever bridge span",
+          "city": "Quebec City",
+          "state": "Quebec",
+          "country": "Canada",
+          "lat": 46.7456,
+          "lon": -71.2881
+        },
+        {
+          "name": "Jacques Cartier Bridge",
+          "description": "Steel truss bridge across the St. Lawrence River",
+          "city": "Montreal",
+          "state": "Quebec",
+          "country": "Canada",
+          "lat": 45.5208,
+          "lon": -73.535
+        },
+        {
+          "name": "Hartland Bridge",
+          "description": "World's longest covered bridge",
+          "city": "Hartland",
+          "state": "New Brunswick",
+          "country": "Canada",
+          "lat": 46.2967,
+          "lon": -67.5303
+        },
+        {
+          "name": "Baluarte Bridge",
+          "description": "Among the world's highest cable stayed bridges",
+          "city": "Concordia",
+          "country": "Mexico",
+          "lat": 23.5342,
+          "lon": -105.7628
+        },
+        {
+          "name": "Bridge of the Americas",
+          "description": "Arch bridge over the Pacific entrance to the Panama Canal",
+          "city": "Panama City",
+          "country": "Panama",
+          "lat": 8.9431,
+          "lon": -79.565
+        },
+        {
+          "name": "Rio Niterói Bridge",
+          "description": "Eight mile bridge across Guanabara Bay",
+          "city": "Rio de Janeiro",
+          "country": "Brazil",
+          "lat": -22.8712,
+          "lon": -43.1534
+        },
+        {
+          "name": "Octávio Frias de Oliveira Bridge",
+          "description": "X shaped cable stayed bridge on the Sao Paulo skyline",
+          "city": "São Paulo",
+          "country": "Brazil",
+          "lat": -23.6127,
+          "lon": -46.6992
+        },
+        {
+          "name": "Hercílio Luz Bridge",
+          "description": "Brazil's iconic eyebar suspension bridge",
+          "city": "Florianópolis",
+          "country": "Brazil",
+          "lat": -27.5935,
+          "lon": -48.5649
+        },
+        {
+          "name": "JK Bridge",
+          "description": "Bridge with three asymmetric steel arches over Lake Paranoa",
+          "city": "Brasília",
+          "country": "Brazil",
+          "lat": -15.8236,
+          "lon": -47.8294
+        },
+        {
+          "name": "Puente de la Mujer",
+          "description": "Calatrava's swing footbridge in Puerto Madero",
+          "city": "Buenos Aires",
+          "country": "Argentina",
+          "lat": -34.6079,
+          "lon": -58.3649
+        },
+        {
+          "name": "Q'eswachaka Bridge",
+          "description": "Inca grass rope bridge rewoven by hand every year",
+          "city": "Quehue",
+          "country": "Peru",
+          "lat": -14.3814,
+          "lon": -71.484
+        },
+        {
+          "name": "General Rafael Urdaneta Bridge",
+          "description": "Five mile bridge across the outlet of Lake Maracaibo",
+          "city": "Maracaibo",
+          "country": "Venezuela",
+          "lat": 10.5743,
+          "lon": -71.576
+        },
+        {
+          "name": "Puente de Occidente",
+          "description": "Historic 1895 suspension bridge over the Cauca River",
+          "city": "Santa Fe de Antioquia",
+          "country": "Colombia",
+          "lat": 6.5778,
+          "lon": -75.7981
+        },
+        {
+          "name": "Tower Bridge",
+          "description": "Victorian bascule and suspension bridge beside the Tower of London",
+          "city": "London",
+          "country": "United Kingdom",
+          "lat": 51.5056,
+          "lon": -0.0753
+        },
+        {
+          "name": "Westminster Bridge",
+          "description": "Thames bridge beside the Houses of Parliament and Big Ben",
+          "city": "London",
+          "country": "United Kingdom",
+          "lat": 51.5008,
+          "lon": -0.1219
+        },
+        {
+          "name": "Millennium Bridge",
+          "description": "Steel footbridge linking St Paul's Cathedral and Tate Modern",
+          "city": "London",
+          "country": "United Kingdom",
+          "lat": 51.5102,
+          "lon": -0.0984
+        },
+        {
+          "name": "Forth Bridge",
+          "description": "Red cantilever railroad bridge, a World Heritage Site",
+          "city": "Edinburgh",
+          "country": "United Kingdom",
+          "lat": 56.0004,
+          "lon": -3.3886
+        },
+        {
+          "name": "Clifton Suspension Bridge",
+          "description": "Brunel's suspension bridge over the Avon Gorge",
+          "city": "Bristol",
+          "country": "United Kingdom",
+          "lat": 51.4549,
+          "lon": -2.6279
+        },
+        {
+          "name": "The Iron Bridge",
+          "description": "World's first major cast iron bridge, from 1779",
+          "city": "Ironbridge",
+          "country": "United Kingdom",
+          "lat": 52.6274,
+          "lon": -2.4854
+        },
+        {
+          "name": "Humber Bridge",
+          "description": "Once the world's longest single span suspension bridge",
+          "city": "Hull",
+          "country": "United Kingdom",
+          "lat": 53.7064,
+          "lon": -0.45
+        },
+        {
+          "name": "Menai Suspension Bridge",
+          "description": "Telford's pioneering 1826 suspension bridge in Wales",
+          "city": "Menai Bridge",
+          "country": "United Kingdom",
+          "lat": 53.22,
+          "lon": -4.1631
+        },
+        {
+          "name": "Pontcysyllte Aqueduct",
+          "description": "Telford's soaring canal aqueduct, a World Heritage Site",
+          "city": "Llangollen",
+          "country": "United Kingdom",
+          "lat": 52.9706,
+          "lon": -3.0878
+        },
+        {
+          "name": "Gateshead Millennium Bridge",
+          "description": "Tilting footbridge nicknamed the Blinking Eye",
+          "city": "Gateshead",
+          "country": "United Kingdom",
+          "lat": 54.9698,
+          "lon": -1.5992
+        },
+        {
+          "name": "Glenfinnan Viaduct",
+          "description": "Curving railroad viaduct famous from the Harry Potter films",
+          "city": "Glenfinnan",
+          "country": "United Kingdom",
+          "lat": 56.8763,
+          "lon": -5.4319
+        },
+        {
+          "name": "Carrick-a-Rede Rope Bridge",
+          "description": "Rope bridge to a tiny island on the Antrim coast",
+          "city": "Ballintoy",
+          "country": "United Kingdom",
+          "lat": 55.2396,
+          "lon": -6.3325
+        },
+        {
+          "name": "Ha'penny Bridge",
+          "description": "Cast iron footbridge over the River Liffey",
+          "city": "Dublin",
+          "country": "Ireland",
+          "lat": 53.3461,
+          "lon": -6.263
+        },
+        {
+          "name": "Samuel Beckett Bridge",
+          "description": "Harp shaped cable stayed bridge over the Liffey",
+          "city": "Dublin",
+          "country": "Ireland",
+          "lat": 53.347,
+          "lon": -6.2413
+        },
+        {
+          "name": "Pont du Gard",
+          "description": "Three tiered Roman aqueduct bridge",
+          "city": "Vers-Pont-du-Gard",
+          "country": "France",
+          "lat": 43.9472,
+          "lon": 4.5356
+        },
+        {
+          "name": "Millau Viaduct",
+          "description": "World's tallest bridge, a cable stayed span over the Tarn valley",
+          "city": "Millau",
+          "country": "France",
+          "lat": 44.0794,
+          "lon": 3.0222
+        },
+        {
+          "name": "Pont Neuf",
+          "description": "Oldest standing bridge across the Seine in Paris",
+          "city": "Paris",
+          "country": "France",
+          "lat": 48.8575,
+          "lon": 2.3417
+        },
+        {
+          "name": "Pont Alexandre III",
+          "description": "Ornate Belle Epoque arch bridge in Paris",
+          "city": "Paris",
+          "country": "France",
+          "lat": 48.8636,
+          "lon": 2.3136
+        },
+        {
+          "name": "Pont des Arts",
+          "description": "Footbridge between the Louvre and the Institut de France",
+          "city": "Paris",
+          "country": "France",
+          "lat": 48.8583,
+          "lon": 2.3375
+        },
+        {
+          "name": "Pont d'Avignon",
+          "description": "Famous medieval half bridge over the Rhone",
+          "city": "Avignon",
+          "country": "France",
+          "lat": 43.9539,
+          "lon": 4.805
+        },
+        {
+          "name": "Pont de Normandie",
+          "description": "Cable stayed bridge over the Seine estuary",
+          "city": "Le Havre",
+          "country": "France",
+          "lat": 49.4322,
+          "lon": 0.2739
+        },
+        {
+          "name": "Pont Valentré",
+          "description": "Fortified medieval bridge with three towers",
+          "city": "Cahors",
+          "country": "France",
+          "lat": 44.445,
+          "lon": 1.4317
+        },
+        {
+          "name": "Ponte Vecchio",
+          "description": "Medieval bridge lined with shops over the Arno",
+          "city": "Florence",
+          "country": "Italy",
+          "lat": 43.768,
+          "lon": 11.2532
+        },
+        {
+          "name": "Rialto Bridge",
+          "description": "Oldest bridge across Venice's Grand Canal",
+          "city": "Venice",
+          "country": "Italy",
+          "lat": 45.438,
+          "lon": 12.336
+        },
+        {
+          "name": "Bridge of Sighs",
+          "description": "Enclosed limestone bridge by the Doge's Palace",
+          "city": "Venice",
+          "country": "Italy",
+          "lat": 45.4341,
+          "lon": 12.3409
+        },
+        {
+          "name": "Ponte Sant'Angelo",
+          "description": "Roman bridge lined with Bernini's angel statues",
+          "city": "Rome",
+          "country": "Italy",
+          "lat": 41.9019,
+          "lon": 12.4665
+        },
+        {
+          "name": "Ponte delle Torri",
+          "description": "Towering medieval aqueduct bridge over a gorge",
+          "city": "Spoleto",
+          "country": "Italy",
+          "lat": 42.7331,
+          "lon": 12.7436
+        },
+        {
+          "name": "25 de Abril Bridge",
+          "description": "Red suspension bridge over the Tagus River",
+          "city": "Lisbon",
+          "country": "Portugal",
+          "lat": 38.6892,
+          "lon": -9.1769
+        },
+        {
+          "name": "Vasco da Gama Bridge",
+          "description": "One of Europe's longest bridges, across the Tagus estuary",
+          "city": "Lisbon",
+          "country": "Portugal",
+          "lat": 38.762,
+          "lon": -9.043
+        },
+        {
+          "name": "Dom Luís I Bridge",
+          "description": "Double deck iron arch bridge over the Douro",
+          "city": "Porto",
+          "country": "Portugal",
+          "lat": 41.1399,
+          "lon": -8.6093
+        },
+        {
+          "name": "Puente Nuevo",
+          "description": "Dramatic stone bridge over the El Tajo gorge",
+          "city": "Ronda",
+          "country": "Spain",
+          "lat": 36.7407,
+          "lon": -5.1659
+        },
+        {
+          "name": "Roman Bridge of Córdoba",
+          "description": "Ancient bridge over the Guadalquivir River",
+          "city": "Córdoba",
+          "country": "Spain",
+          "lat": 37.8767,
+          "lon": -4.7781
+        },
+        {
+          "name": "Alcántara Bridge",
+          "description": "Monumental Roman arch bridge over the Tagus",
+          "city": "Alcántara",
+          "country": "Spain",
+          "lat": 39.7224,
+          "lon": -6.8924
+        },
+        {
+          "name": "Vizcaya Bridge",
+          "description": "World's oldest transporter bridge, a World Heritage Site",
+          "city": "Portugalete",
+          "country": "Spain",
+          "lat": 43.3231,
+          "lon": -3.0169
+        },
+        {
+          "name": "Charles Bridge",
+          "description": "Medieval stone bridge lined with Baroque statues",
+          "city": "Prague",
+          "country": "Czech Republic",
+          "lat": 50.0864,
+          "lon": 14.4119
+        },
+        {
+          "name": "Széchenyi Chain Bridge",
+          "description": "First permanent bridge between Buda and Pest",
+          "city": "Budapest",
+          "country": "Hungary",
+          "lat": 47.4989,
+          "lon": 19.0436
+        },
+        {
+          "name": "Most SNP",
+          "description": "Bridge topped with a flying saucer shaped tower",
+          "city": "Bratislava",
+          "country": "Slovakia",
+          "lat": 48.1384,
+          "lon": 17.1046
+        },
+        {
+          "name": "Dragon Bridge Ljubljana",
+          "description": "Art Nouveau bridge guarded by dragon statues",
+          "city": "Ljubljana",
+          "country": "Slovenia",
+          "lat": 46.0519,
+          "lon": 14.5102
+        },
+        {
+          "name": "Stari Most",
+          "description": "Rebuilt Ottoman bridge, a symbol of reconciliation",
+          "city": "Mostar",
+          "country": "Bosnia and Herzegovina",
+          "lat": 43.3373,
+          "lon": 17.815
+        },
+        {
+          "name": "Mehmed Paša Sokolović Bridge",
+          "description": "Ottoman bridge immortalized in The Bridge on the Drina",
+          "city": "Višegrad",
+          "country": "Bosnia and Herzegovina",
+          "lat": 43.7825,
+          "lon": 19.2879
+        },
+        {
+          "name": "Chapel Bridge",
+          "description": "Wooden covered bridge with painted panels, from the 1300s",
+          "city": "Lucerne",
+          "country": "Switzerland",
+          "lat": 47.0517,
+          "lon": 8.3075
+        },
+        {
+          "name": "Landwasser Viaduct",
+          "description": "Curved stone railroad viaduct running into a cliff tunnel",
+          "city": "Filisur",
+          "country": "Switzerland",
+          "lat": 46.6808,
+          "lon": 9.6758
+        },
+        {
+          "name": "Erasmus Bridge",
+          "description": "Cable stayed bridge nicknamed the Swan",
+          "city": "Rotterdam",
+          "country": "Netherlands",
+          "lat": 51.9092,
+          "lon": 4.4867
+        },
+        {
+          "name": "Magere Brug",
+          "description": "Classic white drawbridge over the Amstel River",
+          "city": "Amsterdam",
+          "country": "Netherlands",
+          "lat": 52.3636,
+          "lon": 4.9025
+        },
+        {
+          "name": "Hohenzollern Bridge",
+          "description": "Railroad bridge covered in love locks, beside Cologne Cathedral",
+          "city": "Cologne",
+          "country": "Germany",
+          "lat": 50.9414,
+          "lon": 6.9656
+        },
+        {
+          "name": "Glienicke Bridge",
+          "description": "Cold War Bridge of Spies used for prisoner exchanges",
+          "city": "Potsdam",
+          "country": "Germany",
+          "lat": 52.4134,
+          "lon": 13.0901
+        },
+        {
+          "name": "Göltzsch Viaduct",
+          "description": "World's largest brick bridge",
+          "city": "Netzschkau",
+          "country": "Germany",
+          "lat": 50.6225,
+          "lon": 12.2458
+        },
+        {
+          "name": "Stone Bridge of Regensburg",
+          "description": "Medieval stone bridge over the Danube",
+          "city": "Regensburg",
+          "country": "Germany",
+          "lat": 49.0228,
+          "lon": 12.0972
+        },
+        {
+          "name": "Krämerbrücke",
+          "description": "Medieval bridge lined with inhabited houses",
+          "city": "Erfurt",
+          "country": "Germany",
+          "lat": 50.9786,
+          "lon": 11.0308
+        },
+        {
+          "name": "Øresund Bridge",
+          "description": "Road and rail link between Sweden and Denmark",
+          "city": "Malmö",
+          "country": "Sweden",
+          "lat": 55.5706,
+          "lon": 12.8494
+        },
+        {
+          "name": "Great Belt Bridge",
+          "description": "Suspension bridge with one of the world's longest spans, linking Danish islands",
+          "city": "Korsør",
+          "country": "Denmark",
+          "lat": 55.3405,
+          "lon": 11.034
+        },
+        {
+          "name": "Storseisundet Bridge",
+          "description": "Twisting bridge on the Atlantic Ocean Road",
+          "city": "Averøy",
+          "country": "Norway",
+          "lat": 63.0167,
+          "lon": 7.3543
+        },
+        {
+          "name": "Palace Bridge",
+          "description": "Drawbridge opening at night over the Neva",
+          "city": "Saint Petersburg",
+          "country": "Russia",
+          "lat": 59.9411,
+          "lon": 30.3081
+        },
+        {
+          "name": "Rio Antirrio Bridge",
+          "description": "Multi span cable stayed bridge across the Gulf of Corinth",
+          "city": "Patras",
+          "country": "Greece",
+          "lat": 38.3214,
+          "lon": 21.7728
+        },
+        {
+          "name": "Galata Bridge",
+          "description": "Bridge over the Golden Horn famous for its fishermen",
+          "city": "Istanbul",
+          "country": "Turkey",
+          "lat": 41.02,
+          "lon": 28.9731
+        },
+        {
+          "name": "Bosphorus Bridge",
+          "description": "Suspension bridge linking Europe and Asia",
+          "city": "Istanbul",
+          "country": "Turkey",
+          "lat": 41.0453,
+          "lon": 29.0344
+        },
+        {
+          "name": "1915 Çanakkale Bridge",
+          "description": "World's longest suspension bridge span, over the Dardanelles",
+          "city": "Çanakkale",
+          "country": "Turkey",
+          "lat": 40.34,
+          "lon": 26.6361
+        },
+        {
+          "name": "Bridge of Peace",
+          "description": "Glass and steel footbridge over the Kura River",
+          "city": "Tbilisi",
+          "country": "Georgia",
+          "lat": 41.6929,
+          "lon": 44.8082
+        },
+        {
+          "name": "Si-o-se-pol",
+          "description": "Safavid bridge of thirty three arches",
+          "city": "Isfahan",
+          "country": "Iran",
+          "lat": 32.6449,
+          "lon": 51.6676
+        },
+        {
+          "name": "Khaju Bridge",
+          "description": "Elegant Safavid bridge and dam over the Zayandeh River",
+          "city": "Isfahan",
+          "country": "Iran",
+          "lat": 32.6367,
+          "lon": 51.6833
+        },
+        {
+          "name": "Tabiat Bridge",
+          "description": "Award winning three level pedestrian bridge",
+          "city": "Tehran",
+          "country": "Iran",
+          "lat": 35.7545,
+          "lon": 51.4204
+        },
+        {
+          "name": "Sheikh Zayed Bridge",
+          "description": "Wave shaped arch bridge designed by Zaha Hadid",
+          "city": "Abu Dhabi",
+          "country": "United Arab Emirates",
+          "lat": 24.4242,
+          "lon": 54.4858
+        },
+        {
+          "name": "King Fahd Causeway",
+          "description": "Causeway linking Saudi Arabia and Bahrain",
+          "city": "Khobar",
+          "country": "Saudi Arabia",
+          "lat": 26.1825,
+          "lon": 50.3358
+        },
+        {
+          "name": "Akashi Kaikyō Bridge",
+          "description": "Held the record for the world's longest suspension span for over two decades",
+          "city": "Kobe",
+          "country": "Japan",
+          "lat": 34.6162,
+          "lon": 135.0205
+        },
+        {
+          "name": "Rainbow Bridge",
+          "description": "Suspension bridge across Tokyo Bay to Odaiba",
+          "city": "Tokyo",
+          "country": "Japan",
+          "lat": 35.6364,
+          "lon": 139.7636
+        },
+        {
+          "name": "Kintai Bridge",
+          "description": "Wooden bridge of five graceful arches over the Nishiki River",
+          "city": "Iwakuni",
+          "country": "Japan",
+          "lat": 34.1676,
+          "lon": 132.1784
+        },
+        {
+          "name": "Shinkyo Bridge",
+          "description": "Sacred red lacquered bridge at the entrance to Nikko's shrines",
+          "city": "Nikkō",
+          "country": "Japan",
+          "lat": 36.7534,
+          "lon": 139.6074
+        },
+        {
+          "name": "Eshima Ohashi Bridge",
+          "description": "Steep bridge famous for its rollercoaster look",
+          "city": "Matsue",
+          "country": "Japan",
+          "lat": 35.5192,
+          "lon": 133.2
+        },
+        {
+          "name": "Tsing Ma Bridge",
+          "description": "Road and rail suspension bridge on the route to Hong Kong's airport",
+          "city": "Hong Kong",
+          "country": "China",
+          "lat": 22.3514,
+          "lon": 114.0742
+        },
+        {
+          "name": "Hong Kong Zhuhai Macau Bridge",
+          "description": "World's longest sea crossing, a chain of bridges and a tunnel",
+          "city": "Zhuhai",
+          "country": "China",
+          "lat": 22.2831,
+          "lon": 113.7806
+        },
+        {
+          "name": "Hangzhou Bay Bridge",
+          "description": "Long S shaped bridge across Hangzhou Bay",
+          "city": "Ningbo",
+          "country": "China",
+          "lat": 30.45,
+          "lon": 121.1333
+        },
+        {
+          "name": "Duge Bridge",
+          "description": "Once the world's highest bridge, over the Beipan River",
+          "city": "Liupanshui",
+          "country": "China",
+          "lat": 26.3856,
+          "lon": 104.6739
+        },
+        {
+          "name": "Zhangjiajie Glass Bridge",
+          "description": "Glass bottomed footbridge over a deep canyon",
+          "city": "Zhangjiajie",
+          "country": "China",
+          "lat": 29.3987,
+          "lon": 110.6982
+        },
+        {
+          "name": "Wuhan Yangtze River Bridge",
+          "description": "First bridge across the Yangtze River",
+          "city": "Wuhan",
+          "country": "China",
+          "lat": 30.5497,
+          "lon": 114.2882
+        },
+        {
+          "name": "Sutong Yangtze River Bridge",
+          "description": "Long cable stayed span over the Yangtze",
+          "city": "Nantong",
+          "country": "China",
+          "lat": 31.7772,
+          "lon": 120.995
+        },
+        {
+          "name": "Marco Polo Bridge",
+          "description": "Ancient stone bridge with hundreds of carved lions",
+          "city": "Beijing",
+          "country": "China",
+          "lat": 39.8492,
+          "lon": 116.2131
+        },
+        {
+          "name": "Seventeen Arch Bridge",
+          "description": "Stone bridge at the Summer Palace",
+          "city": "Beijing",
+          "country": "China",
+          "lat": 39.9953,
+          "lon": 116.2758
+        },
+        {
+          "name": "Anji Bridge",
+          "description": "World's oldest open spandrel stone arch bridge",
+          "city": "Zhao County",
+          "country": "China",
+          "lat": 37.7203,
+          "lon": 114.7633
+        },
+        {
+          "name": "Chengyang Bridge",
+          "description": "Covered wind and rain bridge of the Dong people",
+          "city": "Sanjiang",
+          "country": "China",
+          "lat": 25.9004,
+          "lon": 109.6381
+        },
+        {
+          "name": "Banpo Bridge",
+          "description": "Bridge with the world's longest bridge fountain",
+          "city": "Seoul",
+          "country": "South Korea",
+          "lat": 37.5155,
+          "lon": 126.996
+        },
+        {
+          "name": "Gwangan Bridge",
+          "description": "Illuminated double deck suspension bridge over Busan's beach",
+          "city": "Busan",
+          "country": "South Korea",
+          "lat": 35.1463,
+          "lon": 129.1286
+        },
+        {
+          "name": "Russky Bridge",
+          "description": "Record setting cable stayed span to Russky Island",
+          "city": "Vladivostok",
+          "country": "Russia",
+          "lat": 43.0631,
+          "lon": 131.9083
+        },
+        {
+          "name": "Howrah Bridge",
+          "description": "Busy cantilever bridge over the Hooghly River",
+          "city": "Kolkata",
+          "country": "India",
+          "lat": 22.5851,
+          "lon": 88.3469
+        },
+        {
+          "name": "Bandra Worli Sea Link",
+          "description": "Cable stayed bridge across Mahim Bay",
+          "city": "Mumbai",
+          "country": "India",
+          "lat": 19.0364,
+          "lon": 72.8172
+        },
+        {
+          "name": "Pamban Bridge",
+          "description": "Sea railroad bridge to Rameswaram island",
+          "city": "Rameswaram",
+          "country": "India",
+          "lat": 9.2826,
+          "lon": 79.2016
+        },
+        {
+          "name": "Chenab Bridge",
+          "description": "World's highest railroad arch bridge",
+          "city": "Reasi",
+          "country": "India",
+          "lat": 33.1508,
+          "lon": 74.8825
+        },
+        {
+          "name": "Double Decker Living Root Bridge",
+          "description": "Bridge grown from living rubber fig tree roots",
+          "city": "Nongriat",
+          "country": "India",
+          "lat": 25.2513,
+          "lon": 91.6719
+        },
+        {
+          "name": "Nine Arch Bridge",
+          "description": "Colonial era railroad viaduct in the tea country",
+          "city": "Ella",
+          "country": "Sri Lanka",
+          "lat": 6.8767,
+          "lon": 81.0611
+        },
+        {
+          "name": "Hussaini Suspension Bridge",
+          "description": "Rickety plank bridge over the Hunza River",
+          "city": "Hussaini",
+          "country": "Pakistan",
+          "lat": 36.4238,
+          "lon": 74.8825
+        },
+        {
+          "name": "Golden Bridge",
+          "description": "Footbridge held up by giant stone hands",
+          "city": "Da Nang",
+          "country": "Vietnam",
+          "lat": 15.9949,
+          "lon": 107.9963
+        },
+        {
+          "name": "Dragon Bridge Da Nang",
+          "description": "Dragon shaped bridge that breathes fire on weekends",
+          "city": "Da Nang",
+          "country": "Vietnam",
+          "lat": 16.0611,
+          "lon": 108.2267
+        },
+        {
+          "name": "Japanese Covered Bridge",
+          "description": "Historic covered bridge in the old town",
+          "city": "Hội An",
+          "country": "Vietnam",
+          "lat": 15.8771,
+          "lon": 108.326
+        },
+        {
+          "name": "Long Bien Bridge",
+          "description": "Historic cantilever bridge over the Red River",
+          "city": "Hanoi",
+          "country": "Vietnam",
+          "lat": 21.0433,
+          "lon": 105.8589
+        },
+        {
+          "name": "Bridge on the River Kwai",
+          "description": "World War Two Death Railway bridge",
+          "city": "Kanchanaburi",
+          "country": "Thailand",
+          "lat": 14.0408,
+          "lon": 99.5031
+        },
+        {
+          "name": "Helix Bridge",
+          "description": "Footbridge shaped like a DNA double helix",
+          "city": "Singapore",
+          "country": "Singapore",
+          "lat": 1.2876,
+          "lon": 103.8606
+        },
+        {
+          "name": "Penang Bridge",
+          "description": "Long bridge linking Penang Island to the Malay Peninsula",
+          "city": "George Town",
+          "country": "Malaysia",
+          "lat": 5.3539,
+          "lon": 100.3526
+        },
+        {
+          "name": "Langkawi Sky Bridge",
+          "description": "Curved footbridge high on a mountain peak",
+          "city": "Langkawi",
+          "country": "Malaysia",
+          "lat": 6.3864,
+          "lon": 99.6624
+        },
+        {
+          "name": "Suramadu Bridge",
+          "description": "Indonesia's longest bridge, linking Java and Madura",
+          "city": "Surabaya",
+          "country": "Indonesia",
+          "lat": -7.1842,
+          "lon": 112.7803
+        },
+        {
+          "name": "San Juanico Bridge",
+          "description": "Long steel bridge across the San Juanico Strait",
+          "city": "Tacloban",
+          "country": "Philippines",
+          "lat": 11.3028,
+          "lon": 124.9719
+        },
+        {
+          "name": "Victoria Falls Bridge",
+          "description": "Steel arch bridge beside Victoria Falls",
+          "city": "Livingstone",
+          "country": "Zambia",
+          "lat": -17.9283,
+          "lon": 25.8572
+        },
+        {
+          "name": "Qasr El Nil Bridge",
+          "description": "Historic bridge guarded by bronze lions over the Nile",
+          "city": "Cairo",
+          "country": "Egypt",
+          "lat": 30.0437,
+          "lon": 31.2297
+        },
+        {
+          "name": "Suez Canal Bridge",
+          "description": "High bridge across the Suez Canal",
+          "city": "El Qantara",
+          "country": "Egypt",
+          "lat": 30.8282,
+          "lon": 32.3176
+        },
+        {
+          "name": "Nelson Mandela Bridge",
+          "description": "Cable stayed bridge over the railroad yards",
+          "city": "Johannesburg",
+          "country": "South Africa",
+          "lat": -26.1967,
+          "lon": 28.0342
+        },
+        {
+          "name": "Bloukrans Bridge",
+          "description": "Concrete arch with one of the world's highest bungee jumps",
+          "city": "Plettenberg Bay",
+          "country": "South Africa",
+          "lat": -33.9673,
+          "lon": 23.6452
+        },
+        {
+          "name": "Third Mainland Bridge",
+          "description": "Long bridge across the Lagos Lagoon",
+          "city": "Lagos",
+          "country": "Nigeria",
+          "lat": 6.5,
+          "lon": 3.4014
+        },
+        {
+          "name": "Sidi M'Cid Bridge",
+          "description": "Suspension bridge high over the Rhumel gorge",
+          "city": "Constantine",
+          "country": "Algeria",
+          "lat": 36.3724,
+          "lon": 6.6143
+        },
+        {
+          "name": "Mohammed VI Bridge",
+          "description": "Striking cable stayed bridge over the Bou Regreg valley",
+          "city": "Rabat",
+          "country": "Morocco",
+          "lat": 33.9378,
+          "lon": -6.7592
+        },
+        {
+          "name": "Maputo Katembe Bridge",
+          "description": "Among Africa's longest suspension bridges, across Maputo Bay",
+          "city": "Maputo",
+          "country": "Mozambique",
+          "lat": -25.9731,
+          "lon": 32.5575
+        },
+        {
+          "name": "Sydney Harbour Bridge",
+          "description": "Steel arch bridge known as the Coathanger",
+          "city": "Sydney",
+          "state": "New South Wales",
+          "country": "Australia",
+          "lat": -33.8522,
+          "lon": 151.2106
+        },
+        {
+          "name": "Sea Cliff Bridge",
+          "description": "Coastal bridge curving around sea cliffs",
+          "city": "Clifton",
+          "state": "New South Wales",
+          "country": "Australia",
+          "lat": -34.2539,
+          "lon": 150.9739
+        },
+        {
+          "name": "Story Bridge",
+          "description": "Heritage listed steel cantilever bridge over the Brisbane River",
+          "city": "Brisbane",
+          "state": "Queensland",
+          "country": "Australia",
+          "lat": -27.4635,
+          "lon": 153.0358
+        },
+        {
+          "name": "West Gate Bridge",
+          "description": "Cable stayed bridge over the Yarra River",
+          "city": "Melbourne",
+          "state": "Victoria",
+          "country": "Australia",
+          "lat": -37.8294,
+          "lon": 144.8981
+        },
+        {
+          "name": "Richmond Bridge",
+          "description": "Australia's oldest bridge still in use, built by convicts",
+          "city": "Richmond",
+          "state": "Tasmania",
+          "country": "Australia",
+          "lat": -42.7336,
+          "lon": 147.4394
+        },
+        {
+          "name": "Auckland Harbour Bridge",
+          "description": "Box truss bridge across Waitemata Harbour",
+          "city": "Auckland",
+          "country": "New Zealand",
+          "lat": -36.8294,
+          "lon": 174.7464
+        },
+        {
+          "name": "Kawarau Gorge Suspension Bridge",
+          "description": "Birthplace of commercial bungee jumping",
+          "city": "Queenstown",
+          "country": "New Zealand",
+          "lat": -45.009,
+          "lon": 168.899
+        },
+        {
+          "name": "Huajiang Grand Canyon Bridge",
+          "description": "World's highest bridge, opened in 2025 above a Guizhou canyon",
+          "city": "Guanling",
+          "country": "China",
+          "lat": 25.7047,
+          "lon": 105.5881
+        }
+      ]
+    },
+    {
+      "name": "Extreme Weather",
+      "description": "Places known for the hottest, coldest, wettest, driest, windiest and stormiest weather on Earth",
+      "places": [
+        {
+          "name": "Death Valley",
+          "description": "Hottest air temperature on record, 134 degrees Fahrenheit in 1913",
+          "city": "Furnace Creek",
+          "state": "California",
+          "country": "United States",
+          "lat": 36.4622,
+          "lon": -116.8669
+        },
+        {
+          "name": "Lake Havasu City",
+          "description": "Arizona's record high of 128 degrees Fahrenheit in 1994",
+          "state": "Arizona",
+          "country": "United States",
+          "lat": 34.4839,
+          "lon": -114.3225
+        },
+        {
+          "name": "Phoenix",
+          "description": "Hit 110 degrees or hotter for 31 straight days in July 2023",
+          "state": "Arizona",
+          "country": "United States",
+          "lat": 33.4484,
+          "lon": -112.074
+        },
+        {
+          "name": "Yuma",
+          "description": "Often ranked the sunniest city on Earth",
+          "state": "Arizona",
+          "country": "United States",
+          "lat": 32.6927,
+          "lon": -114.6277
+        },
+        {
+          "name": "St. Petersburg",
+          "description": "The Sunshine City, once had 768 sunny days in a row",
+          "state": "Florida",
+          "country": "United States",
+          "lat": 27.7676,
+          "lon": -82.6403
+        },
+        {
+          "name": "Lytton",
+          "description": "Canada's record high of 49.6 degrees Celsius in 2021",
+          "state": "British Columbia",
+          "country": "Canada",
+          "lat": 50.2316,
+          "lon": -121.5824
+        },
+        {
+          "name": "Dallol",
+          "description": "Highest average yearly temperature of any inhabited place",
+          "country": "Ethiopia",
+          "lat": 14.2417,
+          "lon": 40.3
+        },
+        {
+          "name": "Kebili",
+          "description": "One of the hottest towns in the Sahara",
+          "country": "Tunisia",
+          "lat": 33.705,
+          "lon": 8.965
+        },
+        {
+          "name": "Al Aziziyah",
+          "description": "Held the world heat record until it was thrown out in 2012",
+          "country": "Libya",
+          "lat": 32.53,
+          "lon": 13.0175
+        },
+        {
+          "name": "Basra",
+          "description": "Reached 53.9 degrees Celsius in 2016, among Asia's hottest readings",
+          "country": "Iraq",
+          "lat": 30.5085,
+          "lon": 47.7804
+        },
+        {
+          "name": "Ahvaz",
+          "description": "One of the hottest cities on Earth, with summer highs near 50 Celsius",
+          "country": "Iran",
+          "lat": 31.3183,
+          "lon": 48.6706
+        },
+        {
+          "name": "Bandar Mahshahr",
+          "description": "Heat index of about 165 degrees Fahrenheit in 2015",
+          "country": "Iran",
+          "lat": 30.5589,
+          "lon": 49.1981
+        },
+        {
+          "name": "Dhahran",
+          "description": "World record dew point of 95 degrees Fahrenheit in 2003",
+          "country": "Saudi Arabia",
+          "lat": 26.2886,
+          "lon": 50.114
+        },
+        {
+          "name": "Jacobabad",
+          "description": "Brutal heat and humidity near the limit of human survival",
+          "country": "Pakistan",
+          "lat": 28.2769,
+          "lon": 68.4514
+        },
+        {
+          "name": "Turbat",
+          "description": "Reached 53.7 degrees Celsius in 2017, one of Asia's hottest readings",
+          "country": "Pakistan",
+          "lat": 26.0023,
+          "lon": 63.044
+        },
+        {
+          "name": "Phalodi",
+          "description": "India's record high of 51 degrees Celsius in 2016",
+          "country": "India",
+          "lat": 27.131,
+          "lon": 72.368
+        },
+        {
+          "name": "Turpan",
+          "description": "China's hot spot, in a desert depression that dips below sea level",
+          "country": "China",
+          "lat": 42.9513,
+          "lon": 89.1895
+        },
+        {
+          "name": "Marble Bar",
+          "description": "Topped 100 degrees Fahrenheit 160 days in a row in 1923 and 1924",
+          "state": "Western Australia",
+          "country": "Australia",
+          "lat": -21.1711,
+          "lon": 119.7489
+        },
+        {
+          "name": "Oodnadatta",
+          "description": "Australia's record high of 50.7 degrees Celsius in 1960",
+          "state": "South Australia",
+          "country": "Australia",
+          "lat": -27.548,
+          "lon": 135.4469
+        },
+        {
+          "name": "Onslow",
+          "description": "Tied Australia's record high of 50.7 degrees Celsius in 2022",
+          "state": "Western Australia",
+          "country": "Australia",
+          "lat": -21.637,
+          "lon": 115.112
+        },
+        {
+          "name": "Floridia",
+          "description": "Europe's record high of 48.8 degrees Celsius in 2021",
+          "country": "Italy",
+          "lat": 37.0814,
+          "lon": 15.1531
+        },
+        {
+          "name": "Rivadavia",
+          "description": "South America's record high of 48.9 degrees Celsius in 1905",
+          "country": "Argentina",
+          "lat": -24.1833,
+          "lon": -62.8833
+        },
+        {
+          "name": "Aswan",
+          "description": "One of the driest and sunniest cities, with almost no rain",
+          "country": "Egypt",
+          "lat": 24.0889,
+          "lon": 32.8998
+        },
+        {
+          "name": "Khartoum",
+          "description": "Famous for towering desert dust storms called haboobs",
+          "country": "Sudan",
+          "lat": 15.5007,
+          "lon": 32.5599
+        },
+        {
+          "name": "Esperanza Base",
+          "description": "Antarctica's record high of 18.3 degrees Celsius in 2020",
+          "country": "Antarctica",
+          "lat": -63.3972,
+          "lon": -56.9978
+        },
+        {
+          "name": "Vostok Station",
+          "description": "Coldest temperature measured at a station, minus 89.2 Celsius in 1983",
+          "country": "Antarctica",
+          "lat": -78.4639,
+          "lon": 106.8372
+        },
+        {
+          "name": "Dome Argus",
+          "description": "Summit of the East Antarctic ice sheet, among the coldest places on Earth",
+          "country": "Antarctica",
+          "lat": -80.3667,
+          "lon": 77.35
+        },
+        {
+          "name": "Dome Fuji",
+          "description": "High ice dome station with some of the coldest air on Earth",
+          "country": "Antarctica",
+          "lat": -77.3167,
+          "lon": 39.7
+        },
+        {
+          "name": "Concordia Station",
+          "description": "Station on Dome C where winter lows fall below minus 80 Celsius",
+          "country": "Antarctica",
+          "lat": -75.1,
+          "lon": 123.3333
+        },
+        {
+          "name": "South Pole",
+          "description": "Six months of darkness and winter lows near minus 60 Celsius",
+          "country": "Antarctica",
+          "lat": -90.0,
+          "lon": 0.0
+        },
+        {
+          "name": "McMurdo Station",
+          "description": "Largest Antarctic station, hit by fierce blizzards",
+          "country": "Antarctica",
+          "lat": -77.8463,
+          "lon": 166.6683
+        },
+        {
+          "name": "Oymyakon",
+          "description": "Coldest permanently inhabited town, minus 67.7 Celsius in 1933",
+          "country": "Russia",
+          "lat": 63.4641,
+          "lon": 142.7737
+        },
+        {
+          "name": "Verkhoyansk",
+          "description": "Record lows near minus 68 Celsius and a 38 Celsius heat record in 2020",
+          "country": "Russia",
+          "lat": 67.55,
+          "lon": 133.3833
+        },
+        {
+          "name": "Yakutsk",
+          "description": "Coldest major city on Earth",
+          "country": "Russia",
+          "lat": 62.0355,
+          "lon": 129.6755
+        },
+        {
+          "name": "Norilsk",
+          "description": "Frigid Arctic city with long polar nights and fierce blizzards",
+          "country": "Russia",
+          "lat": 69.3535,
+          "lon": 88.2027
+        },
+        {
+          "name": "Snag",
+          "description": "North America's record low of minus 63 Celsius in 1947",
+          "state": "Yukon",
+          "country": "Canada",
+          "lat": 62.3667,
+          "lon": -140.4
+        },
+        {
+          "name": "Prospect Creek",
+          "description": "United States record low of minus 80 degrees Fahrenheit in 1971",
+          "state": "Alaska",
+          "country": "United States",
+          "lat": 66.8,
+          "lon": -150.6667
+        },
+        {
+          "name": "Klinck",
+          "description": "Northern Hemisphere record low of minus 69.6 Celsius in 1991",
+          "country": "Greenland",
+          "lat": 72.3,
+          "lon": -40.4833
+        },
+        {
+          "name": "Summit Camp",
+          "description": "Research station at the top of the Greenland ice sheet",
+          "country": "Greenland",
+          "lat": 72.5796,
+          "lon": -38.4592
+        },
+        {
+          "name": "Rogers Pass",
+          "description": "Lower 48 record low of minus 70 degrees Fahrenheit in 1954",
+          "city": "Lincoln",
+          "state": "Montana",
+          "country": "United States",
+          "lat": 47.0753,
+          "lon": -112.3644
+        },
+        {
+          "name": "Peter Sinks",
+          "description": "Mountain sinkhole that fell to minus 69 degrees Fahrenheit in 1985",
+          "city": "Logan",
+          "state": "Utah",
+          "country": "United States",
+          "lat": 41.91,
+          "lon": -111.51
+        },
+        {
+          "name": "International Falls",
+          "description": "Nicknamed the Icebox of the Nation",
+          "state": "Minnesota",
+          "country": "United States",
+          "lat": 48.6011,
+          "lon": -93.4108
+        },
+        {
+          "name": "Winnipeg",
+          "description": "One of the coldest large cities, nicknamed Winterpeg",
+          "state": "Manitoba",
+          "country": "Canada",
+          "lat": 49.8951,
+          "lon": -97.1384
+        },
+        {
+          "name": "Utqiagvik",
+          "description": "Northernmost US town, where the sun stays down for about two months",
+          "state": "Alaska",
+          "country": "United States",
+          "lat": 71.2906,
+          "lon": -156.7886
+        },
+        {
+          "name": "Alert",
+          "description": "Northernmost permanently inhabited place, a frozen Arctic outpost",
+          "state": "Nunavut",
+          "country": "Canada",
+          "lat": 82.5018,
+          "lon": -62.3481
+        },
+        {
+          "name": "Eureka",
+          "description": "Arctic weather station with one of Canada's coldest yearly averages",
+          "state": "Nunavut",
+          "country": "Canada",
+          "lat": 79.9833,
+          "lon": -85.9333
+        },
+        {
+          "name": "Ulaanbaatar",
+          "description": "Coldest national capital in the world",
+          "country": "Mongolia",
+          "lat": 47.8864,
+          "lon": 106.9057
+        },
+        {
+          "name": "Astana",
+          "description": "One of the coldest capital cities, with harsh steppe winters",
+          "country": "Kazakhstan",
+          "lat": 51.1694,
+          "lon": 71.4491
+        },
+        {
+          "name": "Harbin",
+          "description": "Bitter winters that host a famous ice and snow festival",
+          "country": "China",
+          "lat": 45.8038,
+          "lon": 126.535
+        },
+        {
+          "name": "Mohe",
+          "description": "China's coldest town, with lows below minus 50 Celsius",
+          "country": "China",
+          "lat": 52.9724,
+          "lon": 122.5386
+        },
+        {
+          "name": "Karasjok",
+          "description": "Norway's record low of minus 51.4 Celsius in 1886",
+          "country": "Norway",
+          "lat": 69.4719,
+          "lon": 25.5112
+        },
+        {
+          "name": "Ifrane",
+          "description": "Africa's record low of minus 23.9 Celsius in 1935",
+          "country": "Morocco",
+          "lat": 33.5228,
+          "lon": -5.1106
+        },
+        {
+          "name": "Sutherland",
+          "description": "Coldest town in South Africa",
+          "country": "South Africa",
+          "lat": -32.3984,
+          "lon": 20.6622
+        },
+        {
+          "name": "Charlotte Pass",
+          "description": "Australia's record low of minus 23 Celsius in 1994",
+          "city": "Jindabyne",
+          "state": "New South Wales",
+          "country": "Australia",
+          "lat": -36.4317,
+          "lon": 148.3283
+        },
+        {
+          "name": "Mount Everest",
+          "description": "Highest point on Earth, often blasted by jet stream winds",
+          "country": "Nepal",
+          "lat": 27.9881,
+          "lon": 86.925
+        },
+        {
+          "name": "Denali",
+          "description": "Among the coldest mountains on Earth, with brutal wind chills",
+          "state": "Alaska",
+          "country": "United States",
+          "lat": 63.0692,
+          "lon": -151.007
+        },
+        {
+          "name": "Vinson Massif",
+          "description": "Antarctica's highest peak, in bitter polar cold",
+          "country": "Antarctica",
+          "lat": -78.5254,
+          "lon": -85.6171
+        },
+        {
+          "name": "Aconcagua",
+          "description": "Highest peak outside Asia, known for violent windstorms",
+          "city": "Mendoza",
+          "country": "Argentina",
+          "lat": -32.6532,
+          "lon": -70.0109
+        },
+        {
+          "name": "Mount Kilimanjaro",
+          "description": "Glaciers near the equator that are rapidly shrinking",
+          "city": "Moshi",
+          "country": "Tanzania",
+          "lat": -3.0758,
+          "lon": 37.3533
+        },
+        {
+          "name": "Mount Washington",
+          "description": "Summit famous for hurricane-force winds and a 231 mph gust record",
+          "city": "Sargent's Purchase",
+          "state": "New Hampshire",
+          "country": "United States",
+          "lat": 44.2706,
+          "lon": -71.3033
+        },
+        {
+          "name": "La Rinconada",
+          "description": "Highest permanent town on Earth, with freezing nights at 5,100 meters",
+          "country": "Peru",
+          "lat": -14.6308,
+          "lon": -69.4456
+        },
+        {
+          "name": "Sonnblick Observatory",
+          "description": "Austrian summit observatory recording weather since 1886",
+          "city": "Rauris",
+          "country": "Austria",
+          "lat": 47.0539,
+          "lon": 12.9575
+        },
+        {
+          "name": "Jungfraujoch",
+          "description": "High alpine research station at about 3,500 meters",
+          "city": "Wengen",
+          "country": "Switzerland",
+          "lat": 46.5476,
+          "lon": 7.9853
+        },
+        {
+          "name": "Zugspitze",
+          "description": "Germany's highest peak and weather station",
+          "city": "Garmisch-Partenkirchen",
+          "country": "Germany",
+          "lat": 47.4211,
+          "lon": 10.9853
+        },
+        {
+          "name": "Pic du Midi de Bigorre",
+          "description": "Pyrenees summit observatory with weather records since the 1880s",
+          "city": "La Mongie",
+          "country": "France",
+          "lat": 42.9364,
+          "lon": 0.1425
+        },
+        {
+          "name": "Santis",
+          "description": "Swiss summit station with Switzerland's record snow depth",
+          "city": "Schwagalp",
+          "country": "Switzerland",
+          "lat": 47.2494,
+          "lon": 9.3433
+        },
+        {
+          "name": "Ben Nevis",
+          "description": "UK's highest peak, in cloud most of the year with fierce gales",
+          "city": "Fort William",
+          "country": "United Kingdom",
+          "lat": 56.7969,
+          "lon": -5.0036
+        },
+        {
+          "name": "Mount Fuji",
+          "description": "Japan's highest peak, with a long-running summit weather station",
+          "city": "Fujiyoshida",
+          "country": "Japan",
+          "lat": 35.3606,
+          "lon": 138.7274
+        },
+        {
+          "name": "Mauna Kea",
+          "description": "Tropical summit that often gets snow",
+          "city": "Hilo",
+          "state": "Hawaii",
+          "country": "United States",
+          "lat": 19.8207,
+          "lon": -155.4681
+        },
+        {
+          "name": "Mawsynram",
+          "description": "Often called the wettest place on Earth by average rainfall",
+          "country": "India",
+          "lat": 25.2975,
+          "lon": 91.5826
+        },
+        {
+          "name": "Cherrapunji",
+          "description": "World records for rainfall in a single year and a single month",
+          "city": "Sohra",
+          "country": "India",
+          "lat": 25.2702,
+          "lon": 91.7323
+        },
+        {
+          "name": "Lloró",
+          "description": "Claimed by some as the rainiest place on Earth",
+          "country": "Colombia",
+          "lat": 5.4974,
+          "lon": -76.5463
+        },
+        {
+          "name": "Quibdó",
+          "description": "One of the rainiest cities in the world",
+          "country": "Colombia",
+          "lat": 5.6947,
+          "lon": -76.6611
+        },
+        {
+          "name": "Mount Waialeale",
+          "description": "Rain-soaked summit that is among the wettest spots on Earth",
+          "city": "Wailua",
+          "state": "Hawaii",
+          "country": "United States",
+          "lat": 22.0742,
+          "lon": -159.4986
+        },
+        {
+          "name": "Hilo",
+          "description": "Rainiest city in the United States",
+          "state": "Hawaii",
+          "country": "United States",
+          "lat": 19.7297,
+          "lon": -155.09
+        },
+        {
+          "name": "Debundscha",
+          "description": "Africa's wettest place, at the foot of Mount Cameroon",
+          "country": "Cameroon",
+          "lat": 4.1,
+          "lon": 8.9833
+        },
+        {
+          "name": "Cilaos",
+          "description": "Town on Réunion with world records for rainfall over several days",
+          "country": "France",
+          "lat": -21.134,
+          "lon": 55.472
+        },
+        {
+          "name": "Crkvice",
+          "description": "Wettest inhabited place in Europe",
+          "country": "Montenegro",
+          "lat": 42.57,
+          "lon": 18.64
+        },
+        {
+          "name": "Bergen",
+          "description": "One of Europe's rainiest cities, with rain on most days",
+          "country": "Norway",
+          "lat": 60.3913,
+          "lon": 5.3221
+        },
+        {
+          "name": "Seathwaite",
+          "description": "Wettest inhabited place in England",
+          "country": "United Kingdom",
+          "lat": 54.502,
+          "lon": -3.183
+        },
+        {
+          "name": "Milford Sound",
+          "description": "Fiord with about 6.7 meters of rain a year",
+          "country": "New Zealand",
+          "lat": -44.6717,
+          "lon": 167.9256
+        },
+        {
+          "name": "Bellenden Ker",
+          "description": "Australia's wettest place, over 12 meters of rain in 2000",
+          "city": "Babinda",
+          "state": "Queensland",
+          "country": "Australia",
+          "lat": -17.2633,
+          "lon": 145.8542
+        },
+        {
+          "name": "Tully",
+          "description": "Australia's wettest town, celebrated with a giant golden gumboot",
+          "state": "Queensland",
+          "country": "Australia",
+          "lat": -17.9333,
+          "lon": 145.9228
+        },
+        {
+          "name": "Ketchikan",
+          "description": "Alaska's rain capital, about 150 inches a year",
+          "state": "Alaska",
+          "country": "United States",
+          "lat": 55.3422,
+          "lon": -131.6461
+        },
+        {
+          "name": "Hoh Rain Forest",
+          "description": "Temperate rainforest with some of the most rain in the lower 48",
+          "city": "Forks",
+          "state": "Washington",
+          "country": "United States",
+          "lat": 47.8606,
+          "lon": -123.9348
+        },
+        {
+          "name": "Baguio",
+          "description": "Over 46 inches of rain in 24 hours during a 1911 typhoon",
+          "country": "Philippines",
+          "lat": 16.4023,
+          "lon": 120.596
+        },
+        {
+          "name": "Mumbai",
+          "description": "About 37 inches of rain in one day during the 2005 floods",
+          "country": "India",
+          "lat": 19.076,
+          "lon": 72.8777
+        },
+        {
+          "name": "Holt",
+          "description": "World record 12 inches of rain in 42 minutes in 1947",
+          "state": "Missouri",
+          "country": "United States",
+          "lat": 39.4542,
+          "lon": -94.3363
+        },
+        {
+          "name": "Unionville",
+          "description": "World record 1.23 inches of rain in one minute in 1956",
+          "state": "Maryland",
+          "country": "United States",
+          "lat": 39.4729,
+          "lon": -77.1886
+        },
+        {
+          "name": "Alvin",
+          "description": "43 inches of rain in 24 hours from Tropical Storm Claudette in 1979",
+          "state": "Texas",
+          "country": "United States",
+          "lat": 29.4238,
+          "lon": -95.2441
+        },
+        {
+          "name": "Arica",
+          "description": "Lowest average yearly rainfall of any city, a fraction of a millimeter",
+          "country": "Chile",
+          "lat": -18.4783,
+          "lon": -70.3126
+        },
+        {
+          "name": "Quillagua",
+          "description": "Among the driest places on Earth, in the Atacama Desert",
+          "country": "Chile",
+          "lat": -21.653,
+          "lon": -69.544
+        },
+        {
+          "name": "McMurdo Dry Valleys",
+          "description": "Driest place on Earth, snow-free valleys with almost no precipitation",
+          "country": "Antarctica",
+          "lat": -77.5167,
+          "lon": 161.6667
+        },
+        {
+          "name": "Lima",
+          "description": "Desert capital with almost no rain under a gray coastal fog",
+          "country": "Peru",
+          "lat": -12.0464,
+          "lon": -77.0428
+        },
+        {
+          "name": "Swakopmund",
+          "description": "Namib Desert town where cold ocean fog stands in for rain",
+          "country": "Namibia",
+          "lat": -22.6784,
+          "lon": 14.5266
+        },
+        {
+          "name": "Point Reyes",
+          "description": "One of the foggiest places on the Pacific coast",
+          "city": "Inverness",
+          "state": "California",
+          "country": "United States",
+          "lat": 37.9956,
+          "lon": -123.0231
+        },
+        {
+          "name": "Cape Disappointment",
+          "description": "Often called the foggiest place in the United States",
+          "city": "Ilwaco",
+          "state": "Washington",
+          "country": "United States",
+          "lat": 46.2756,
+          "lon": -124.0519
+        },
+        {
+          "name": "Argentia",
+          "description": "Among the foggiest places in Canada",
+          "city": "Placentia",
+          "state": "Newfoundland and Labrador",
+          "country": "Canada",
+          "lat": 47.295,
+          "lon": -53.9906
+        },
+        {
+          "name": "St. John's",
+          "description": "Canada's foggiest, snowiest, wettest and windiest major city",
+          "state": "Newfoundland and Labrador",
+          "country": "Canada",
+          "lat": 47.5615,
+          "lon": -52.7126
+        },
+        {
+          "name": "Chongqing",
+          "description": "China's fog capital",
+          "country": "China",
+          "lat": 29.563,
+          "lon": 106.5516
+        },
+        {
+          "name": "Tosontsengel",
+          "description": "World record high air pressure, 1084.8 hectopascals in 2001",
+          "country": "Mongolia",
+          "lat": 48.7567,
+          "lon": 98.2839
+        },
+        {
+          "name": "Barrow Island",
+          "description": "World record wind gust of 253 mph during Cyclone Olivia in 1996",
+          "state": "Western Australia",
+          "country": "Australia",
+          "lat": -20.7833,
+          "lon": 115.4
+        },
+        {
+          "name": "Commonwealth Bay",
+          "description": "Windiest place at sea level, battered by katabatic winds",
+          "country": "Antarctica",
+          "lat": -67.0083,
+          "lon": 142.6631
+        },
+        {
+          "name": "Mawson Station",
+          "description": "Antarctic station scoured by fierce katabatic winds",
+          "country": "Antarctica",
+          "lat": -67.6027,
+          "lon": 62.8738
+        },
+        {
+          "name": "Wellington",
+          "description": "Often called the windiest city in the world",
+          "country": "New Zealand",
+          "lat": -41.2865,
+          "lon": 174.7762
+        },
+        {
+          "name": "Punta Arenas",
+          "description": "Patagonian port famous for relentless westerly winds",
+          "country": "Chile",
+          "lat": -53.1638,
+          "lon": -70.9171
+        },
+        {
+          "name": "Cape Horn",
+          "description": "Stormy southern cape notorious for gales and huge seas",
+          "city": "Puerto Williams",
+          "country": "Chile",
+          "lat": -55.98,
+          "lon": -67.27
+        },
+        {
+          "name": "Kerguelen Islands",
+          "description": "Remote islands in the Furious Fifties with near-constant gales",
+          "country": "French Southern and Antarctic Lands",
+          "lat": -49.35,
+          "lon": 70.2167
+        },
+        {
+          "name": "Cairn Gorm",
+          "description": "UK record wind gust of 173 mph in 1986",
+          "city": "Aviemore",
+          "country": "United Kingdom",
+          "lat": 57.1166,
+          "lon": -3.644
+        },
+        {
+          "name": "Tarifa",
+          "description": "Wind capital of Europe on the Strait of Gibraltar",
+          "country": "Spain",
+          "lat": 36.0143,
+          "lon": -5.6044
+        },
+        {
+          "name": "Senj",
+          "description": "Strongest bora winds on the Adriatic coast",
+          "country": "Croatia",
+          "lat": 44.9894,
+          "lon": 14.9058
+        },
+        {
+          "name": "Mont Ventoux",
+          "description": "Bald summit scoured by the fierce mistral wind",
+          "city": "Bedoin",
+          "country": "France",
+          "lat": 44.1739,
+          "lon": 5.2786
+        },
+        {
+          "name": "Storhofdi",
+          "description": "One of the windiest spots in Europe",
+          "city": "Vestmannaeyjar",
+          "country": "Iceland",
+          "lat": 63.3986,
+          "lon": -20.2886
+        },
+        {
+          "name": "Loma",
+          "description": "US record temperature rise of 103 degrees Fahrenheit in 24 hours in 1972",
+          "state": "Montana",
+          "country": "United States",
+          "lat": 47.9389,
+          "lon": -110.5072
+        },
+        {
+          "name": "Spearfish",
+          "description": "Temperature jumped 49 degrees Fahrenheit in two minutes in 1943",
+          "state": "South Dakota",
+          "country": "United States",
+          "lat": 44.4908,
+          "lon": -103.8594
+        },
+        {
+          "name": "Browning",
+          "description": "Temperature dropped 100 degrees Fahrenheit in a single day in 1916",
+          "state": "Montana",
+          "country": "United States",
+          "lat": 48.5569,
+          "lon": -113.0134
+        },
+        {
+          "name": "Mount Baker Ski Area",
+          "description": "World record seasonal snowfall of 1,140 inches in 1998 to 1999",
+          "city": "Glacier",
+          "state": "Washington",
+          "country": "United States",
+          "lat": 48.857,
+          "lon": -121.67
+        },
+        {
+          "name": "Paradise",
+          "description": "Mount Rainier spot with 1,122 inches of snow in the 1971 to 1972 season",
+          "city": "Ashford",
+          "state": "Washington",
+          "country": "United States",
+          "lat": 46.786,
+          "lon": -121.7353
+        },
+        {
+          "name": "Thompson Pass",
+          "description": "Alaska pass with nearly 975 inches of snow in one season",
+          "city": "Valdez",
+          "state": "Alaska",
+          "country": "United States",
+          "lat": 61.1333,
+          "lon": -145.75
+        },
+        {
+          "name": "Valdez",
+          "description": "One of the snowiest towns in the United States",
+          "state": "Alaska",
+          "country": "United States",
+          "lat": 61.1308,
+          "lon": -146.3483
+        },
+        {
+          "name": "Sukayu Onsen",
+          "description": "Hot spring with Japan's record snow depth for an inhabited place",
+          "city": "Aomori",
+          "country": "Japan",
+          "lat": 40.6489,
+          "lon": 140.8483
+        },
+        {
+          "name": "Mount Ibuki",
+          "description": "World record snow depth of 11.82 meters in 1927",
+          "city": "Maibara",
+          "country": "Japan",
+          "lat": 35.4181,
+          "lon": 136.4058
+        },
+        {
+          "name": "Tateyama Kurobe Alpine Route",
+          "description": "Mountain road lined by towering walls of snow in spring",
+          "city": "Tateyama",
+          "country": "Japan",
+          "lat": 36.5774,
+          "lon": 137.5958
+        },
+        {
+          "name": "Capracotta",
+          "description": "About 100 inches of snow fell in 18 hours in 2015",
+          "country": "Italy",
+          "lat": 41.8336,
+          "lon": 14.2647
+        },
+        {
+          "name": "Syracuse",
+          "description": "One of the snowiest large cities in the United States",
+          "state": "New York",
+          "country": "United States",
+          "lat": 43.0481,
+          "lon": -76.1474
+        },
+        {
+          "name": "Buffalo",
+          "description": "Lake effect snowstorms bury the city, like the 2014 Snowvember storm",
+          "state": "New York",
+          "country": "United States",
+          "lat": 42.8864,
+          "lon": -78.8784
+        },
+        {
+          "name": "Lake Maracaibo",
+          "description": "Lightning capital of the world, home of the Catatumbo lightning",
+          "country": "Venezuela",
+          "lat": 9.4,
+          "lon": -71.7
+        },
+        {
+          "name": "Bogor",
+          "description": "World record for thunderstorm days, known as the City of Rain",
+          "country": "Indonesia",
+          "lat": -6.5971,
+          "lon": 106.806
+        },
+        {
+          "name": "Tororo",
+          "description": "One of the most thunderstorm-prone places on Earth",
+          "country": "Uganda",
+          "lat": 0.6928,
+          "lon": 34.1808
+        },
+        {
+          "name": "Tampa",
+          "description": "Lightning capital of the United States",
+          "state": "Florida",
+          "country": "United States",
+          "lat": 27.9506,
+          "lon": -82.4572
+        },
+        {
+          "name": "Kericho",
+          "description": "More hail days than almost anywhere on Earth",
+          "country": "Kenya",
+          "lat": -0.3677,
+          "lon": 35.2831
+        },
+        {
+          "name": "Vivian",
+          "description": "Largest hailstone in the US, 8 inches across in 2010",
+          "state": "South Dakota",
+          "country": "United States",
+          "lat": 43.9306,
+          "lon": -100.2943
+        },
+        {
+          "name": "Gopalganj",
+          "description": "Heaviest hailstone on record, about 2.25 pounds in 1986",
+          "country": "Bangladesh",
+          "lat": 23.005,
+          "lon": 89.8266
+        },
+        {
+          "name": "Cheyenne",
+          "description": "Heart of Hail Alley, one of the most hail-prone US cities",
+          "state": "Wyoming",
+          "country": "United States",
+          "lat": 41.14,
+          "lon": -104.8202
+        },
+        {
+          "name": "Moore",
+          "description": "Struck by violent tornadoes in 1999 and 2013",
+          "state": "Oklahoma",
+          "country": "United States",
+          "lat": 35.3395,
+          "lon": -97.4867
+        },
+        {
+          "name": "El Reno",
+          "description": "Widest tornado on record, 2.6 miles across in 2013",
+          "state": "Oklahoma",
+          "country": "United States",
+          "lat": 35.5323,
+          "lon": -97.955
+        },
+        {
+          "name": "Joplin",
+          "description": "Devastated by a deadly EF5 tornado in 2011",
+          "state": "Missouri",
+          "country": "United States",
+          "lat": 37.0842,
+          "lon": -94.5133
+        },
+        {
+          "name": "Greensburg",
+          "description": "Nearly wiped out by the first EF5 tornado on the new scale in 2007",
+          "state": "Kansas",
+          "country": "United States",
+          "lat": 37.6028,
+          "lon": -99.2926
+        },
+        {
+          "name": "Murphysboro",
+          "description": "Hardest-hit town in the deadly 1925 Tri-State Tornado",
+          "state": "Illinois",
+          "country": "United States",
+          "lat": 37.7645,
+          "lon": -89.3351
+        },
+        {
+          "name": "Norman",
+          "description": "Home of the national Storm Prediction Center in Tornado Alley",
+          "state": "Oklahoma",
+          "country": "United States",
+          "lat": 35.2226,
+          "lon": -97.4395
+        },
+        {
+          "name": "Saturia",
+          "description": "Deadliest tornado on record struck here in 1989",
+          "country": "Bangladesh",
+          "lat": 23.95,
+          "lon": 90.0167
+        },
+        {
+          "name": "Galveston",
+          "description": "The 1900 hurricane here is the deadliest US natural disaster",
+          "state": "Texas",
+          "country": "United States",
+          "lat": 29.3013,
+          "lon": -94.7977
+        },
+        {
+          "name": "Mexico Beach",
+          "description": "Leveled by Category 5 Hurricane Michael in 2018",
+          "state": "Florida",
+          "country": "United States",
+          "lat": 29.948,
+          "lon": -85.4199
+        },
+        {
+          "name": "Homestead",
+          "description": "Ground zero for Hurricane Andrew in 1992",
+          "state": "Florida",
+          "country": "United States",
+          "lat": 25.4687,
+          "lon": -80.4776
+        },
+        {
+          "name": "Cape Hatteras",
+          "description": "Storm-battered cape on the Graveyard of the Atlantic",
+          "city": "Buxton",
+          "state": "North Carolina",
+          "country": "United States",
+          "lat": 35.2507,
+          "lon": -75.5288
+        },
+        {
+          "name": "Marsh Harbour",
+          "description": "Struck by Hurricane Dorian with 185 mph winds in 2019",
+          "country": "Bahamas",
+          "lat": 26.5412,
+          "lon": -77.0636
+        },
+        {
+          "name": "Tacloban",
+          "description": "Devastated by the storm surge of Typhoon Haiyan in 2013",
+          "country": "Philippines",
+          "lat": 11.244,
+          "lon": 125.004
+        },
+        {
+          "name": "Naha",
+          "description": "Okinawa's capital, in the heart of Typhoon Alley",
+          "country": "Japan",
+          "lat": 26.2124,
+          "lon": 127.6809
+        },
+        {
+          "name": "Bhola Island",
+          "description": "Hit by the 1970 cyclone, the deadliest tropical cyclone on record",
+          "country": "Bangladesh",
+          "lat": 22.6859,
+          "lon": 90.6482
+        },
+        {
+          "name": "Darwin",
+          "description": "Destroyed by Cyclone Tracy on Christmas Day 1974",
+          "state": "Northern Territory",
+          "country": "Australia",
+          "lat": -12.4634,
+          "lon": 130.8456
+        }
+      ]
+    },
+    {
+      "name": "Beaches of the World",
+      "description": "Famous beaches around the world, from surf landmarks to tropical coves",
+      "places": [
+        {
+          "name": "Waikiki Beach",
+          "description": "Honolulu's famous strip of sand below Diamond Head, birthplace of modern surfing",
+          "city": "Honolulu",
+          "state": "Hawaii",
+          "country": "United States",
+          "lat": 21.2765,
+          "lon": -157.827
+        },
+        {
+          "name": "Hanauma Bay",
+          "description": "Volcanic crater bay with a protected coral reef for snorkeling",
+          "city": "Honolulu",
+          "state": "Hawaii",
+          "country": "United States",
+          "lat": 21.269,
+          "lon": -157.6938
+        },
+        {
+          "name": "Banzai Pipeline",
+          "description": "Legendary North Shore surf break with powerful hollow waves",
+          "city": "Haleiwa",
+          "state": "Hawaii",
+          "country": "United States",
+          "lat": 21.665,
+          "lon": -158.053
+        },
+        {
+          "name": "Waimea Bay",
+          "description": "North Shore bay known for giant winter surf and calm summer swimming",
+          "city": "Haleiwa",
+          "state": "Hawaii",
+          "country": "United States",
+          "lat": 21.642,
+          "lon": -158.066
+        },
+        {
+          "name": "Lanikai Beach",
+          "description": "Soft white sand and turquoise water facing the Mokulua Islands",
+          "city": "Kailua",
+          "state": "Hawaii",
+          "country": "United States",
+          "lat": 21.393,
+          "lon": -157.715
+        },
+        {
+          "name": "Hanalei Bay",
+          "description": "Two mile crescent beneath Kauai's green mountains",
+          "city": "Hanalei",
+          "state": "Hawaii",
+          "country": "United States",
+          "lat": 22.214,
+          "lon": -159.499
+        },
+        {
+          "name": "Venice Beach",
+          "description": "Bohemian boardwalk, skate park and Muscle Beach",
+          "city": "Los Angeles",
+          "state": "California",
+          "country": "United States",
+          "lat": 33.985,
+          "lon": -118.473
+        },
+        {
+          "name": "Malibu Surfrider Beach",
+          "description": "Classic point break at the heart of California surf culture",
+          "city": "Malibu",
+          "state": "California",
+          "country": "United States",
+          "lat": 34.036,
+          "lon": -118.678
+        },
+        {
+          "name": "Huntington Beach",
+          "description": "Known as Surf City USA and home of the US Open of Surfing",
+          "city": "Huntington Beach",
+          "state": "California",
+          "country": "United States",
+          "lat": 33.655,
+          "lon": -118.005
+        },
+        {
+          "name": "Coronado Beach",
+          "description": "Sparkling sand in front of the historic Hotel del Coronado",
+          "city": "Coronado",
+          "state": "California",
+          "country": "United States",
+          "lat": 32.681,
+          "lon": -117.179
+        },
+        {
+          "name": "La Jolla Cove",
+          "description": "Small cove famous for sea lions, seals and snorkeling",
+          "city": "San Diego",
+          "state": "California",
+          "country": "United States",
+          "lat": 32.85,
+          "lon": -117.272
+        },
+        {
+          "name": "Pfeiffer Beach",
+          "description": "Big Sur beach with purple sand and the Keyhole Arch",
+          "city": "Big Sur",
+          "state": "California",
+          "country": "United States",
+          "lat": 36.238,
+          "lon": -121.816
+        },
+        {
+          "name": "Cannon Beach",
+          "description": "Wide Oregon beach watched over by Haystack Rock",
+          "city": "Cannon Beach",
+          "state": "Oregon",
+          "country": "United States",
+          "lat": 45.885,
+          "lon": -123.964
+        },
+        {
+          "name": "Sand Harbor",
+          "description": "Clear water and granite boulders on the shore of Lake Tahoe",
+          "city": "Incline Village",
+          "state": "Nevada",
+          "country": "United States",
+          "lat": 39.198,
+          "lon": -119.931
+        },
+        {
+          "name": "South Beach",
+          "description": "Art Deco district beach in Miami Beach",
+          "city": "Miami Beach",
+          "state": "Florida",
+          "country": "United States",
+          "lat": 25.782,
+          "lon": -80.129
+        },
+        {
+          "name": "Siesta Beach",
+          "description": "Powdery quartz sand often ranked best in the United States",
+          "city": "Sarasota",
+          "state": "Florida",
+          "country": "United States",
+          "lat": 27.265,
+          "lon": -82.552
+        },
+        {
+          "name": "Daytona Beach",
+          "description": "Hard packed sand where cars can drive along the shore",
+          "city": "Daytona Beach",
+          "state": "Florida",
+          "country": "United States",
+          "lat": 29.228,
+          "lon": -81.006
+        },
+        {
+          "name": "Pensacola Beach",
+          "description": "Sugar white sand on the Gulf Islands barrier island",
+          "city": "Pensacola",
+          "state": "Florida",
+          "country": "United States",
+          "lat": 30.333,
+          "lon": -87.142
+        },
+        {
+          "name": "Myrtle Beach",
+          "description": "Center of the Grand Strand, sixty miles of Carolina coast",
+          "city": "Myrtle Beach",
+          "state": "South Carolina",
+          "country": "United States",
+          "lat": 33.689,
+          "lon": -78.886
+        },
+        {
+          "name": "Coney Island Beach",
+          "description": "Classic New York beach beside the famous amusement park",
+          "city": "New York City",
+          "state": "New York",
+          "country": "United States",
+          "lat": 40.5725,
+          "lon": -73.979
+        },
+        {
+          "name": "North Avenue Beach",
+          "description": "Lake Michigan beach with Chicago's skyline as a backdrop",
+          "city": "Chicago",
+          "state": "Illinois",
+          "country": "United States",
+          "lat": 41.915,
+          "lon": -87.625
+        },
+        {
+          "name": "Trunk Bay",
+          "description": "Virgin Islands National Park beach with an underwater snorkel trail",
+          "city": "Cruz Bay",
+          "country": "United States Virgin Islands",
+          "lat": 18.353,
+          "lon": -64.769
+        },
+        {
+          "name": "Flamenco Beach",
+          "description": "Horseshoe bay of white sand on the island of Culebra",
+          "city": "Culebra",
+          "country": "Puerto Rico",
+          "lat": 18.33,
+          "lon": -65.317
+        },
+        {
+          "name": "Long Beach",
+          "description": "Sixteen kilometers of surf and rainforest in Pacific Rim National Park",
+          "city": "Tofino",
+          "state": "British Columbia",
+          "country": "Canada",
+          "lat": 49.067,
+          "lon": -125.743
+        },
+        {
+          "name": "English Bay Beach",
+          "description": "Vancouver's downtown beach famous for sunsets and fireworks",
+          "city": "Vancouver",
+          "state": "British Columbia",
+          "country": "Canada",
+          "lat": 49.2865,
+          "lon": -123.143
+        },
+        {
+          "name": "Cavendish Beach",
+          "description": "Red sandstone cliffs and dunes on Prince Edward Island",
+          "city": "Cavendish",
+          "state": "Prince Edward Island",
+          "country": "Canada",
+          "lat": 46.497,
+          "lon": -63.392
+        },
+        {
+          "name": "Wasaga Beach",
+          "description": "World's longest freshwater beach on Georgian Bay",
+          "city": "Wasaga Beach",
+          "state": "Ontario",
+          "country": "Canada",
+          "lat": 44.523,
+          "lon": -80.017
+        },
+        {
+          "name": "Horseshoe Bay Beach",
+          "description": "Bermuda's famous curving pink sand beach",
+          "city": "Southampton",
+          "country": "Bermuda",
+          "lat": 32.255,
+          "lon": -64.82
+        },
+        {
+          "name": "Tulum Beach",
+          "description": "Caribbean sand below clifftop Maya ruins",
+          "city": "Tulum",
+          "country": "Mexico",
+          "lat": 20.2,
+          "lon": -87.432
+        },
+        {
+          "name": "Hidden Beach",
+          "description": "Secret beach inside a crater on the Marietas Islands",
+          "city": "Punta de Mita",
+          "country": "Mexico",
+          "lat": 20.701,
+          "lon": -105.566
+        },
+        {
+          "name": "Lover's Beach",
+          "description": "Sandy cove beside the famous rock arch at Land's End",
+          "city": "Cabo San Lucas",
+          "country": "Mexico",
+          "lat": 22.878,
+          "lon": -109.896
+        },
+        {
+          "name": "Zicatela Beach",
+          "description": "Big wave beach nicknamed the Mexican Pipeline",
+          "city": "Puerto Escondido",
+          "country": "Mexico",
+          "lat": 15.854,
+          "lon": -97.054
+        },
+        {
+          "name": "Seven Mile Beach",
+          "description": "Grand Cayman's long stretch of soft coral sand",
+          "city": "George Town",
+          "country": "Cayman Islands",
+          "lat": 19.335,
+          "lon": -81.386
+        },
+        {
+          "name": "Eagle Beach",
+          "description": "Wide white sand beach known for its fofoti trees",
+          "city": "Oranjestad",
+          "country": "Aruba",
+          "lat": 12.55,
+          "lon": -70.058
+        },
+        {
+          "name": "Grace Bay",
+          "description": "Turquoise water often ranked among the world's best beaches",
+          "city": "Providenciales",
+          "country": "Turks and Caicos Islands",
+          "lat": 21.798,
+          "lon": -72.184
+        },
+        {
+          "name": "Pink Sands Beach",
+          "description": "Three miles of pale pink sand on Harbour Island",
+          "city": "Dunmore Town",
+          "country": "Bahamas",
+          "lat": 25.503,
+          "lon": -76.633
+        },
+        {
+          "name": "Seven Mile Beach Negril",
+          "description": "Jamaica's famous sunset beach with cliffs nearby",
+          "city": "Negril",
+          "country": "Jamaica",
+          "lat": 18.29,
+          "lon": -78.347
+        },
+        {
+          "name": "Varadero Beach",
+          "description": "Twenty kilometers of white sand on the Hicacos Peninsula",
+          "city": "Varadero",
+          "country": "Cuba",
+          "lat": 23.175,
+          "lon": -81.2
+        },
+        {
+          "name": "Bavaro Beach",
+          "description": "Palm lined Caribbean coast in Punta Cana",
+          "city": "Punta Cana",
+          "country": "Dominican Republic",
+          "lat": 18.688,
+          "lon": -68.418
+        },
+        {
+          "name": "Shoal Bay East",
+          "description": "Anguilla's powdery beach with clear reef water",
+          "city": "The Valley",
+          "country": "Anguilla",
+          "lat": 18.258,
+          "lon": -63.017
+        },
+        {
+          "name": "The Baths",
+          "description": "Giant granite boulders forming pools and grottoes",
+          "city": "Spanish Town",
+          "country": "British Virgin Islands",
+          "lat": 18.429,
+          "lon": -64.444
+        },
+        {
+          "name": "Maho Beach",
+          "description": "Planes pass just overhead landing at Princess Juliana Airport",
+          "city": "Simpson Bay",
+          "country": "Sint Maarten",
+          "lat": 18.039,
+          "lon": -63.12
+        },
+        {
+          "name": "Crane Beach",
+          "description": "Pink tinged sand below cliffs on Barbados' southeast coast",
+          "city": "Bridgetown",
+          "country": "Barbados",
+          "lat": 13.106,
+          "lon": -59.443
+        },
+        {
+          "name": "Pigeon Point",
+          "description": "Tobago's postcard beach with a thatched roof jetty",
+          "city": "Crown Point",
+          "country": "Trinidad and Tobago",
+          "lat": 11.161,
+          "lon": -60.844
+        },
+        {
+          "name": "Manuel Antonio Beach",
+          "description": "Rainforest meets the sea in a national park full of wildlife",
+          "city": "Quepos",
+          "country": "Costa Rica",
+          "lat": 9.383,
+          "lon": -84.143
+        },
+        {
+          "name": "Tamarindo Beach",
+          "description": "Surf town beach on the Guanacaste coast",
+          "city": "Tamarindo",
+          "country": "Costa Rica",
+          "lat": 10.299,
+          "lon": -85.84
+        },
+        {
+          "name": "West Bay Beach",
+          "description": "Roatan beach beside the Mesoamerican Barrier Reef",
+          "city": "Roatan",
+          "country": "Honduras",
+          "lat": 16.273,
+          "lon": -86.6
+        },
+        {
+          "name": "Copacabana Beach",
+          "description": "Four kilometer crescent of sand along Rio's Atlantic shore",
+          "city": "Rio de Janeiro",
+          "country": "Brazil",
+          "lat": -22.9711,
+          "lon": -43.1822
+        },
+        {
+          "name": "Ipanema Beach",
+          "description": "Rio beach made famous by the bossa nova song",
+          "city": "Rio de Janeiro",
+          "country": "Brazil",
+          "lat": -22.9868,
+          "lon": -43.205
+        },
+        {
+          "name": "Sancho Bay",
+          "description": "Fernando de Noronha cove often voted the world's best beach",
+          "city": "Fernando de Noronha",
+          "country": "Brazil",
+          "lat": -3.854,
+          "lon": -32.443
+        },
+        {
+          "name": "Lopes Mendes",
+          "description": "Pristine beach on car free Ilha Grande",
+          "city": "Angra dos Reis",
+          "country": "Brazil",
+          "lat": -23.17,
+          "lon": -44.143
+        },
+        {
+          "name": "Jericoacoara Beach",
+          "description": "Dunes, lagoons and kitesurfing in a remote village",
+          "city": "Jijoca de Jericoacoara",
+          "country": "Brazil",
+          "lat": -2.795,
+          "lon": -40.513
+        },
+        {
+          "name": "Playa Brava",
+          "description": "Punta del Este beach with the famous hand sculpture",
+          "city": "Punta del Este",
+          "country": "Uruguay",
+          "lat": -34.953,
+          "lon": -54.935
+        },
+        {
+          "name": "Anakena",
+          "description": "Palm fringed Easter Island beach with standing moai",
+          "city": "Hanga Roa",
+          "country": "Chile",
+          "lat": -27.073,
+          "lon": -109.323
+        },
+        {
+          "name": "Mancora Beach",
+          "description": "Peru's sunny surf and party beach",
+          "city": "Mancora",
+          "country": "Peru",
+          "lat": -4.105,
+          "lon": -81.05
+        },
+        {
+          "name": "Chicama",
+          "description": "Home of one of the world's longest left breaking waves",
+          "city": "Puerto Malabrigo",
+          "country": "Peru",
+          "lat": -7.703,
+          "lon": -79.44
+        },
+        {
+          "name": "Tortuga Bay",
+          "description": "Galapagos beach where marine iguanas sun on the sand",
+          "city": "Puerto Ayora",
+          "country": "Ecuador",
+          "lat": -0.766,
+          "lon": -90.336
+        },
+        {
+          "name": "Navagio Beach",
+          "description": "Shipwreck Beach, a cove enclosed by towering white cliffs",
+          "city": "Zakynthos",
+          "country": "Greece",
+          "lat": 37.859,
+          "lon": 20.625
+        },
+        {
+          "name": "Elafonisi Beach",
+          "description": "Pink tinted sand and shallow lagoons in western Crete",
+          "city": "Kissamos",
+          "country": "Greece",
+          "lat": 35.271,
+          "lon": 23.541
+        },
+        {
+          "name": "Balos Lagoon",
+          "description": "Turquoise lagoon and white sand on a remote Cretan peninsula",
+          "city": "Kissamos",
+          "country": "Greece",
+          "lat": 35.58,
+          "lon": 23.588
+        },
+        {
+          "name": "Myrtos Beach",
+          "description": "White pebbles and bright blue water below Kefalonia's cliffs",
+          "city": "Kefalonia",
+          "country": "Greece",
+          "lat": 38.343,
+          "lon": 20.535
+        },
+        {
+          "name": "Paradise Beach",
+          "description": "Mykonos beach famous for its all day parties",
+          "city": "Mykonos",
+          "country": "Greece",
+          "lat": 37.41,
+          "lon": 25.354
+        },
+        {
+          "name": "Red Beach",
+          "description": "Dramatic red volcanic cliffs and sand on Santorini",
+          "city": "Akrotiri",
+          "country": "Greece",
+          "lat": 36.348,
+          "lon": 25.394
+        },
+        {
+          "name": "La Concha Beach",
+          "description": "Elegant city beach on San Sebastian's shell shaped bay",
+          "city": "San Sebastian",
+          "country": "Spain",
+          "lat": 43.318,
+          "lon": -1.988
+        },
+        {
+          "name": "Beach of the Cathedrals",
+          "description": "Towering rock arches revealed at low tide",
+          "city": "Ribadeo",
+          "country": "Spain",
+          "lat": 43.554,
+          "lon": -7.156
+        },
+        {
+          "name": "Rodas Beach",
+          "description": "Cies Islands beach once named the world's best by The Guardian",
+          "city": "Vigo",
+          "country": "Spain",
+          "lat": 42.224,
+          "lon": -8.903
+        },
+        {
+          "name": "Ses Illetes",
+          "description": "Caribbean blue water on a narrow Formentera spit",
+          "city": "Formentera",
+          "country": "Spain",
+          "lat": 38.756,
+          "lon": 1.431
+        },
+        {
+          "name": "Cala Macarella",
+          "description": "Pine fringed turquoise cove on Menorca",
+          "city": "Ciutadella",
+          "country": "Spain",
+          "lat": 39.938,
+          "lon": 3.937
+        },
+        {
+          "name": "Barceloneta Beach",
+          "description": "Barcelona's lively city beach on the Mediterranean",
+          "city": "Barcelona",
+          "country": "Spain",
+          "lat": 41.378,
+          "lon": 2.192
+        },
+        {
+          "name": "Maspalomas Beach",
+          "description": "Sand dunes meet the sea on Gran Canaria",
+          "city": "Maspalomas",
+          "country": "Spain",
+          "lat": 27.737,
+          "lon": -15.573
+        },
+        {
+          "name": "Praia da Marinha",
+          "description": "Golden cliffs and sea arches on the Algarve coast",
+          "city": "Lagoa",
+          "country": "Portugal",
+          "lat": 37.09,
+          "lon": -8.412
+        },
+        {
+          "name": "Benagil Beach",
+          "description": "Small beach beside the famous Benagil sea cave",
+          "city": "Lagoa",
+          "country": "Portugal",
+          "lat": 37.087,
+          "lon": -8.426
+        },
+        {
+          "name": "Praia do Norte",
+          "description": "Home of the biggest waves ever surfed",
+          "city": "Nazare",
+          "country": "Portugal",
+          "lat": 39.61,
+          "lon": -9.078
+        },
+        {
+          "name": "Pampelonne Beach",
+          "description": "Saint Tropez's glamorous five kilometer beach",
+          "city": "Ramatuelle",
+          "country": "France",
+          "lat": 43.235,
+          "lon": 6.66
+        },
+        {
+          "name": "Nice Beach",
+          "description": "Pebble beach along the Promenade des Anglais",
+          "city": "Nice",
+          "country": "France",
+          "lat": 43.695,
+          "lon": 7.265
+        },
+        {
+          "name": "Grande Plage",
+          "description": "Biarritz beach that helped bring surfing to Europe",
+          "city": "Biarritz",
+          "country": "France",
+          "lat": 43.484,
+          "lon": -1.56
+        },
+        {
+          "name": "Etretat Beach",
+          "description": "Pebble beach below famous chalk cliff arches",
+          "city": "Etretat",
+          "country": "France",
+          "lat": 49.708,
+          "lon": 0.203
+        },
+        {
+          "name": "Omaha Beach",
+          "description": "Normandy beach of the D Day landings",
+          "city": "Colleville sur Mer",
+          "country": "France",
+          "lat": 49.37,
+          "lon": -0.87
+        },
+        {
+          "name": "Rabbit Beach",
+          "description": "Lampedusa cove of clear water where sea turtles nest",
+          "city": "Lampedusa",
+          "country": "Italy",
+          "lat": 35.515,
+          "lon": 12.559
+        },
+        {
+          "name": "Cala Goloritze",
+          "description": "Limestone spire above a white pebble cove in Sardinia",
+          "city": "Baunei",
+          "country": "Italy",
+          "lat": 40.11,
+          "lon": 9.689
+        },
+        {
+          "name": "La Pelosa",
+          "description": "Shallow turquoise water beside a watchtower in Sardinia",
+          "city": "Stintino",
+          "country": "Italy",
+          "lat": 40.966,
+          "lon": 8.209
+        },
+        {
+          "name": "Positano Beach",
+          "description": "Spiaggia Grande below the colorful Amalfi Coast village",
+          "city": "Positano",
+          "country": "Italy",
+          "lat": 40.628,
+          "lon": 14.485
+        },
+        {
+          "name": "Scala dei Turchi",
+          "description": "Stair shaped white marl cliff above a Sicilian beach",
+          "city": "Realmonte",
+          "country": "Italy",
+          "lat": 37.29,
+          "lon": 13.473
+        },
+        {
+          "name": "Zlatni Rat",
+          "description": "Golden Horn, a pebble spit that shifts with the wind",
+          "city": "Bol",
+          "country": "Croatia",
+          "lat": 43.256,
+          "lon": 16.635
+        },
+        {
+          "name": "Banje Beach",
+          "description": "City beach with views of Dubrovnik's old walls",
+          "city": "Dubrovnik",
+          "country": "Croatia",
+          "lat": 42.641,
+          "lon": 18.116
+        },
+        {
+          "name": "Sveti Stefan Beach",
+          "description": "Pink sand beside a fortified island village",
+          "city": "Budva",
+          "country": "Montenegro",
+          "lat": 42.256,
+          "lon": 18.892
+        },
+        {
+          "name": "Ksamil Beach",
+          "description": "Albanian Riviera beach with small islands offshore",
+          "city": "Ksamil",
+          "country": "Albania",
+          "lat": 39.769,
+          "lon": 20.0
+        },
+        {
+          "name": "Oludeniz Beach",
+          "description": "Blue Lagoon beach famous for paragliding",
+          "city": "Fethiye",
+          "country": "Turkey",
+          "lat": 36.55,
+          "lon": 29.115
+        },
+        {
+          "name": "Nissi Beach",
+          "description": "Popular white sand beach with an islet you can wade to",
+          "city": "Ayia Napa",
+          "country": "Cyprus",
+          "lat": 34.988,
+          "lon": 33.969
+        },
+        {
+          "name": "Rhossili Bay",
+          "description": "Three miles of sand on Wales' Gower Peninsula",
+          "city": "Swansea",
+          "country": "United Kingdom",
+          "lat": 51.57,
+          "lon": -4.29
+        },
+        {
+          "name": "Porthcurno Beach",
+          "description": "Cornish cove of white shell sand beside the Minack Theatre",
+          "city": "Penzance",
+          "country": "United Kingdom",
+          "lat": 50.042,
+          "lon": -5.655
+        },
+        {
+          "name": "Fistral Beach",
+          "description": "Britain's best known surf beach",
+          "city": "Newquay",
+          "country": "United Kingdom",
+          "lat": 50.417,
+          "lon": -5.1
+        },
+        {
+          "name": "Durdle Door",
+          "description": "Natural limestone arch on the Jurassic Coast",
+          "city": "Wareham",
+          "country": "United Kingdom",
+          "lat": 50.621,
+          "lon": -2.277
+        },
+        {
+          "name": "Brighton Beach",
+          "description": "Pebble beach beside the Victorian Palace Pier",
+          "city": "Brighton",
+          "country": "United Kingdom",
+          "lat": 50.819,
+          "lon": -0.137
+        },
+        {
+          "name": "Luskentyre Beach",
+          "description": "White sand and turquoise water in Scotland's Outer Hebrides",
+          "city": "Tarbert",
+          "country": "United Kingdom",
+          "lat": 57.887,
+          "lon": -6.946
+        },
+        {
+          "name": "Keem Bay",
+          "description": "Sheltered Achill Island cove between steep green hills",
+          "city": "Achill",
+          "country": "Ireland",
+          "lat": 53.968,
+          "lon": -10.195
+        },
+        {
+          "name": "Scheveningen Beach",
+          "description": "Busy Dutch beach resort with a pier and Ferris wheel",
+          "city": "The Hague",
+          "country": "Netherlands",
+          "lat": 52.11,
+          "lon": 4.275
+        },
+        {
+          "name": "Haukland Beach",
+          "description": "White sand Arctic beach in the Lofoten Islands",
+          "city": "Leknes",
+          "country": "Norway",
+          "lat": 68.1985,
+          "lon": 13.529
+        },
+        {
+          "name": "Reynisfjara",
+          "description": "Black sand beach with basalt columns and sneaker waves",
+          "city": "Vik",
+          "country": "Iceland",
+          "lat": 63.404,
+          "lon": -19.045
+        },
+        {
+          "name": "Anse Source d'Argent",
+          "description": "Granite boulders and white sand on La Digue",
+          "city": "La Digue",
+          "country": "Seychelles",
+          "lat": -4.371,
+          "lon": 55.827
+        },
+        {
+          "name": "Anse Lazio",
+          "description": "Praslin beach framed by granite and takamaka trees",
+          "city": "Praslin",
+          "country": "Seychelles",
+          "lat": -4.293,
+          "lon": 55.701
+        },
+        {
+          "name": "Le Morne Beach",
+          "description": "Lagoon beach beneath Le Morne Brabant mountain",
+          "city": "Le Morne",
+          "country": "Mauritius",
+          "lat": -20.454,
+          "lon": 57.315
+        },
+        {
+          "name": "Camps Bay Beach",
+          "description": "Palm lined beach beneath the Twelve Apostles",
+          "city": "Cape Town",
+          "country": "South Africa",
+          "lat": -33.951,
+          "lon": 18.377
+        },
+        {
+          "name": "Boulders Beach",
+          "description": "Sheltered coves home to a colony of African penguins",
+          "city": "Simon's Town",
+          "country": "South Africa",
+          "lat": -34.197,
+          "lon": 18.451
+        },
+        {
+          "name": "Supertubes",
+          "description": "Jeffreys Bay's world class right hand point break",
+          "city": "Jeffreys Bay",
+          "country": "South Africa",
+          "lat": -34.031,
+          "lon": 24.93
+        },
+        {
+          "name": "Diani Beach",
+          "description": "Kenya's long white sand coast on the Indian Ocean",
+          "city": "Ukunda",
+          "country": "Kenya",
+          "lat": -4.317,
+          "lon": 39.58
+        },
+        {
+          "name": "Nungwi Beach",
+          "description": "Zanzibar beach with dhows and sunsets",
+          "city": "Nungwi",
+          "country": "Tanzania",
+          "lat": -5.727,
+          "lon": 39.293
+        },
+        {
+          "name": "Tofo Beach",
+          "description": "Mozambique beach known for whale sharks and manta rays",
+          "city": "Inhambane",
+          "country": "Mozambique",
+          "lat": -23.853,
+          "lon": 35.547
+        },
+        {
+          "name": "Gordon Beach",
+          "description": "Tel Aviv's lively Mediterranean city beach",
+          "city": "Tel Aviv",
+          "country": "Israel",
+          "lat": 32.083,
+          "lon": 34.768
+        },
+        {
+          "name": "Maya Bay",
+          "description": "Cliff ringed cove made famous by the film The Beach",
+          "city": "Krabi",
+          "country": "Thailand",
+          "lat": 7.678,
+          "lon": 98.766
+        },
+        {
+          "name": "Railay Beach",
+          "description": "Limestone cliffs and rock climbing reachable only by boat",
+          "city": "Krabi",
+          "country": "Thailand",
+          "lat": 8.011,
+          "lon": 98.837
+        },
+        {
+          "name": "Haad Rin",
+          "description": "Koh Phangan beach of the Full Moon Party",
+          "city": "Koh Phangan",
+          "country": "Thailand",
+          "lat": 9.676,
+          "lon": 100.064
+        },
+        {
+          "name": "White Beach",
+          "description": "Boracay's powdery four kilometer beach",
+          "city": "Boracay",
+          "country": "Philippines",
+          "lat": 11.962,
+          "lon": 121.925
+        },
+        {
+          "name": "Nacpan Beach",
+          "description": "Long golden beach near El Nido in Palawan",
+          "city": "El Nido",
+          "country": "Philippines",
+          "lat": 11.32,
+          "lon": 119.417
+        },
+        {
+          "name": "Kuta Beach",
+          "description": "Bali's famous surf and sunset beach",
+          "city": "Kuta",
+          "country": "Indonesia",
+          "lat": -8.718,
+          "lon": 115.169
+        },
+        {
+          "name": "Padang Padang Beach",
+          "description": "Small cove and famous reef break on Bali's Bukit Peninsula",
+          "city": "Uluwatu",
+          "country": "Indonesia",
+          "lat": -8.811,
+          "lon": 115.103
+        },
+        {
+          "name": "Kelingking Beach",
+          "description": "Hidden beach below a cliff shaped like a dinosaur",
+          "city": "Nusa Penida",
+          "country": "Indonesia",
+          "lat": -8.75,
+          "lon": 115.474
+        },
+        {
+          "name": "My Khe Beach",
+          "description": "Long city beach once known as China Beach",
+          "city": "Da Nang",
+          "country": "Vietnam",
+          "lat": 16.06,
+          "lon": 108.247
+        },
+        {
+          "name": "Unawatuna Beach",
+          "description": "Palm fringed bay on Sri Lanka's south coast",
+          "city": "Galle",
+          "country": "Sri Lanka",
+          "lat": 6.01,
+          "lon": 80.249
+        },
+        {
+          "name": "Mirissa Beach",
+          "description": "Crescent beach and whale watching hub",
+          "city": "Mirissa",
+          "country": "Sri Lanka",
+          "lat": 5.945,
+          "lon": 80.458
+        },
+        {
+          "name": "Arugam Bay",
+          "description": "Sri Lanka's premier surf point",
+          "city": "Pottuvil",
+          "country": "Sri Lanka",
+          "lat": 6.84,
+          "lon": 81.836
+        },
+        {
+          "name": "Palolem Beach",
+          "description": "Crescent of sand lined with palms in south Goa",
+          "city": "Canacona",
+          "country": "India",
+          "lat": 15.01,
+          "lon": 74.023
+        },
+        {
+          "name": "Radhanagar Beach",
+          "description": "Celebrated Andaman Islands beach with forest to the shore",
+          "city": "Havelock Island",
+          "country": "India",
+          "lat": 11.984,
+          "lon": 92.951
+        },
+        {
+          "name": "Marina Beach",
+          "description": "One of the world's longest urban beaches",
+          "city": "Chennai",
+          "country": "India",
+          "lat": 13.05,
+          "lon": 80.283
+        },
+        {
+          "name": "Cox's Bazar Beach",
+          "description": "One of the longest natural sea beaches in the world",
+          "city": "Cox's Bazar",
+          "country": "Bangladesh",
+          "lat": 21.427,
+          "lon": 91.97
+        },
+        {
+          "name": "Yalong Bay",
+          "description": "Tropical bay on Hainan Island, China's Hawaii",
+          "city": "Sanya",
+          "country": "China",
+          "lat": 18.228,
+          "lon": 109.64
+        },
+        {
+          "name": "Repulse Bay",
+          "description": "Crescent beach on Hong Kong Island's south side",
+          "city": "Hong Kong",
+          "country": "Hong Kong",
+          "lat": 22.236,
+          "lon": 114.196
+        },
+        {
+          "name": "Haeundae Beach",
+          "description": "South Korea's most famous city beach",
+          "city": "Busan",
+          "country": "South Korea",
+          "lat": 35.159,
+          "lon": 129.16
+        },
+        {
+          "name": "Yonaha Maehama Beach",
+          "description": "Seven kilometers of white sand in Okinawa's Miyako Islands",
+          "city": "Miyakojima",
+          "country": "Japan",
+          "lat": 24.734,
+          "lon": 125.26
+        },
+        {
+          "name": "Kabira Bay",
+          "description": "Jade green bay on Ishigaki Island",
+          "city": "Ishigaki",
+          "country": "Japan",
+          "lat": 24.453,
+          "lon": 124.144
+        },
+        {
+          "name": "Bondi Beach",
+          "description": "Sydney's iconic surf beach and lifesaving landmark",
+          "city": "Sydney",
+          "state": "New South Wales",
+          "country": "Australia",
+          "lat": -33.891,
+          "lon": 151.277
+        },
+        {
+          "name": "Hyams Beach",
+          "description": "Said to have some of the whitest sand in the world",
+          "city": "Jervis Bay",
+          "state": "New South Wales",
+          "country": "Australia",
+          "lat": -35.101,
+          "lon": 150.692
+        },
+        {
+          "name": "Byron Bay Main Beach",
+          "description": "Laid back surf beach near Australia's most easterly point",
+          "city": "Byron Bay",
+          "state": "New South Wales",
+          "country": "Australia",
+          "lat": -28.642,
+          "lon": 153.613
+        },
+        {
+          "name": "Whitehaven Beach",
+          "description": "Pure silica sand in the Whitsunday Islands",
+          "city": "Airlie Beach",
+          "state": "Queensland",
+          "country": "Australia",
+          "lat": -20.282,
+          "lon": 149.039
+        },
+        {
+          "name": "Surfers Paradise Beach",
+          "description": "High rise lined surf beach on the Gold Coast",
+          "city": "Gold Coast",
+          "state": "Queensland",
+          "country": "Australia",
+          "lat": -28.002,
+          "lon": 153.431
+        },
+        {
+          "name": "Bells Beach",
+          "description": "Home of the world's longest running pro surfing contest",
+          "city": "Torquay",
+          "state": "Victoria",
+          "country": "Australia",
+          "lat": -38.37,
+          "lon": 144.281
+        },
+        {
+          "name": "Wineglass Bay",
+          "description": "Perfect curve of white sand in Freycinet National Park",
+          "city": "Coles Bay",
+          "state": "Tasmania",
+          "country": "Australia",
+          "lat": -42.154,
+          "lon": 148.301
+        },
+        {
+          "name": "Cable Beach",
+          "description": "Camel rides at sunset on twenty two kilometers of sand",
+          "city": "Broome",
+          "state": "Western Australia",
+          "country": "Australia",
+          "lat": -17.933,
+          "lon": 122.21
+        },
+        {
+          "name": "Piha Beach",
+          "description": "Black sand surf beach beside Lion Rock",
+          "city": "Auckland",
+          "country": "New Zealand",
+          "lat": -36.954,
+          "lon": 174.468
+        },
+        {
+          "name": "Cathedral Cove",
+          "description": "Beach reached through a huge natural rock arch",
+          "city": "Hahei",
+          "country": "New Zealand",
+          "lat": -36.827,
+          "lon": 175.79
+        },
+        {
+          "name": "Hot Water Beach",
+          "description": "Dig your own hot spring pool in the sand at low tide",
+          "city": "Whitianga",
+          "country": "New Zealand",
+          "lat": -36.889,
+          "lon": 175.824
+        },
+        {
+          "name": "Koekohe Beach",
+          "description": "Home of the giant round Moeraki Boulders",
+          "city": "Moeraki",
+          "country": "New Zealand",
+          "lat": -45.345,
+          "lon": 170.827
+        },
+        {
+          "name": "Natadola Beach",
+          "description": "Fiji's finest stretch of white sand on the main island",
+          "city": "Sigatoka",
+          "country": "Fiji",
+          "lat": -18.106,
+          "lon": 177.317
+        },
+        {
+          "name": "Matira Beach",
+          "description": "Bora Bora's best public beach facing the lagoon",
+          "city": "Bora Bora",
+          "country": "French Polynesia",
+          "lat": -16.537,
+          "lon": -151.738
+        }
+      ]
+    }
+  ]
+}

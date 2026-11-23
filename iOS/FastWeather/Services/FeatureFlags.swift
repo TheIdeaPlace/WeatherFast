@@ -157,6 +157,15 @@ class FeatureFlags: ObservableObject {
         }
     }
     
+    /// Enable/disable Places of the World in the Browse tab: curated lists of famous places
+    /// (bridges, beaches, extreme-weather spots) alongside U.S. states and countries.
+    /// On by default. When disabled, the Places of the World entry is hidden from Browse.
+    @Published var placesOfTheWorldEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(placesOfTheWorldEnabled, forKey: "feature_places_of_the_world_enabled")
+        }
+    }
+
     // MARK: - Initialization
     
     private init() {
@@ -177,6 +186,7 @@ class FeatureFlags: ObservableObject {
         self.myLocationEnabled = UserDefaults.standard.bool(forKey: "feature_my_location_enabled")
         self.alertBrowserEnabled = UserDefaults.standard.bool(forKey: "feature_alert_browser_enabled")
         self.airQualityEnabled = UserDefaults.standard.bool(forKey: "feature_air_quality_enabled")
+        self.placesOfTheWorldEnabled = UserDefaults.standard.bool(forKey: "feature_places_of_the_world_enabled")
 
         // Default values (if first launch or not set)
         // All features enabled by default for production
@@ -228,6 +238,9 @@ class FeatureFlags: ObservableObject {
         if !UserDefaults.standard.contains(key: "feature_air_quality_enabled") {
             self.airQualityEnabled = true  // On by default
         }
+        if !UserDefaults.standard.contains(key: "feature_places_of_the_world_enabled") {
+            self.placesOfTheWorldEnabled = true  // On by default
+        }
     }
     
     // MARK: - Helper Methods
@@ -248,6 +261,7 @@ class FeatureFlags: ObservableObject {
         myLocationEnabled = true
         alertBrowserEnabled = true
         airQualityEnabled = true
+        placesOfTheWorldEnabled = true
         debugLog("🔧 Feature flags reset to defaults")
     }
     
@@ -267,6 +281,7 @@ class FeatureFlags: ObservableObject {
         myLocationEnabled = true
         alertBrowserEnabled = true
         airQualityEnabled = true
+        placesOfTheWorldEnabled = true
         debugLog("🔧 All features enabled")
     }
 
@@ -285,6 +300,7 @@ class FeatureFlags: ObservableObject {
         myLocationEnabled = false
         alertBrowserEnabled = false
         airQualityEnabled = false
+        placesOfTheWorldEnabled = false
         debugLog("🔧 All features disabled")
     }
 }

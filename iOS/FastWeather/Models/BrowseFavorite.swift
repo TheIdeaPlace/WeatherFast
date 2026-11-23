@@ -10,6 +10,7 @@ import Foundation
 enum BrowseRegionType: String, CaseIterable, Codable, Hashable {
     case us = "United States"
     case international = "International"
+    case places = "Places of the World"
 }
 
 struct BrowseFavorite: Identifiable, Codable, Hashable {

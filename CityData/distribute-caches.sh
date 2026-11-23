@@ -42,6 +42,11 @@ copy_files() {
 
 echo "[1/3] iOS..."
 copy_files "$ROOT_DIR/iOS/FastWeather/Resources" "iOS/FastWeather/Resources/"
+# Places of the World is iOS-only for now; add web/ and windows/ copies when they get the UI
+if [ -f "$SCRIPT_DIR/places-of-the-world.json" ]; then
+    cp "$SCRIPT_DIR/places-of-the-world.json" "$ROOT_DIR/iOS/FastWeather/Resources/"
+    echo "  ✓ places-of-the-world.json"
+fi
 echo ""
 
 echo "[2/3] Web/PWA..."
