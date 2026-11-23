@@ -11,6 +11,7 @@ import SwiftUI
 class CityDataService: ObservableObject {
     @Published var usCitiesByState: [String: [CityLocation]] = [:]
     @Published var internationalCitiesByCountry: [String: [CityLocation]] = [:]
+    @Published var placeCategories: [WorldPlaceCategory] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     
@@ -50,6 +51,18 @@ class CityDataService: ObservableObject {
             debugLog("❌ Could not find international-cities-cached.json in bundle")
             errorMessage = "Could not find international cities data file"
         }
+
+        // Load Places of the World
+        if let url = Bundle.main.url(forResource: "places-of-the-world", withExtension: "json") {
+            do {
+                let data = try Data(contentsOf: url)
+                placeCategories = try JSONDecoder().decode(WorldPlacesFile.self, from: data).categories
+            } catch {
+                debugLog("❌ Error loading places of the world: \(error)")
+            }
+        } else {
+            debugLog("❌ Could not find places-of-the-world.json in bundle")
+        }
     }
     
     var usStates: [String] {
@@ -66,6 +79,10 @@ class CityDataService: ObservableObject {
     
     func cities(forCountry country: String) -> [CityLocation] {
         internationalCitiesByCountry[country] ?? []
+    }
+
+    func places(forCategory category: String) -> [WorldPlace] {
+        placeCategories.first { $0.name == category }?.places ?? []
     }
     
     /// Get all cities from all states and countries combined

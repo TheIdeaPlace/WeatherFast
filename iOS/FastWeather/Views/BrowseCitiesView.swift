@@ -12,6 +12,7 @@ enum BrowseDestination: Hashable {
     case region(BrowseRegionType)
     case stateCities(name: String, sortOrder: BrowseSortOrder?)
     case countryCities(name: String, sortOrder: BrowseSortOrder?)
+    case placeCategory(name: String, sortOrder: BrowseSortOrder?)
     case alertBrowser
     case alertMeteoAlarmCountries
     case alertDigest(AlertRegion)
@@ -24,25 +25,32 @@ struct BrowseCitiesView: View {
     @ObservedObject private var featureFlags = FeatureFlags.shared
     @State private var navPath: [BrowseDestination] = []
 
+    // Hide Places of the World favorites when the feature is switched off
+    private var visibleFavorites: [BrowseFavorite] {
+        favoritesService.favorites.filter { $0.regionType != .places || featureFlags.placesOfTheWorldEnabled }
+    }
+
     var body: some View {
         NavigationStack(path: $navPath) {
             List {
-                if !favoritesService.favorites.isEmpty {
+                if !visibleFavorites.isEmpty {
                     Section("Favorites") {
-                        ForEach(favoritesService.favorites) { favorite in
+                        ForEach(visibleFavorites) { favorite in
                             Button {
                                 switch favorite.regionType {
                                 case .us:
                                     navPath.append(.stateCities(name: favorite.name, sortOrder: favorite.sortOrder))
                                 case .international:
                                     navPath.append(.countryCities(name: favorite.name, sortOrder: favorite.sortOrder))
+                                case .places:
+                                    navPath.append(.placeCategory(name: favorite.name, sortOrder: favorite.sortOrder))
                                 }
                             } label: {
                                 Text(favorite.name)
                                     .foregroundColor(.primary)
                             }
                             .accessibilityLabel(favorite.name)
-                            .accessibilityHint("Double tap to browse cities")
+                            .accessibilityHint(favorite.regionType == .places ? "Double tap to browse places" : "Double tap to browse cities")
                         }
                     }
                 }
@@ -63,6 +71,16 @@ struct BrowseCitiesView: View {
                             .foregroundColor(.primary)
                     }
                     .accessibilityHint("Double tap to browse countries")
+
+                    if featureFlags.placesOfTheWorldEnabled {
+                        Button {
+                            navPath.append(.region(.places))
+                        } label: {
+                            Label("Places of the World", systemImage: "mappin.and.ellipse")
+                                .foregroundColor(.primary)
+                        }
+                        .accessibilityHint("Double tap to browse famous bridges, beaches and extreme weather places")
+                    }
                 }
 
                 if featureFlags.radarLoopEnabled {
@@ -98,6 +116,8 @@ struct BrowseCitiesView: View {
                     USStatesListView(cityDataService: cityDataService, navPath: $navPath)
                 case .region(.international):
                     CountriesListView(cityDataService: cityDataService, navPath: $navPath)
+                case .region(.places):
+                    PlaceCategoriesListView(cityDataService: cityDataService, navPath: $navPath)
                 case .stateCities(let name, let sortOrder):
                     StateCitiesView(
                         state: name,
@@ -108,6 +128,13 @@ struct BrowseCitiesView: View {
                 case .countryCities(let name, let sortOrder):
                     CountryCitiesView(
                         country: name,
+                        cityDataService: cityDataService,
+                        favoritesService: favoritesService,
+                        overrideSortOrder: sortOrder
+                    )
+                case .placeCategory(let name, let sortOrder):
+                    PlaceCategoryView(
+                        category: name,
                         cityDataService: cityDataService,
                         favoritesService: favoritesService,
                         overrideSortOrder: sortOrder

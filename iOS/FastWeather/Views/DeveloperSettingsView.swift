@@ -39,6 +39,10 @@ struct DeveloperSettingsView: View {
                         .accessibilityLabel("Air Quality feature toggle")
                         .accessibilityHint(featureFlags.airQualityEnabled ? "Air Quality is enabled. An Air Quality section appears in city detail, using observed monitors where available and deferring to active air quality alerts." : "Air Quality is disabled. The Air Quality section will not appear in city detail.")
 
+                    Toggle("Places of the World", isOn: $featureFlags.placesOfTheWorldEnabled)
+                        .accessibilityLabel("Places of the World feature toggle")
+                        .accessibilityHint(featureFlags.placesOfTheWorldEnabled ? "Places of the World is enabled. The Browse tab lists famous bridges, beaches and extreme weather places." : "Places of the World is disabled and will not appear in the Browse tab.")
+
                     Toggle("Specific Place Names", isOn: $featureFlags.specificPlaceNamesEnabled)
                         .accessibilityLabel("Specific Place Names feature toggle")
                         .accessibilityHint(featureFlags.specificPlaceNamesEnabled ? "Specific place names are enabled. Searching for an airport or university shows its full name instead of just the city." : "Specific place names are disabled. All searches label the result by city name only.")

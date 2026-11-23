@@ -117,6 +117,7 @@ All flags are toggled in `DeveloperSettingsView` (Settings → Developer Setting
 | `weatherKitConditionsEnabled` | `true` | Use WeatherKit's observation-informed current condition instead of Open-Meteo's model `weather_code` for "now" (today only; unmappable conditions fall back to Open-Meteo) |
 | `specificPlaceNamesEnabled` | `true` | Show specific place names (airports, universities, streets) instead of city-only labels; when off, searches fall back to locality-only |
 | `myLocationEnabled` | `true` | Show the My Location section on the city list; when off, the whole My Location feature is hidden |
+| `placesOfTheWorldEnabled` | `true` | Places of the World entry in Browse (curated bridges, beaches, extreme-weather places from `places-of-the-world.json`) |
 
 **Adding a feature-flagged feature:**
 1. Add `@Published var featureEnabled: Bool` to `FeatureFlags.swift`
@@ -220,5 +221,7 @@ python build-international-cache.py   # International (~40-50 min)
 ./distribute-caches.sh               # macOS/Linux
 # distribute-caches.bat               # Windows
 ```
+
+**Places of the World** (`CityData/places-of-the-world.json`) is hand-curated, not geocoded: an array of categories, each with up to 200 places (`name`, `description`, optional `city`/`state`, `country`, `lat`, `lon`). Open-Meteo uses the elevation at the exact coordinates, so summits and weather stations must be pinned on the spot itself. Run `python3 verify-places.py` after editing (structure checks plus a Nominatim country check, cached), then `./distribute-caches.sh`. iOS only for now.
 
 Current coverage: 93 countries (~20 cities each) + 50 US states (50 cities each) = ~4,360 pre-geocoded locations. Scripts respect Nominatim's 1 req/sec rate limit and are resumable.
