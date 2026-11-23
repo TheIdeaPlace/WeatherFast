@@ -1,0 +1,37 @@
+***What's in this build***
+- New: Open at Launch, which opens WeatherFast on a city of your choice instead of your city list.
+- Preliminary radar feature, off by default. Instructions for turning it on are below.
+
+***New: Open at Launch***
+Choose a city and WeatherFast starts on that city's full weather. Back takes you to your city list.
+
+Open at Launch is in each city's Actions menu (Flat view), when you touch and hold a city or use its VoiceOver actions (List view), in the Actions menu on a city's own screen, and in Settings, Display Options, Open at Launch, which also shows your current choice. My Location can be your choice too. On the chosen city the option reads Stop Opening at Launch.
+
+It only applies when the app starts, so switching away briefly leaves you where you were. Each device keeps its own choice, even with iCloud sync on.
+
+***Preliminary radar (off by default)***
+To turn it on: go to Settings, scroll to the bottom, choose Developer Settings, and turn on Radar Loop. Then open any city, open the Actions menu and choose Radar. To also try forecast frames, turn on Radar Forecast Frames.
+
+The switch at the top of the Radar screen picks the source:
+- NWS: the National Weather Service image from the station nearest your city. Newest picture, a frame every 2 minutes over the last 18 minutes. Includes Alaska, Hawaii and Puerto Rico.
+- Composite: all U.S. radars blended on a map centred on your city. 12 frames over 55 minutes. Map area chooses Local (about 140 miles) or Regional (about 400 miles).
+- Canada: Environment Canada's composite of Canadian and U.S. radars. 3 hours of history, shades areas no radar can see, and shows snow separately from rain.
+
+Forecast frames (experimental, Composite only): about two hours of model forecast after the latest radar frame. They have a purple border and a "FORECAST · model, not radar" banner, and VoiceOver says "Forecast, not radar" on each.
+
+Browse Radar Stations, in the Browse tab, lists all 159 U.S. and 32 Canadian radar sites. You can sort and search them, and open a station's radar directly.
+
+The loop plays on its own. Swipe left or right on the picture, or use Previous frame and Next frame, to step through time. Pinch to zoom. About Radar explains each source.
+
+VoiceOver: each frame is a real image, so Intelligent Image Description in iOS 27 can describe it. The loop stays paused while VoiceOver is on. Swipe left or right with three fingers to move between frames.
+
+***What I'd like feedback on***
+- Is Open at Launch easy to find and to turn off again? VoiceOver users: when the app opens on a city, is it clear how to get back to the list?
+- Radar: which source is most useful to you, and why? Is the playback speed right?
+- VoiceOver users: do the radar descriptions tell you what you want to know?
+- Anything wrong: radar that doesn't match the weather outside, blank areas, slow loading, or a place whose radar won't load.
+
+***Fixed in 1.6.0***
+- The daylight gained or lost since yesterday now shows.
+- "Couldn't load the full forecast" no longer appears over a forecast that loaded fine.
+- Settings, Data Sources & Attribution now credits AirNow (U.S. EPA) and the Copernicus Atmosphere Monitoring Service for air quality data.
