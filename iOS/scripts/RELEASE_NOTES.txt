@@ -1,17 +1,19 @@
-New in this build
+New in this build: Places of the World
 
-Places of the World: the Browse tab has a new entry next to United States and International. It opens curated lists of famous places around the world, and you can check the weather at any of them the same way you browse a state or a country.
+The Browse tab has a new entry next to United States and International. Places of the World opens lists of famous places around the world, and you can check the weather at any of them, the same way you browse a state or a country.
 
-Three lists to start:
-- Famous Bridges: about 150 bridges, from the Golden Gate to the Millau Viaduct.
-- Extreme Weather: about 150 places known for heat, cold, wind, rain, snow, lightning and more, including summits and Antarctic stations.
-- Beaches of the World: about 145 famous beaches on every continent.
+There are three lists to start:
+- Famous Bridges: 153 bridges, from the Golden Gate to the Millau Viaduct.
+- Extreme Weather: 150 places known for record heat, cold, wind, rain, snow and lightning, including mountain summits and Antarctic research stations.
+- Beaches of the World: 144 famous beaches on every continent.
 
-Each place shows its current weather, where it is, and a one-line note on why it's notable. Open one for the full forecast, or use the Add to My Cities action to save it. Saved places keep their name, for example "Golden Gate Bridge, San Francisco". Lists can be sorted, searched by name or country, and added to Browse favorites with the star button.
+Each place shows its current weather, where it is, and a short note on why it's known. Open a place for the full forecast, or use the Add to My Cities action to save it. A saved place keeps its name, for example "Golden Gate Bridge, San Francisco". You can sort a list, search it by name or by country or state, and star it to keep it at the top of Browse.
 
 What to test
-- Browse, then Places of the World: open each list and check that weather loads.
+- In Browse, open Places of the World, then each of the three lists, and check that the weather loads.
 - With VoiceOver, check that each place reads its name, weather, location and note, and that the Add to My Cities action works.
-- Search a list by a country or state name, for example Japan or Hawaii.
-- Open a few places and check the forecast looks right for where they are.
-- Tell us about any place that seems to be in the wrong spot or has a wrong note.
+- Search a list by a country or state, such as Japan or Hawaii.
+- Open a few places and check that the forecast makes sense for where they are. Summits and polar stations should be very cold.
+- Star a list, then check that it appears under Favorites in Browse.
+- If a place seems to be in the wrong spot, or its note is wrong, please tell us which one.
+- What other lists would you like to see? Send us your ideas through TestFlight feedback.
