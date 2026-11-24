@@ -1179,6 +1179,8 @@ async function displayLocationCities(locationName, cityNames, totalCount = null,
     // Keep state selector visible and update heading
     stateSelectorSection.hidden = false;
     heading.innerHTML = `Cities in ${locationName} <button id="back-to-your-cities-btn" class="back-btn">← Back to Your Cities</button>`;
+    currentBrowseListName = `Cities in ${locationName}`;
+    clearCityListRole(container);
     container.innerHTML = '<p class="loading-text">Loading weather data... (0/' + cityNames.length + ')</p>';
     cityListSection.hidden = false;
     
@@ -1368,6 +1370,8 @@ async function displayPlaces(category) {
     stateSelectorSection.hidden = false;
     cityListSection.hidden = false;
     setHeading(category.name);
+    currentBrowseListName = category.name;
+    clearCityListRole(container);
     container.innerHTML = '';
     const loading = document.createElement('p');
     loading.className = 'loading-text';
@@ -1454,6 +1458,11 @@ function renderStateCitiesWithWeather(container, citiesData) {
         existingControls.remove();
     }
     
+    // Leave nothing from the last view: list view's tabindex and
+    // aria-activedescendant on a table region point at items that are gone
+    container.removeAttribute('tabindex');
+    container.removeAttribute('aria-activedescendant');
+
     if (currentView === 'table') {
         renderStateCitiesTableWithWeather(container, citiesData);
     } else if (currentView === 'list') {
@@ -1461,20 +1470,32 @@ function renderStateCitiesWithWeather(container, citiesData) {
     } else {
         renderStateCitiesFlatWithWeather(container, citiesData);
     }
-    nameCityList(container);
+    nameCityList(container, currentBrowseListName || `Cities in ${currentStateName}`);
 }
 
 // Give the city list a short name for screen readers, in every view: the
 // list view's listbox must have one (WCAG 4.1.2). Just the name, no usage
 // instructions, which were read again on every visit.
-function nameCityList(container, yourCities = false) {
-    let name = 'Your cities';
-    if (!yourCities && currentStateName) {
-        const isPlacesList = cachedPlaceCategories.some(c => c.name === currentStateName);
-        name = isPlacesList ? currentStateName : `Cities in ${currentStateName}`;
+// ARIA allows a name only on an element with a role, so a container left as
+// a plain div loses its name rather than carrying one nothing reads.
+function nameCityList(container, name) {
+    if (container.getAttribute('role')) {
+        container.setAttribute('aria-label', name);
+    } else {
+        container.removeAttribute('aria-label');
     }
-    container.setAttribute('aria-label', name);
 }
+
+// While a browse list loads, the container holds only the loading text: a
+// plain div, not a list box still named for what was there before.
+function clearCityListRole(container) {
+    ['role', 'tabindex', 'aria-activedescendant', 'aria-label']
+        .forEach(attr => container.removeAttribute(attr));
+    const controls = document.querySelector('.list-view-controls');
+    if (controls) controls.remove();
+}
+
+let currentBrowseListName = null;  // the browse list's screen reader name, e.g. "Cities in Ohio"
 
 // Add city from state selection
 async function addCityFromState(cityData) {
@@ -1587,7 +1608,8 @@ function renderStateCitiesFlatWithWeather(container, citiesData) {
     container.setAttribute('role', 'list');
     
     citiesData.forEach((cityData) => {
-        const card = document.createElement('article');
+        // A div, not an article: ARIA doesn't allow role=listitem on article
+        const card = document.createElement('div');
         card.className = 'city-card state-city-card';
         card.setAttribute('role', 'listitem');
         
@@ -2231,6 +2253,11 @@ function renderCityList() {
     if (Object.keys(cities).length === 0) {
         console.log('No cities, showing empty state');
         container.innerHTML = '';
+        // An empty list: not a list box you can Tab to, or one named for a
+        // browse list you just left
+        clearCityListRole(container);
+        container.setAttribute('role', 'list');
+        nameCityList(container, 'Your cities');
         emptyState.hidden = false;
         // Clean up list view controls if they exist
         const existingControls = document.querySelector('.list-view-controls');
@@ -2267,7 +2294,7 @@ function renderCityList() {
         console.log('Rendering flat view');
         renderFlatView(container);
     }
-    nameCityList(container, true);
+    nameCityList(container, 'Your cities');
 
     console.log('renderCityList completed, container children:', container.children.length);
 }
@@ -2404,7 +2431,8 @@ function renderFlatView(container) {
 
 // Create city card
 function createCityCard(cityName, lat, lon, weather, index) {
-    const card = document.createElement('article');
+    // A div, not an article: ARIA doesn't allow role=listitem on article
+    const card = document.createElement('div');
     card.className = 'city-card';
     card.setAttribute('role', 'listitem');
     
@@ -2679,7 +2707,8 @@ function createButton(text, ariaLabelOrOnClick, onClickIfThreeParams = null) {
 
 // Table view
 function renderTableView(container) {
-    container.removeAttribute('role');
+    // A named region, like the browse table, so the name has a role to sit on
+    container.setAttribute('role', 'region');
     container.removeAttribute('tabindex');
     container.removeAttribute('aria-activedescendant');
     
