@@ -10,6 +10,8 @@ const {
     placeLocationLine,
     placeSavedName,
     placeCategoryLabel,
+    isNwsPlace,
+    nwsPlaceSavedNames,
     placeToCityInfo,
     chunk,
     weatherResultsFromResponse
@@ -49,6 +51,7 @@ describe('place helpers', () => {
     test('city info for the browse views', () => {
         expect(placeToCityInfo(GOLDEN_GATE)).toEqual({
             name: 'Golden Gate Bridge',
+            label: 'Golden Gate Bridge',
             display: 'Golden Gate Bridge, San Francisco',
             state: 'California',
             country: 'United States',
@@ -59,6 +62,15 @@ describe('place helpers', () => {
             weather: null
         });
         expect(placeToCityInfo(VOSTOK).state).toBe('');
+    });
+
+    test('NWS covers the US and its territories, by saved name', () => {
+        expect(isNwsPlace(GOLDEN_GATE)).toBe(true);
+        expect(isNwsPlace({ country: 'Puerto Rico' })).toBe(true);
+        expect(isNwsPlace({ country: 'United States Virgin Islands' })).toBe(true);
+        expect(isNwsPlace(VOSTOK)).toBe(false);
+        const names = nwsPlaceSavedNames([{ name: 'x', places: [GOLDEN_GATE, VOSTOK] }]);
+        expect([...names]).toEqual(['Golden Gate Bridge, San Francisco']);
     });
 
     test('chunk', () => {

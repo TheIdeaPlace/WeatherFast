@@ -24,7 +24,7 @@ from .ui.accessible_list import AccessibleLinesPanel
 from .ui.city_row import city_row_error, city_row_text
 from .ui.dialogs.city_select import CitySelectionDialog
 from .ui.dialogs.config_dialog import WeatherConfigDialog
-from .ui.dialogs.location_browser import LocationBrowserDialog
+from .ui.dialogs.location_browser import LocationBrowserDialog, add_summary
 from .ui.events import EVT_FETCH_RESULT
 from .services import alert_service, location_service, updater
 from .ui.alert_format import RETRY, city_row_badge, highest, section_lines
@@ -766,16 +766,9 @@ class MainFrame(wx.Frame):
 
             if added_count > 0:
                 self.update_city_list()
-                msg = f"Added {added_count} cit{'y' if added_count == 1 else 'ies'}"
-                if skipped_count > 0:
-                    msg += f" ({skipped_count} already in list)"
-                wx.MessageBox(msg, "Cities Added", wx.OK | wx.ICON_INFORMATION)
-            elif skipped_count > 0:
-                wx.MessageBox(
-                    f"All {skipped_count} selected "
-                    f"cit{'y was' if skipped_count == 1 else 'ies were'} already in your list",
-                    "No New Cities", wx.OK | wx.ICON_INFORMATION,
-                )
+            summary = add_summary(added_count, skipped_count, dlg.selected_are_places())
+            if summary:
+                wx.MessageBox(summary[0], summary[1], wx.OK | wx.ICON_INFORMATION)
         dlg.Destroy()
 
     # -- list actions ---------------------------------------------------------

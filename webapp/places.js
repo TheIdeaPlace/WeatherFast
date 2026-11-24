@@ -42,6 +42,24 @@ function placeSavedName(place) {
     return place.city && place.city !== place.name ? `${place.name}, ${place.city}` : place.name;
 }
 
+// Countries NWS alerts cover, as the data names them
+const NWS_PLACE_COUNTRIES = ['United States', 'Puerto Rico', 'United States Virgin Islands'];
+
+function isNwsPlace(place) {
+    return NWS_PLACE_COUNTRIES.includes(place.country);
+}
+
+// Saved names of every place NWS covers. A saved place is "Golden Gate
+// Bridge, San Francisco", with no country in it, so the alert check can't
+// tell it's in the US from the name alone.
+function nwsPlaceSavedNames(categories) {
+    const names = new Set();
+    categories.forEach(cat => cat.places.forEach(p => {
+        if (isNwsPlace(p)) names.add(placeSavedName(p));
+    }));
+    return names;
+}
+
 // How a list reads in the chooser: "Famous Bridges (153 places)".
 function placeCategoryLabel(category) {
     const n = category.places.length;
@@ -49,11 +67,14 @@ function placeCategoryLabel(category) {
 }
 
 // A browse row for a place, in the shape the state/country browse views use.
-// display is the saved name (it's also the key in Your Cities); location and
-// note are shown after the weather.
+// display is the saved name (it's also the key in Your Cities, and names the
+// Add button); label is what the row shows, the bare name, because the
+// location line that follows already gives the town. location and note are
+// shown after the weather.
 function placeToCityInfo(place) {
     return {
         name: place.name,
+        label: place.name,
         display: placeSavedName(place),
         state: place.state || '',
         country: place.country || '',
@@ -91,6 +112,8 @@ if (typeof module !== 'undefined' && module.exports) {
         placeLocationLine,
         placeSavedName,
         placeCategoryLabel,
+        isNwsPlace,
+        nwsPlaceSavedNames,
         placeToCityInfo,
         chunk,
         weatherResultsFromResponse

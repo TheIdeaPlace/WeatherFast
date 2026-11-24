@@ -4,7 +4,7 @@ import os
 import unittest
 
 from fastweather import places
-from fastweather.ui.dialogs.location_browser import row_label
+from fastweather.ui.dialogs.location_browser import add_summary, place_row, row_label
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _WINDOWS = os.path.dirname(_HERE)
@@ -122,6 +122,50 @@ class PlaceRowTests(unittest.TestCase):
     def test_failed(self):
         self.assertEqual(row_label(_row(failed=True)),
                          f"Golden Gate Bridge - weather unavailable. {self.ABOUT}")
+
+
+class PlaceRowBuildTests(unittest.TestCase):
+    def test_row_shows_name_saves_name_and_town(self):
+        c = place_row(GOLDEN_GATE)
+        self.assertEqual(c["display"], "Golden Gate Bridge")
+        self.assertEqual(c["saved"], "Golden Gate Bridge, San Francisco")
+        self.assertEqual(c["about"], PlaceRowTests.ABOUT)
+        self.assertEqual(row_label(c), f"Golden Gate Bridge - Loading. {PlaceRowTests.ABOUT}")
+
+    def test_no_town_or_state(self):
+        c = place_row(VOSTOK)
+        self.assertEqual((c["state"], c["country"], c["saved"]),
+                         ("", "Antarctica", "Vostok Station"))
+
+
+class NwsTests(unittest.TestCase):
+    def test_us_and_territories(self):
+        self.assertTrue(places.is_nws_place(GOLDEN_GATE))
+        self.assertTrue(places.is_nws_place({"country": "Puerto Rico"}))
+        self.assertTrue(places.is_nws_place({"country": "United States Virgin Islands"}))
+        self.assertFalse(places.is_nws_place(VOSTOK))
+        self.assertFalse(places.is_nws_place({"country": "Canada"}))
+
+    def test_every_us_area_in_the_data_is_covered(self):
+        countries = {p["country"] for cat in places.load_categories() for p in cat["places"]}
+        us_like = {c for c in countries if "United States" in c or c == "Puerto Rico"}
+        self.assertTrue(us_like <= places.NWS_COUNTRIES, us_like - places.NWS_COUNTRIES)
+
+
+class AddSummaryTests(unittest.TestCase):
+    def test_cities(self):
+        self.assertEqual(add_summary(1, 0), ("Added 1 city", "Cities Added"))
+        self.assertEqual(add_summary(3, 1), ("Added 3 cities (1 already in list)", "Cities Added"))
+        self.assertEqual(add_summary(0, 2),
+                         ("All 2 selected cities were already in your list", "No New Cities"))
+
+    def test_places(self):
+        self.assertEqual(add_summary(1, 0, True), ("Added 1 place", "Places Added"))
+        self.assertEqual(add_summary(0, 1, True),
+                         ("All 1 selected place was already in your list", "No New Places"))
+
+    def test_nothing(self):
+        self.assertIsNone(add_summary(0, 0))
 
 
 if __name__ == "__main__":

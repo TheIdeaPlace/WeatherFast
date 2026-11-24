@@ -9,6 +9,7 @@ import wx
 
 from ... import browse_favorites, places as world_places
 from ...services import alert_service, weather_service
+from ..accessible_list import name_list
 from ..alert_format import city_row_badge
 from ..city_row import city_row_text
 
@@ -39,6 +40,40 @@ def row_label(c):
     if c.get("about"):
         text += (" " if text.endswith(".") else ". ") + c["about"]
     return text
+
+
+def place_row(p):
+    """A Browse row for a Places of the World place. It shows the bare name
+    (the location follows the weather) and is saved as "Name, City"."""
+    return {
+        "name": p["name"], "lat": p["lat"], "lon": p["lon"],
+        "state": p.get("state") or "", "country": p.get("country") or "",
+        "display": p["name"],
+        "saved": world_places.saved_name(p),
+        "about": world_places.about_text(p),
+        "temp": None, "row": None, "badge": "", "failed": False,
+        "alerts_checked": False,
+    }
+
+
+def add_summary(added, skipped, places=False):
+    """(message, title) after adding from Browse, or None when nothing was
+    chosen. ``places`` words it for Places of the World."""
+    one, many = ("place", "places") if places else ("city", "cities")
+
+    def noun(n):
+        return one if n == 1 else many
+
+    if added:
+        msg = f"Added {added} {noun(added)}"
+        if skipped:
+            msg += f" ({skipped} already in list)"
+        return msg, f"{many.capitalize()} Added"
+    if skipped:
+        verb = "was" if skipped == 1 else "were"
+        return (f"All {skipped} selected {noun(skipped)} {verb} already in your list",
+                f"No New {many.capitalize()}")
+    return None
 
 
 def _deliver(state, gen, fn, *args):
@@ -122,6 +157,8 @@ _PLACES_LIST_LABEL = "Select places to add (check multiple places):"
 # Favorites list prefixes, by kind
 _KIND_PREFIX = {"us": "US", "intl": "Intl", "places": "Places"}
 
+_PLACES_DEFAULT_DESC = "Famous bridges, beaches and extreme weather places, each with its weather."
+
 _SORTS = [
     "Name (A-Z)", "Name (Z-A)",
     "North to South", "South to North",
@@ -141,7 +178,9 @@ class LocationBrowserDialog(wx.Dialog):
 
     def __init__(self, parent, us_cities_cache, intl_cities_cache, favorites=None, fmt=None,
                  place_categories=None, start_page=None):
-        super().__init__(parent, title="Browse Cities by Location", size=(720, 640))
+        title = ("Browse Places of the World" if start_page == "places" and place_categories
+                 else "Browse Cities by Location")
+        super().__init__(parent, title=title, size=(720, 640))
         self.us_cities_cache = us_cities_cache
         self.intl_cities_cache = intl_cities_cache
         self.place_categories = list(place_categories or [])
@@ -264,10 +303,12 @@ class LocationBrowserDialog(wx.Dialog):
         # What the chosen list is; read-only text, so a screen reader can
         # review it with Tab rather than only seeing it.
         self.places_desc = wx.TextCtrl(
-            p, value="Famous bridges, beaches and extreme weather places, each with its weather.",
+            p, value=_PLACES_DEFAULT_DESC,
             style=wx.TE_READONLY | wx.TE_MULTILINE | wx.TE_NO_VSCROLL | wx.BORDER_NONE,
             size=(-1, 40))
-        self.places_desc.SetName("About this list")
+        # SetName alone doesn't reach MSAA, and the control before this is
+        # the Choice, not a label, so give it its name explicitly.
+        name_list(self.places_desc, "About this list")
         s.Add(self.places_desc, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 10)
         self.load_places_btn = wx.Button(p, label="Load Places")
         s.Add(self.load_places_btn, 0, wx.ALIGN_CENTER | wx.ALL, 10)
@@ -278,8 +319,8 @@ class LocationBrowserDialog(wx.Dialog):
 
     def _on_places_choice(self, event):
         sel = self.places_choice.GetSelection()
-        if sel > 0:
-            self.places_desc.SetValue(self.place_categories[sel - 1]["description"])
+        desc = self.place_categories[sel - 1]["description"] if sel > 0 else ""
+        self.places_desc.SetValue(desc or _PLACES_DEFAULT_DESC)
 
     def _build_fav_tab(self):
         p = wx.Panel(self.notebook)
@@ -340,15 +381,7 @@ class LocationBrowserDialog(wx.Dialog):
         self.loaded_region = (kind, region)
         cities = self._regions.get((kind, region))
         if cities is None and kind == "places":
-            cities = [{
-                "name": p["name"], "lat": p["lat"], "lon": p["lon"],
-                "state": p.get("state") or "", "country": p.get("country") or "",
-                "display": p["name"],
-                "saved": world_places.saved_name(p),
-                "about": world_places.about_text(p),
-                "temp": None, "row": None, "badge": "", "failed": False,
-                "alerts_checked": False,
-            } for p in cache[region]]
+            cities = [place_row(p) for p in cache[region]]
             self._regions[(kind, region)] = cities
         if cities is None:
             cities = []
@@ -477,7 +510,7 @@ class LocationBrowserDialog(wx.Dialog):
         # Places of the World list.
         alert_todo = [c for c in cities if not c["alerts_checked"]
                       and (kind == "us"
-                           or (kind == "places" and c["country"] == "United States"))]
+                           or (kind == "places" and world_places.is_nws_place(c)))]
         self._weather_pending = len(todo)
         if not todo and not alert_todo:
             return
@@ -566,6 +599,10 @@ class LocationBrowserDialog(wx.Dialog):
 
     def get_selected_cities(self):
         return self.selected_cities
+
+    def selected_are_places(self):
+        """Whether the cities chosen came from a Places of the World list."""
+        return bool(self.loaded_region and self.loaded_region[0] == "places")
 
     def get_favorites(self):
         return self.favorites

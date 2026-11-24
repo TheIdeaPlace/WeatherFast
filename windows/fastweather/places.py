@@ -68,6 +68,15 @@ def about_text(place):
     return ". ".join(p for p in parts if p)
 
 
+# Countries NWS alerts cover, as the data names them
+NWS_COUNTRIES = frozenset({"United States", "Puerto Rico", "United States Virgin Islands"})
+
+
+def is_nws_place(place):
+    """Whether NWS alerts cover a place (a browse row or a place dict)."""
+    return place.get("country") in NWS_COUNTRIES
+
+
 def category_label(category):
     """How a list reads in the chooser: "Famous Bridges (153 places)"."""
     n = len(category["places"])

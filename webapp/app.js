@@ -112,6 +112,8 @@ let listNavigationHandler = null;
 let cachedCityCoordinates = null; // Cache for pre-geocoded US city coordinates
 let cachedInternationalCoordinates = null; // Cache for pre-geocoded international city coordinates
 let cachedPlaceCategories = []; // Places of the World lists (see places.js)
+let nwsPlaceNames = new Set();  // saved names of Places of the World places NWS covers
+let placesReady = Promise.resolve(); // settles once Places of the World has loaded (or failed)
 let currentStateCities = null; // Store current state cities being viewed
 let currentStateName = null; // Store current state name
 let currentLocationType = 'us'; // 'us' or 'international'
@@ -137,6 +139,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     
     initializeEventListeners();
+    // Started before the list renders: the list's alert checks wait for it
+    // to know which saved places are in the US
+    placesReady = loadPlacesOfTheWorld();
     console.log('About to renderCityList, cities count:', Object.keys(cities).length);
     renderCityList();
     
@@ -150,7 +155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadCachedInternationalCoordinates();
     console.log('After loadCachedInternationalCoordinates, cachedInternationalCoordinates is:', cachedInternationalCoordinates ? 'LOADED' : 'NULL/UNDEFINED');
 
-    await loadPlacesOfTheWorld();
+    await placesReady;
 
     announceToScreenReader('FastWeather application loaded');
     console.log('=== FastWeather Initialization Complete ===');
@@ -224,6 +229,7 @@ async function loadPlacesOfTheWorld() {
         console.error('Could not load places-of-the-world.json:', error);
         cachedPlaceCategories = [];
     }
+    nwsPlaceNames = nwsPlaceSavedNames(cachedPlaceCategories);
     populatePlacesDropdown();
 }
 
@@ -251,10 +257,10 @@ function updatePlacesDescription() {
     const description = document.getElementById('places-description');
     if (!select || !description) return;
     const category = cachedPlaceCategories.find(c => c.name === select.value);
-    if (category && category.description) {
-        description.textContent = category.description;
-    }
+    description.textContent = (category && category.description) || PLACES_DEFAULT_DESCRIPTION;
 }
+
+const PLACES_DEFAULT_DESCRIPTION = 'Famous bridges, beaches and extreme weather places, each with its weather.';
 
 // Populate country dropdown from cached data
 function populateCountryDropdown() {
@@ -1139,6 +1145,7 @@ function showYourCities() {
     currentStateCities = null;
     currentStateName = null;
     browseLoadGeneration++;
+    browseLoading = false;
     
     // Reset heading and show state selector
     heading.textContent = 'Your Cities';
@@ -1153,7 +1160,13 @@ function showYourCities() {
 
 // Display location cities (US state or international country)
 async function displayLocationCities(locationName, cityNames, totalCount = null, locationType = 'us') {
-    browseLoadGeneration++;  // a Places list still loading must not replace these cities
+    // Another list, a Places list or Back can come while this one's weather
+    // loads; then this load stops rather than replacing what's showing.
+    const gen = ++browseLoadGeneration;
+    // Until this region's cities are in, a view switch must not show the last one's
+    currentStateCities = null;
+    currentStateName = null;
+    browseLoading = true;
     // Hide state selector section and show city list section with location cities
     const stateSelectorSection = document.querySelector('.state-selector-section');
     const cityListSection = document.querySelector('.city-list-section');
@@ -1294,6 +1307,7 @@ async function displayLocationCities(locationName, cityNames, totalCount = null,
                 if (i < cityNames.length - 1) {
                     await delay(1100);
                 }
+                if (gen !== browseLoadGeneration) return;
             } catch (error) {
                 console.error(`Error geocoding ${cityName}:`, error);
             }
@@ -1303,6 +1317,9 @@ async function displayLocationCities(locationName, cityNames, totalCount = null,
         citiesData.sort((a, b) => a.name.localeCompare(b.name));
     }
     
+    if (gen !== browseLoadGeneration) return;  // superseded while loading
+    browseLoading = false;
+
     // Render the cities list
     console.log('Rendering', citiesData.length, 'cities');
     if (citiesData.length > 0) {
@@ -1333,6 +1350,10 @@ async function displayPlaces(category) {
     const heading = document.getElementById('your-cities-heading');
     const container = document.getElementById('city-list');
     const gen = ++browseLoadGeneration;
+    // Until this list's places are in, a view switch must not show the last list
+    currentStateCities = null;
+    currentStateName = null;
+    browseLoading = true;
 
     const setHeading = (text) => {
         heading.textContent = text + ' ';
@@ -1367,6 +1388,7 @@ async function displayPlaces(category) {
         }
     }
     if (gen !== browseLoadGeneration) return;
+    browseLoading = false;
 
     placeInfos.sort((a, b) => a.name.localeCompare(b.name));
     currentStateCities = placeInfos;
@@ -1382,7 +1404,8 @@ async function displayPlaces(category) {
 
 const PLACES_WEATHER_BATCH = 50;      // places per Open-Meteo request
 const PLACES_WEATHER_GAP_MS = 500;    // pause between those requests
-let browseLoadGeneration = 0;         // bumped on each places load and on Back
+let browseLoadGeneration = 0;         // bumped on each browse load and on Back
+let browseLoading = false;            // a browse list's weather is still loading
 
 // Today's weather for many places in one request; one result (or null) per place
 async function fetchWeatherDataBatch(locations) {
@@ -1559,7 +1582,7 @@ function renderStateCitiesFlatWithWeather(container, citiesData) {
         header.className = 'city-card-header';
         
         const title = document.createElement('h4');
-        title.textContent = cityData.display;
+        title.textContent = cityData.label || cityData.display;
         header.appendChild(title);
         card.appendChild(header);
 
@@ -1773,7 +1796,7 @@ function renderStateCitiesTableWithWeather(container, citiesData) {
         
         const cityCell = document.createElement('th');
         cityCell.scope = 'row';
-        cityCell.textContent = cityData.display;
+        cityCell.textContent = cityData.label || cityData.display;
         row.appendChild(cityCell);
         
         if (cityData.weather && cityData.weather.current) {
@@ -1912,7 +1935,7 @@ function renderStateCitiesListWithWeather(container, citiesData) {
         item.id = `state-city-item-${index}`;
         item.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
         
-        let weatherText = cityData.display;
+        let weatherText = cityData.label || cityData.display;
         if (cityData.weather && cityData.weather.current) {
             const current = cityData.weather.current;
             const weather = cityData.weather;
@@ -1973,9 +1996,9 @@ function renderStateCitiesListWithWeather(container, citiesData) {
                 }
             });
             
-            weatherText = `${cityData.display} - ${parts.join(', ')}`;
+            weatherText = `${cityData.label || cityData.display} - ${parts.join(', ')}`;
         } else if (cityData.location || cityData.note) {
-            weatherText = `${cityData.display} - weather unavailable`;
+            weatherText = `${cityData.label || cityData.display} - weather unavailable`;
         }
 
         // A place: name and weather first, then where it is and why it's known
@@ -2336,7 +2359,10 @@ function switchView(view) {
     document.getElementById('current-view-label').textContent = `View: ${viewLabel}`;
     
     // Re-render with new view - check if viewing state cities or user cities
-    if (currentStateCities && currentStateName) {
+    if (browseLoading) {
+        // A state, country or Places list is still loading: it renders in the
+        // new view when it's in, and the loading message stays until then
+    } else if (currentStateCities && currentStateName) {
         // Re-render state cities with new view
         const container = document.getElementById('city-list');
         renderStateCitiesWithWeather(container, currentStateCities);
@@ -4817,8 +4843,13 @@ async function fetchWeatherAlerts(cityKey, lat, lon) {
     }
     
     // NWS API only works for US locations
-    // Simple heuristic: if the city key doesn't contain "United States", skip
+    // Simple heuristic: if the city key doesn't contain "United States", skip,
+    // unless it's a saved US place from Places of the World ("Golden Gate
+    // Bridge, San Francisco" names no country)
     if (!cityKey.includes('United States')) {
+        await placesReady;
+    }
+    if (!cityKey.includes('United States') && !nwsPlaceNames.has(cityKey)) {
         console.log(`Skipping alerts for non-US city: ${cityKey}`);
         return [];
     }
