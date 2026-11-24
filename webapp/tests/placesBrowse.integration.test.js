@@ -4,6 +4,7 @@
  */
 import fs from 'fs';
 import path from 'path';
+import { axe } from 'jest-axe';
 
 const WEBAPP = path.join(__dirname, '..');
 const read = f => fs.readFileSync(path.join(WEBAPP, f), 'utf8');
@@ -66,7 +67,10 @@ beforeAll(() => {
             get currentStateCities() { return currentStateCities; },
             get currentLocationType() { return currentLocationType; },
             get nwsPlaceNames() { return nwsPlaceNames; },
-            fetchWeatherAlerts
+            fetchWeatherAlerts,
+            get cities() { return cities; },
+            switchView,
+            showYourCities
         };`);
     document.dispatchEvent(new Event('DOMContentLoaded'));
 });
@@ -109,6 +113,87 @@ describe('Browse tabs', () => {
     });
 });
 
+describe('the city list has a screen reader name in every view (WCAG 4.1.2)', () => {
+    // Accessibility Insights flagged the list view's listbox as unnamed
+    const cityListViolations = async () => {
+        const results = await axe($('city-list').closest('section'));
+        if (process.env.AXE_DEBUG) {
+            process.stderr.write(JSON.stringify(results.violations.map(v =>
+                [v.id, v.nodes.slice(0, 2).map(n => n.html.slice(0, 120))])) + '\n');
+        }
+        return results.violations.map(v => v.id);
+    };
+
+    afterAll(() => {
+        window.__t.showYourCities();
+        window.__t.switchView('flat');
+    });
+
+    test.each(['list', 'flat', 'table'])('Your Cities, %s view', async (view) => {
+        window.__t.showYourCities();
+        window.__t.switchView(view);
+        expect($('city-list').getAttribute('role')).toBeTruthy();
+        expect($('city-list').getAttribute('aria-label')).toBe('Your cities');
+        expect(await cityListViolations()).toEqual([]);
+    });
+
+    test('while a list loads, the old list box and its name are gone', async () => {
+        let release;
+        holdMeteo = new Promise(resolve => { release = resolve; });
+        window.__t.switchView('list');
+        expect($('city-list').getAttribute('role')).toBe('listbox');
+        $('places-tab').click();
+        $('places-select').value = 'Famous Bridges';
+        submit();
+        await until(() => meteoCalls.length === 1);
+        expect($('city-list').hasAttribute('role')).toBe(false);
+        expect($('city-list').hasAttribute('aria-label')).toBe(false);
+        expect($('city-list').hasAttribute('tabindex')).toBe(false);
+        window.__t.showYourCities();
+        release();
+        await new Promise(resolve => setTimeout(resolve, 700));
+    });
+
+    test('a Places list in list view is named for the list', async () => {
+        window.__t.switchView('list');
+        $('places-tab').click();
+        $('places-select').value = 'Beaches of the World';
+        submit();
+        await until(() => document.querySelectorAll('.state-city-item').length === 144, 10000);
+        expect($('city-list').getAttribute('role')).toBe('listbox');
+        expect($('city-list').getAttribute('aria-label')).toBe('Beaches of the World');
+        expect(await cityListViolations()).toEqual([]);
+        window.__t.switchView('table');
+        expect($('city-list').getAttribute('aria-label')).toBe('Beaches of the World');
+        expect(await cityListViolations()).toEqual([]);
+        window.__t.switchView('list');
+        window.__t.showYourCities();
+        expect($('city-list').getAttribute('aria-label')).toBe('Your cities');
+    }, 15000);
+
+    test('with no saved cities, Back leaves an empty plain list named Your cities', async () => {
+        const saved = window.__t.cities;
+        const keys = Object.keys(saved);
+        const backup = keys.map(k => [k, saved[k]]);
+        keys.forEach(k => delete saved[k]);
+        try {
+            window.__t.switchView('list');
+            $('us-states-tab').click();
+            $('state-select').value = 'Wisconsin';
+            submit();
+            await until(() => document.querySelectorAll('.state-city-item').length > 0, 10000);
+            expect($('city-list').getAttribute('aria-label')).toBe('Cities in Wisconsin');
+            window.__t.showYourCities();
+            expect($('city-list').getAttribute('role')).toBe('list');
+            expect($('city-list').hasAttribute('tabindex')).toBe(false);
+            expect($('city-list').getAttribute('aria-label')).toBe('Your cities');
+        } finally {
+            backup.forEach(([k, v]) => { saved[k] = v; });
+            window.__t.showYourCities();
+        }
+    }, 15000);
+});
+
 describe('Places of the World', () => {
     beforeEach(() => $('places-tab').click());
 
@@ -128,9 +213,21 @@ describe('Places of the World', () => {
     test('Load with no list chosen says so', async () => {
         $('places-select').value = '';
         submit();
-        await flush();
+        await until(() => $('state-selector-error').textContent.length > 0);
         expect($('state-selector-error').textContent).toMatch(/select a list of places/i);
-    });
+        // The chooser says it's invalid and points at the message
+        expect($('places-select').getAttribute('aria-invalid')).toBe('true');
+        expect($('places-select').getAttribute('aria-describedby')).toContain('state-selector-error');
+        // and stops saying so once a list is chosen and loaded
+        $('places-select').value = 'Famous Bridges';
+        submit();
+        await flush();
+        expect($('places-select').hasAttribute('aria-invalid')).toBe(false);
+        expect($('places-select').getAttribute('aria-describedby')).toBe('places-description');
+        // Let that load finish, so its requests don't count in the next test
+        await until(() => document.querySelectorAll('.state-city-card').length === 153, 10000);
+        window.__t.showYourCities();
+    }, 15000);
 
     test('a list loads 50 places to a request and shows every place', async () => {
         $('places-select').value = 'Famous Bridges';
@@ -140,10 +237,10 @@ describe('Places of the World', () => {
         expect(new URL(meteoCalls[0]).searchParams.get('latitude').split(',').length).toBe(50);
         expect($('your-cities-heading').textContent).toMatch(/^Famous Bridges \(153\)/);
         const card = [...document.querySelectorAll('.state-city-card')]
-            .find(c => c.querySelector('h4').textContent === 'Golden Gate Bridge');
+            .find(c => c.querySelector('h3').textContent === 'Golden Gate Bridge');
         expect(card.querySelector('.place-location').textContent).toBe('San Francisco, California, United States');
         expect(card.querySelector('button').getAttribute('aria-label'))
-            .toBe('Add Golden Gate Bridge, San Francisco to your cities list');
+            .toBe('Add to My Cities: Golden Gate Bridge, San Francisco');
     }, 15000);
 
     test('Back while a list is loading keeps Your Cities', async () => {

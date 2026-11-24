@@ -10,6 +10,11 @@
     box-sizing: border-box;
 }
 
+/* hidden always hides, even on elements whose class sets display */
+[hidden] {
+    display: none !important;
+}
+
 :root {
     /* Color palette meeting WCAG AA contrast ratios */
     --primary-bg: #ffffff;
@@ -221,7 +226,7 @@ section {
     margin: 0;
 }
 
-#view-menu [role="menuitem"] {
+#view-menu [role="menuitemradio"] {
     width: 100%;
     background: none;
     border: none;
@@ -236,25 +241,30 @@ section {
     gap: var(--spacing-sm);
 }
 
-#view-menu [role="menuitem"]::before {
+#view-menu [role="menuitemradio"]::before {
     content: '';
     width: 16px;
     height: 16px;
 }
 
-#view-menu [role="menuitem"][aria-checked="true"]::before {
+#view-menu [role="menuitemradio"][aria-checked="true"]::before {
     content: '✓';
     font-weight: bold;
 }
 
-#view-menu [role="menuitem"]:hover {
+#view-menu [role="menuitemradio"]:hover {
     background: var(--primary-bg);
 }
 
-#view-menu [role="menuitem"]:focus {
-    outline: none;
+/* Text in the page's background colour: white on blue in light mode, dark
+   on light blue in dark mode (white on #4da3ff was 2.6:1). The transparent
+   outline shows as a real one in Windows Contrast themes, where the
+   background colour is replaced. */
+#view-menu [role="menuitemradio"]:focus {
+    outline: 2px solid transparent;
+    outline-offset: -2px;
     background: var(--link-color);
-    color: white;
+    color: var(--primary-bg);
 }
 
 /* === Table View === */
@@ -479,7 +489,10 @@ select {
     color: var(--text-primary);
     min-height: 44px; /* WCAG touch target size */
     flex: 1;
-    min-width: 200px;
+    /* 200px when there's room; never wider than the screen, so the page
+       doesn't scroll sideways at 320px (WCAG 1.4.10) */
+    min-width: min(200px, 100%);
+    max-width: 100%;
 }
 
 input[type="text"]:hover,
@@ -771,9 +784,15 @@ legend {
     border-radius: var(--border-radius);
 }
 
-.city-title-btn h3 {
+/* The heading now holds the button; the button takes the heading's size */
+.city-title {
     margin: 0;
-    color: inherit;
+    font-size: var(--font-size-lg, 1.25rem);
+}
+
+.city-title .city-title-btn {
+    font-size: inherit;
+    font-weight: inherit;
 }
 
 .city-card-content {
@@ -1298,7 +1317,14 @@ a:hover {
     header, footer, .controls, .city-card-controls, button {
         display: none;
     }
-    
+
+    /* City names are buttons (they open Full Weather) but are the content
+       of a printed list or table */
+    .city-title-btn, .city-link-btn {
+        display: inline !important;
+        color: #000;
+    }
+
     .city-card {
         page-break-inside: avoid;
         border: 1px solid #000;
@@ -1442,6 +1468,7 @@ a:hover {
     transform: translateY(-2px);
 }
 
+.state-city-card h3,
 .state-city-card h4 {
     color: var(--text-primary);
     margin-bottom: var(--spacing-sm);
@@ -1514,13 +1541,14 @@ a:hover {
     outline-offset: 2px;
 }
 
+/* The badge now has words on it, so each colour carries its text at 4.5:1 or better */
 .alert-badge.extreme {
-    background-color: #dc3545;
+    background-color: #b02a37;
     color: white;
 }
 
 .alert-badge.severe {
-    background-color: #fd7e14;
+    background-color: #a14a00;
     color: white;
 }
 
@@ -1596,7 +1624,8 @@ a:hover {
     margin-bottom: var(--spacing-lg);
 }
 
-.alert-section h4 {
+.alert-section h4,
+.alert-section h5 {
     font-size: 1.125rem;
     margin-bottom: var(--spacing-sm);
     color: var(--text-primary);
@@ -1630,6 +1659,13 @@ a:hover {
 .alert-meta-value {
     font-weight: 600;
     color: var(--text-primary);
+    margin: 0;
+}
+
+/* Several alerts in one dialog, each its own section */
+.alert-details + .alert-details {
+    border-top: 1px solid var(--border-color);
+    margin-top: var(--spacing-lg);
 }
 
 /* === Historical Weather === */
@@ -2020,5 +2056,42 @@ a:hover {
     .config-feedback-banner.fade-out {
         animation: none;
         opacity: 0;
+    }
+}
+
+/* === New version available === */
+.update-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--secondary-bg);
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+/* === Windows Contrast themes (forced colours) ===
+   Background colours are replaced there, so anything shown only by a
+   background (the selected item in a list box, the focused menu item, an
+   alert badge) gets a border or outline the theme can colour. */
+@media (forced-colors: active) {
+    [role="option"][aria-selected="true"] {
+        outline: 2px solid Highlight;
+        outline-offset: -2px;
+    }
+
+    [role="listbox"]:focus [role="option"][aria-selected="true"] {
+        background: Highlight;
+        color: HighlightText;
+        forced-color-adjust: none;
+    }
+
+    #view-menu [role="menuitemradio"]:focus {
+        outline: 2px solid Highlight;
+    }
+
+    .alert-badge {
+        border: 2px solid ButtonText;
     }
 }

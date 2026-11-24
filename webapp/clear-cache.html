@@ -67,7 +67,7 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <main class="container">
         <h1>🧹 Clear FastWeather Cache</h1>
         
         <div class="info">
@@ -77,9 +77,9 @@
 
         <button onclick="clearAllCaches()">Clear All Caches</button>
         <button onclick="unregisterServiceWorker()">Unregister Service Worker</button>
-        <button onclick="fullReset()">Full Reset (Recommended)</button>
+        <button onclick="fullReset()">Full Reset (also deletes your saved cities)</button>
         
-        <div id="status" class="status"></div>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
 
         <div class="info" style="margin-top: 30px;">
             <strong>Manual alternatives:</strong>
@@ -93,7 +93,7 @@
         <p style="margin-top: 30px;">
             <a href="index.html">← Back to FastWeather</a>
         </p>
-    </div>
+    </main>
 
     <script>
         function showStatus(message, isSuccess) {
@@ -139,6 +139,8 @@
         }
 
         async function fullReset() {
+            // It deletes your saved cities and settings too, so ask first
+            if (!confirm('Full Reset also deletes your saved cities and settings. Continue?')) return;
             try {
                 // Clear caches
                 const cacheNames = await caches.keys();

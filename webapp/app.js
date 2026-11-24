@@ -106,9 +106,9 @@ let cities = {};
 let weatherData = {};
 let currentConfig = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 let currentCityMatches = [];
-let focusReturnElement = null;
 let currentView = 'flat'; // 'flat', 'table', or 'list'
-let listNavigationHandler = null;
+// Your cities in List view, not a browse list drawn in the same container
+const YOUR_LIST_ITEMS = ".list-view-item:not(.state-city-item)";
 let cachedCityCoordinates = null; // Cache for pre-geocoded US city coordinates
 let cachedInternationalCoordinates = null; // Cache for pre-geocoded international city coordinates
 let cachedPlaceCategories = []; // Places of the World lists (see places.js)
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Update view button label and menu checkmarks to match initial view
     const viewLabel = currentView.charAt(0).toUpperCase() + currentView.slice(1);
     document.getElementById('current-view-label').textContent = `View: ${viewLabel}`;
-    document.querySelectorAll('#view-menu [role="menuitem"]').forEach(item => {
+    document.querySelectorAll('#view-menu [role="menuitemradio"]').forEach(item => {
         const isSelected = item.dataset.view === currentView;
         item.setAttribute('aria-checked', isSelected ? 'true' : 'false');
     });
@@ -157,7 +157,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await placesReady;
 
-    announceToScreenReader('FastWeather application loaded');
+    // No "application loaded" announcement: the page title and the first
+    // heading already say where you are, on every visit
     console.log('=== FastWeather Initialization Complete ===');
 });
 
@@ -387,12 +388,13 @@ function initializeEventListeners() {
 
     // State selector form
     document.getElementById('state-selector-form').addEventListener('submit', handleStateSelection);
+    document.getElementById('back-to-your-cities-btn').addEventListener('click', () => showYourCities());
     
     // Configuration dialog
     document.getElementById('configure-btn').addEventListener('click', openConfigDialog);
     document.getElementById('apply-config-btn').addEventListener('click', applyConfiguration);
     document.getElementById('save-config-btn').addEventListener('click', saveConfiguration);
-    document.getElementById('cancel-config-btn').addEventListener('click', closeConfigDialog);
+    document.getElementById('cancel-config-btn').addEventListener('click', cancelConfigDialog);
     
     // Reset buttons
     document.getElementById('reset-cities-btn').addEventListener('click', resetCities);
@@ -400,22 +402,17 @@ function initializeEventListeners() {
     document.getElementById('reset-all-btn').addEventListener('click', resetAll);
     
     // Check All / Uncheck All buttons
+    // They change many boxes at once, out of sight, so say what happened
+    const setAllChecks = (target, checked) => {
+        const boxes = document.querySelectorAll(`input[name^="${target}-"]`);
+        boxes.forEach(checkbox => { checkbox.checked = checked; });
+        announceToScreenReader(`${boxes.length} options ${checked ? 'checked' : 'unchecked'}`);
+    };
     document.querySelectorAll('.check-all-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const target = e.target.dataset.target;
-            document.querySelectorAll(`input[name^="${target}-"]`).forEach(checkbox => {
-                checkbox.checked = true;
-            });
-        });
+        btn.addEventListener('click', (e) => setAllChecks(e.currentTarget.dataset.target, true));
     });
-    
     document.querySelectorAll('.uncheck-all-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const target = e.target.dataset.target;
-            document.querySelectorAll(`input[name^="${target}-"]`).forEach(checkbox => {
-                checkbox.checked = false;
-            });
-        });
+        btn.addEventListener('click', (e) => setAllChecks(e.currentTarget.dataset.target, false));
     });
     
     // Debug panel buttons
@@ -436,13 +433,36 @@ function initializeEventListeners() {
     
     viewMenuBtn.addEventListener('click', toggleViewMenu);
     
-    // Menu item clicks
-    document.querySelectorAll('#view-menu [role="menuitem"]').forEach(item => {
+    // Menu item clicks (mouse, touch, and a screen reader in browse mode,
+    // which sends a click): focus goes back to the button, not lost on a
+    // hidden item
+    document.querySelectorAll('#view-menu [role="menuitemradio"]').forEach(item => {
         item.addEventListener('click', (e) => {
-            const view = e.target.dataset.view;
+            const view = e.currentTarget.dataset.view;
             switchView(view);
             closeViewMenu();
+            viewMenuBtn.focus();
         });
+    });
+
+    // Down arrow on the button opens the menu, as menu buttons do
+    viewMenuBtn.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown' && viewMenu.hidden) {
+            e.preventDefault();
+            openViewMenu();
+        }
+    });
+
+    // Tabbing away closes it rather than leaving it open behind you
+    // Only when focus actually goes somewhere else: Safari and Firefox on a
+    // Mac don't focus a clicked button, so a click on an item blurs to
+    // nowhere first, and closing then would swallow the click. The outside
+    // click handler deals with the mouse.
+    viewMenu.addEventListener('focusout', (e) => {
+        const to = e.relatedTarget;
+        if (to && !viewMenu.hidden && !viewMenu.contains(to) && to !== viewMenuBtn) {
+            closeViewMenu();
+        }
     });
     
     // Close menu on Escape or outside click
@@ -471,50 +491,43 @@ function initializeEventListeners() {
     // Keyboard shortcuts
     document.addEventListener('keydown', handleKeyboardShortcuts);
     
-    // Close modals on Escape
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeAllModals();
-        }
-    });
+    // Escape closing a dialog is handled with the focus trap (openDialog)
 }
 
 // Keyboard shortcuts
 function handleKeyboardShortcuts(e) {
+    // Caps Lock gives "V", not "v"
+    const key = (e.key || '').toLowerCase();
+    // Shortcuts act on the page, so not while a dialog is open over it.
+    // Ctrl+R is still kept from reloading the whole page there.
+    if (topDialog()) {
+        if (e.ctrlKey && !e.altKey && key === 'r') e.preventDefault();
+        return;
+    }
+
     // Ctrl+R: Refresh all cities
-    if (e.ctrlKey && e.key === 'r') {
+    if (e.ctrlKey && !e.altKey && key === 'r') {
         e.preventDefault();
         refreshAllCities();
     }
-    
-    // Alt+V: Open view menu
-    if (e.altKey && e.key === 'v') {
+
+    // Alt+V: Open view menu (focus lands on the current view, which says enough)
+    if (e.altKey && !e.ctrlKey && key === 'v') {
         e.preventDefault();
-        const viewMenuBtn = document.getElementById('view-menu-btn');
-        if (viewMenuBtn && !document.getElementById('config-dialog').hidden === false) {
-            toggleViewMenu();
-            announceToScreenReader('View menu opened');
-        }
+        if (document.getElementById('view-menu-btn')) toggleViewMenu();
     }
-    
-    // Alt+G: Open configuration dialog
-    if (e.altKey && e.key === 'g') {
+
+    // Alt+G: Open configuration dialog (the dialog announces itself)
+    if (e.altKey && !e.ctrlKey && key === 'g') {
         e.preventDefault();
-        const configDialog = document.getElementById('config-dialog');
-        if (configDialog && configDialog.hidden) {
-            openConfigDialog();
-            announceToScreenReader('Configuration dialog opened');
-        }
+        openConfigDialog();
     }
-    
-    // Alt+L: Use current location
-    if (e.altKey && e.key === 'l') {
+
+    // Alt+L: Use current location (the location code says what it's doing)
+    if (e.altKey && !e.ctrlKey && key === 'l') {
         e.preventDefault();
         const locationBtn = document.getElementById('location-btn');
-        if (locationBtn && !locationBtn.disabled) {
-            locationBtn.click();
-            announceToScreenReader('Getting current location');
-        }
+        if (locationBtn && !locationBtn.disabled) locationBtn.click();
     }
 }
 
@@ -589,20 +602,29 @@ async function handleAddCity(e) {
     const errorDiv = document.getElementById('city-search-error');
     
     if (!cityName) {
-        showError(errorDiv, 'Please enter a city name');
+        showError(errorDiv, 'Please enter a city name or zip code');
+        input.focus();
         return;
     }
     
     clearError(errorDiv);
-    
+
+    // Searching takes a moment: say so, and don't start a second search
+    const addBtn = document.getElementById('add-city-btn');
+    if (addBtn.disabled) return;
+    addBtn.disabled = true;
+    addBtn.setAttribute('aria-busy', 'true');
+    announceToScreenReader(`Searching for ${cityName}`);
+
     try {
         const matches = await geocodeCity(cityName, countryCode);
-        
+
         if (matches.length === 0) {
-            showError(errorDiv, `No cities found for "${cityName}"`);
+            showError(errorDiv, `No places found for "${cityName}". Check the spelling, or add a state or country.`);
+            input.focus();
             return;
         }
-        
+
         if (matches.length === 1) {
             await addCity(matches[0]);
             input.value = '';
@@ -611,7 +633,16 @@ async function handleAddCity(e) {
             showCitySelectionDialog(cityName, matches);
         }
     } catch (error) {
-        showError(errorDiv, `Error searching for city: ${error.message}`);
+        console.error('City search failed:', error);
+        showError(errorDiv, `Couldn't search for "${cityName}". Check your connection, then try again.`);
+        input.focus();
+    } finally {
+        addBtn.disabled = false;
+        addBtn.removeAttribute('aria-busy');
+        // A button that's disabled while focused drops focus to the page in
+        // some browsers (after a click on Add): back to the search box
+        const a = document.activeElement;
+        if ((!a || a === document.body) && !topDialog()) input.focus();
     }
 }
 
@@ -679,9 +710,8 @@ async function detectLocation() {
             return;
         }
         
-        // Add the city
+        // Add the city (addCity says it was added)
         await addCity(cityData);
-        announceToScreenReader(`Added ${cityData.display} to your cities`);
         
     } catch (error) {
         console.error('Location detection error:', error);
@@ -887,18 +917,12 @@ function showCitySelectionDialog(originalInput, matches) {
     // Set aria-activedescendant to the first option
     listBox.setAttribute('aria-activedescendant', 'city-option-0');
     
-    closeAllModals();
-    focusReturnElement = document.activeElement;
-    dialog.hidden = false;
-    
-    // Add keyboard navigation to listBox
+    // Add keyboard navigation to listBox (once, however often it opens)
+    listBox.removeEventListener('keydown', handleCityListKeydown);
     listBox.addEventListener('keydown', handleCityListKeydown);
-    
-    // Set up focus trap
-    trapFocus(dialog);
-    
-    // Focus the listbox
-    listBox.focus();
+
+    // Opens with focus on the list of matches
+    openDialog(dialog, listBox);
     
     // Scroll first option into view
     const firstOption = listBox.querySelector('#city-option-0');
@@ -992,12 +1016,9 @@ function closeCitySelectionDialog() {
     
     // Clear aria-activedescendant
     listBox.removeAttribute('aria-activedescendant');
-    
-    dialog.hidden = true;
-    if (focusReturnElement) {
-        focusReturnElement.focus();
-        focusReturnElement = null;
-    }
+
+    // Back to the search box, which is where the search started
+    closeDialog(dialog, document.getElementById('city-input'));
 }
 
 // Add city to list
@@ -1019,8 +1040,8 @@ async function addCity(cityData, skipRender = false) {
     
     // Only render city list if not in state browsing mode
     if (!skipRender) {
-        console.log('Calling renderCityList');
-        renderCityList();
+        // A browse list on show gets its Add buttons updated instead
+        refreshShownList();
     } else {
         console.log('Skipping render');
     }
@@ -1043,7 +1064,10 @@ async function addCity(cityData, skipRender = false) {
 // Handle state/country selection
 async function handleStateSelection(e) {
     e.preventDefault();
-    
+    // Back returns here: the Load button for the tab you're on
+    browseOrigin = { us: 'choose-state-btn', international: 'choose-country-btn', places: 'choose-places-btn' }[currentLocationType];
+    browseOrigin = browseOrigin ? document.getElementById(browseOrigin) : null;
+
     const errorDiv = document.getElementById('state-selector-error');
 
     if (currentLocationType === 'places') {
@@ -1135,26 +1159,55 @@ async function handleStateSelection(e) {
     }
 }
 
+// The button that started the current browse (Load Cities / Load Places),
+// where Back returns you
+let browseOrigin = null;
+
+// The list heading while browsing: just the name, with Back beside it
+function setBrowseHeading(text) {
+    document.getElementById('your-cities-heading').textContent = text;
+    document.getElementById('back-to-your-cities-btn').hidden = false;
+}
+
+// When a browse list is ready, take you to it, unless you've moved on to
+// something else while it loaded
+function focusBrowseResults() {
+    const a = document.activeElement;
+    const waiting = !a || a === document.body || a === browseOrigin ||
+        a.id === 'back-to-your-cities-btn' || !!a.closest('#state-selector-form');
+    if (waiting && !topDialog()) focusElement(document.getElementById('your-cities-heading'));
+}
+
 // Show your cities (return from state browsing)
 function showYourCities() {
     const stateSelectorSection = document.querySelector('.state-selector-section');
     const cityListSection = document.querySelector('.city-list-section');
     const heading = document.getElementById('your-cities-heading');
-    
+    const backBtn = document.getElementById('back-to-your-cities-btn');
+    const wasOnBack = document.activeElement === backBtn || focusInCityList();
+
     // Clear state cities tracking, and stop a Places list that's still loading
     currentStateCities = null;
     currentStateName = null;
     browseLoadGeneration++;
     browseLoading = false;
-    
+
     // Reset heading and show state selector
     heading.textContent = 'Your Cities';
+    backBtn.hidden = true;
     stateSelectorSection.hidden = false;
     cityListSection.hidden = false;
-    
+
     // Re-render the user's city list
     renderCityList();
-    
+
+    // Back used to remove itself and drop focus to the page: go back to
+    // the Load button you started from, or the list heading
+    if (wasOnBack) {
+        if (!(canFocus(browseOrigin) && focusElement(browseOrigin))) focusElement(heading);
+    }
+    browseOrigin = null;
+
     announceToScreenReader('Returned to your cities list');
 }
 
@@ -1178,14 +1231,11 @@ async function displayLocationCities(locationName, cityNames, totalCount = null,
     
     // Keep state selector visible and update heading
     stateSelectorSection.hidden = false;
-    heading.innerHTML = `Cities in ${locationName} <button id="back-to-your-cities-btn" class="back-btn">← Back to Your Cities</button>`;
+    setBrowseHeading(`Cities in ${locationName}`);
+    currentBrowseListName = `Cities in ${locationName}`;
+    clearCityListRole(container);
     container.innerHTML = '<p class="loading-text">Loading weather data... (0/' + cityNames.length + ')</p>';
     cityListSection.hidden = false;
-    
-    // Add event listener for back button
-    document.getElementById('back-to-your-cities-btn').addEventListener('click', () => {
-        showYourCities();
-    });
     
     console.log(`displayLocationCities called with ${cityNames.length} cities for ${locationName} (${locationType})`);
     
@@ -1327,14 +1377,10 @@ async function displayLocationCities(locationName, cityNames, totalCount = null,
         currentStateCities = citiesData;
         currentStateName = locationName;
         
-        heading.innerHTML = `Cities in ${locationName} (${citiesData.length}) <button id="back-to-your-cities-btn" class="back-btn">← Back to Your Cities</button>`;
+        setBrowseHeading(`Cities in ${locationName} (${citiesData.length})`);
         renderStateCitiesWithWeather(container, citiesData);
         announceToScreenReader(`Loaded ${citiesData.length} cities with weather for ${locationName}`);
-        
-        // Re-attach event listener for back button
-        document.getElementById('back-to-your-cities-btn').addEventListener('click', () => {
-            showYourCities();
-        });
+        focusBrowseResults();
     } else {
         container.innerHTML = '<p class="error-message">Failed to load city data. Please try again later.</p>';
         announceToScreenReader('Failed to load city data');
@@ -1355,19 +1401,13 @@ async function displayPlaces(category) {
     currentStateName = null;
     browseLoading = true;
 
-    const setHeading = (text) => {
-        heading.textContent = text + ' ';
-        const backBtn = document.createElement('button');
-        backBtn.id = 'back-to-your-cities-btn';
-        backBtn.className = 'back-btn';
-        backBtn.textContent = '← Back to Your Cities';
-        backBtn.addEventListener('click', () => showYourCities());
-        heading.appendChild(backBtn);
-    };
+    const setHeading = setBrowseHeading;
 
     stateSelectorSection.hidden = false;
     cityListSection.hidden = false;
     setHeading(category.name);
+    currentBrowseListName = category.name;
+    clearCityListRole(container);
     container.innerHTML = '';
     const loading = document.createElement('p');
     loading.className = 'loading-text';
@@ -1400,6 +1440,7 @@ async function displayPlaces(category) {
     announceToScreenReader(missing
         ? `Loaded ${placeInfos.length} places for ${category.name}; weather unavailable for ${missing}`
         : `Loaded ${placeInfos.length} places with weather for ${category.name}`);
+    focusBrowseResults();
 }
 
 const PLACES_WEATHER_BATCH = 50;      // places per Open-Meteo request
@@ -1447,13 +1488,19 @@ async function fetchWeatherData(lat, lon) {
 // Render state cities with weather in the current view
 function renderStateCitiesWithWeather(container, citiesData) {
     container.innerHTML = '';
-    
+    detachListHandlers(container);
+
     // Clean up list view controls if they exist (they're siblings, not children)
     const existingControls = document.querySelector('.list-view-controls');
     if (existingControls) {
         existingControls.remove();
     }
     
+    // Leave nothing from the last view: list view's tabindex and
+    // aria-activedescendant on a table region point at items that are gone
+    container.removeAttribute('tabindex');
+    container.removeAttribute('aria-activedescendant');
+
     if (currentView === 'table') {
         renderStateCitiesTableWithWeather(container, citiesData);
     } else if (currentView === 'list') {
@@ -1461,7 +1508,46 @@ function renderStateCitiesWithWeather(container, citiesData) {
     } else {
         renderStateCitiesFlatWithWeather(container, citiesData);
     }
+    nameCityList(container, currentBrowseListName || `Cities in ${currentStateName}`);
 }
+
+// Give the city list a short name for screen readers, in every view: the
+// list view's listbox must have one (WCAG 4.1.2). Just the name, no usage
+// instructions, which were read again on every visit.
+// ARIA allows a name only on an element with a role, so a container left as
+// a plain div loses its name rather than carrying one nothing reads.
+function nameCityList(container, name) {
+    if (container.getAttribute('role')) {
+        container.setAttribute('aria-label', name);
+    } else {
+        container.removeAttribute('aria-label');
+    }
+}
+
+// While a browse list loads, the container holds only the loading text: a
+// plain div, not a list box still named for what was there before.
+// #city-list stays while its contents change, so the List view key handlers
+// (your cities' and a browse list's) must come off when it's redrawn; left
+// on, both acted on every key, and Down skipped every other place
+function detachListHandlers(container) {
+    if (container._cityListNavHandler) {
+        container.removeEventListener('keydown', container._cityListNavHandler);
+        container._cityListNavHandler = null;
+    }
+    if (container._stateCityNavHandler) {
+        container.removeEventListener('keydown', container._stateCityNavHandler);
+        container._stateCityNavHandler = null;
+    }
+}
+
+function clearCityListRole(container) {
+    ['role', 'tabindex', 'aria-activedescendant', 'aria-label']
+        .forEach(attr => container.removeAttribute(attr));
+    const controls = document.querySelector('.list-view-controls');
+    if (controls) controls.remove();
+}
+
+let currentBrowseListName = null;  // the browse list's screen reader name, e.g. "Cities in Ohio"
 
 // Add city from state selection
 async function addCityFromState(cityData) {
@@ -1473,100 +1559,34 @@ async function addCityFromState(cityData) {
         lat: cityData.lat,
         lon: cityData.lon
     }, true); // Skip render - we'll stay in state view
-    
-    // Re-render state cities to update button states, preserving active item and scroll position
-    if (added && currentStateCities && currentStateName) {
-        const container = document.getElementById('city-list');
-        const scrollPosition = container.scrollTop;
-        const currentActive = container.getAttribute('aria-activedescendant');
-        let activeIndex = 0;
-        
-        if (currentActive && currentActive.startsWith('state-city-item-')) {
-            activeIndex = parseInt(currentActive.split('-')[3]);
-        }
-        
-        renderStateCitiesWithWeather(container, currentStateCities);
-        
-        // Restore scroll position for all views
-        container.scrollTop = scrollPosition;
-        
-        // Restore the active item after re-render for list view
-        if (currentView === 'list') {
-            container.setAttribute('aria-activedescendant', `state-city-item-${activeIndex}`);
-            const items = container.querySelectorAll('.state-city-item');
-            items.forEach((item, i) => {
-                item.setAttribute('aria-selected', i === activeIndex ? 'true' : 'false');
-            });
-            
-            // Update the action button to reflect the new state
-            const actionBtn = document.getElementById('state-city-action-btn');
-            if (actionBtn && currentStateCities && currentStateCities[activeIndex]) {
-                const cityData = currentStateCities[activeIndex];
-                const isInList = cities[cityData.display];
-                
-                if (isInList) {
-                    actionBtn.textContent = '✖ Remove from My Cities';
-                    actionBtn.className = 'list-control-btn remove-btn';
-                } else {
-                    actionBtn.textContent = '➕ Add to My Cities';
-                    actionBtn.className = 'list-control-btn';
-                }
-            }
-        }
-    }
+    if (added) rerenderBrowseList();
 }
 
 // Remove city from user's list (for state browsing)
 async function removeCityFromState(cityData) {
     const key = cityData.display;
-    
-    if (cities[key]) {
-        delete cities[key];
-        delete weatherData[key];
-        saveCitiesToStorage();
-        announceToScreenReader(`${key} removed from list`);
-        
-        // Re-render state cities to update button states, preserving active item and scroll position
-        if (currentStateCities && currentStateName) {
-            const container = document.getElementById('city-list');
-            const scrollPosition = container.scrollTop;
-            const currentActive = container.getAttribute('aria-activedescendant');
-            let activeIndex = 0;
-            
-            if (currentActive && currentActive.startsWith('state-city-item-')) {
-                activeIndex = parseInt(currentActive.split('-')[3]);
-            }
-            
-            renderStateCitiesWithWeather(container, currentStateCities);
-            
-            // Restore scroll position for all views
-            container.scrollTop = scrollPosition;
-            
-            // Restore the active item after re-render for list view
-            if (currentView === 'list') {
-                container.setAttribute('aria-activedescendant', `state-city-item-${activeIndex}`);
-                const items = container.querySelectorAll('.state-city-item');
-                items.forEach((item, i) => {
-                    item.setAttribute('aria-selected', i === activeIndex ? 'true' : 'false');
-                });
-                
-                // Update the action button to reflect the new state
-                const actionBtn = document.getElementById('state-city-action-btn');
-                if (actionBtn && currentStateCities[activeIndex]) {
-                    const cityData = currentStateCities[activeIndex];
-                    const isInList = cities[cityData.display];
-                    
-                    if (isInList) {
-                        actionBtn.textContent = '✖ Remove from My Cities';
-                        actionBtn.className = 'list-control-btn remove-btn';
-                    } else {
-                        actionBtn.textContent = '➕ Add to My Cities';
-                        actionBtn.className = 'list-control-btn';
-                    }
-                }
-            }
-        }
-    }
+    if (!cities[key]) return;
+    delete cities[key];
+    delete weatherData[key];
+    saveCitiesToStorage();
+    announceToScreenReader(`${key} removed from list`);
+    rerenderBrowseList();
+}
+
+// Rebuild the browse list after Add or Remove, keeping your place: the same
+// item selected (List view), the scroll position, and focus on the button
+// you pressed, which has turned from Add into Remove or back (same focus key).
+function rerenderBrowseList() {
+    if (!currentStateCities || !currentStateName) return;
+    const container = document.getElementById('city-list');
+    const saved = rememberFocus();
+    const scroll = container.scrollTop;
+    const items = [...container.querySelectorAll('.state-city-item')];
+    const activeIndex = items.findIndex(i => i.id === container.getAttribute('aria-activedescendant'));
+    renderStateCitiesWithWeather(container, currentStateCities);
+    container.scrollTop = scroll;
+    if (currentView === 'list' && activeIndex >= 0) setBrowseListActive(container, activeIndex);
+    restoreFocus(saved);
 }
 
 // Render state cities with weather data in flat view
@@ -1574,14 +1594,15 @@ function renderStateCitiesFlatWithWeather(container, citiesData) {
     container.setAttribute('role', 'list');
     
     citiesData.forEach((cityData) => {
-        const card = document.createElement('article');
+        // A div, not an article: ARIA doesn't allow role=listitem on article
+        const card = document.createElement('div');
         card.className = 'city-card state-city-card';
         card.setAttribute('role', 'listitem');
         
         const header = document.createElement('div');
         header.className = 'city-card-header';
         
-        const title = document.createElement('h4');
+        const title = document.createElement('h3');  // under the list's h2
         title.textContent = cityData.label || cityData.display;
         header.appendChild(title);
         card.appendChild(header);
@@ -1696,7 +1717,7 @@ function renderStateCitiesFlatWithWeather(container, citiesData) {
                 const forecast = document.createElement('div');
                 forecast.className = 'daily-forecast';
                 
-                const forecastTitle = document.createElement('h5');
+                const forecastTitle = document.createElement('h4');  // under the card's h3
                 forecastTitle.textContent = 'Today';
                 forecast.appendChild(forecastTitle);
                 forecast.appendChild(forecastDetails);
@@ -1714,20 +1735,24 @@ function renderStateCitiesFlatWithWeather(container, citiesData) {
         // Check if city is already in user's list
         const isInList = cities[cityData.display];
         
+        // The spoken name starts with the visible words; Add and Remove share
+        // a focus key, so focus stays put when one turns into the other
         if (isInList) {
-            const removeBtn = createButton('✖ Remove from List', `Remove ${cityData.display} from your cities list`, async () => {
+            const removeBtn = createButton('<span aria-hidden="true">✖ </span>Remove from My Cities', `Remove from My Cities: ${cityData.display}`, async () => {
                 await removeCityFromState(cityData);
             });
             removeBtn.className = 'remove-btn';
+            removeBtn.dataset.focusKey = `toggle|${cityData.display}`;
             controls.appendChild(removeBtn);
         } else {
-            const addBtn = createButton('➕ Add to My Cities', `Add ${cityData.display} to your cities list`, async () => {
+            const addBtn = createButton('<span aria-hidden="true">➕ </span>Add to My Cities', `Add to My Cities: ${cityData.display}`, async () => {
                 await addCityFromState(cityData);
             });
             addBtn.className = 'add-city-btn';
+            addBtn.dataset.focusKey = `toggle|${cityData.display}`;
             controls.appendChild(addBtn);
         }
-        
+
         card.appendChild(controls);
         container.appendChild(card);
     });
@@ -1763,13 +1788,16 @@ function renderStateCitiesTableWithWeather(container, citiesData) {
         { key: 'sunset', label: 'Sunset' }
     ];
     
-    columnConfig.forEach(col => {
-        if (currentConfig.cityList[col.key]) {
-            const th = document.createElement('th');
-            th.textContent = col.label;
-            th.scope = 'col';
-            headerRow.appendChild(th);
-        }
+    // Headers in the same order as the cells: your Configure order. They
+    // used to follow this fixed list, so after turning on Feels Like or
+    // reordering, table navigation read "Feels Like" over the high.
+    const columnLabels = Object.fromEntries(columnConfig.map(c => [c.key, c.label]));
+    currentConfig.cityListOrder.forEach(key => {
+        if (!currentConfig.cityList[key]) return;
+        const th = document.createElement('th');
+        th.textContent = columnLabels[key] || CITY_LIST_FIELD_LABELS[key] || key;
+        th.scope = 'col';
+        headerRow.appendChild(th);
     });
 
     // Places of the World lists say where each place is and why it's known
@@ -1881,7 +1909,7 @@ function renderStateCitiesTableWithWeather(container, citiesData) {
                 row.appendChild(cell);
             });
         } else {
-            const enabledColumns = columnConfig.filter(col => currentConfig.cityList[col.key]).length;
+            const enabledColumns = currentConfig.cityListOrder.filter(key => currentConfig.cityList[key]).length;
             for (let i = 0; i < enabledColumns; i++) {
                 const loadingCell = document.createElement('td');
                 loadingCell.textContent = 'N/A';
@@ -1900,16 +1928,18 @@ function renderStateCitiesTableWithWeather(container, citiesData) {
         const isInList = cities[cityData.display];
         
         if (isInList) {
-            const removeBtn = createButton('✖ Remove', `Remove ${cityData.display} from your cities list`, async () => {
+            const removeBtn = createButton('<span aria-hidden="true">✖ </span>Remove', `Remove ${cityData.display} from My Cities`, async () => {
                 await removeCityFromState(cityData);
             });
             removeBtn.className = 'remove-btn-small';
+            removeBtn.dataset.focusKey = `toggle|${cityData.display}`;
             actionsCell.appendChild(removeBtn);
         } else {
-            const addBtn = createButton('➕ Add', `Add ${cityData.display} to your cities list`, async () => {
+            const addBtn = createButton('<span aria-hidden="true">➕ </span>Add', `Add ${cityData.display} to My Cities`, async () => {
                 await addCityFromState(cityData);
             });
             addBtn.className = 'add-city-btn-small';
+            addBtn.dataset.focusKey = `toggle|${cityData.display}`;
             actionsCell.appendChild(addBtn);
         }
         
@@ -2017,146 +2047,77 @@ function renderStateCitiesListWithWeather(container, citiesData) {
     });
     
     container.setAttribute('aria-activedescendant', 'state-city-item-0');
-    
-    // Add control button for adding/removing the selected city
+    container._browseCities = citiesData;
+
+    // One button below the list adds or removes the selected place. Its
+    // visible words are its name, and they always match what it does: the
+    // spoken name used to stay "Add selected city" while it said Remove.
     const controlsDiv = document.createElement('div');
     controlsDiv.className = 'list-view-controls';
-    
-    const actionBtn = createButton('➕ Add to My Cities', 'Add selected city to your cities list', () => {
-        const items = container.querySelectorAll('.state-city-item');
-        const currentActive = container.getAttribute('aria-activedescendant');
-        let activeIndex = 0;
-        
-        if (currentActive && currentActive.startsWith('state-city-item-')) {
-            activeIndex = parseInt(currentActive.split('-')[3]);
-        }
-        
-        if (citiesData[activeIndex]) {
-            const cityData = citiesData[activeIndex];
-            const isInList = cities[cityData.display];
-            
-            if (isInList) {
-                removeCityFromState(cityData);
-            } else {
-                addCityFromState(cityData);
-            }
-        }
-    });
-    actionBtn.className = 'list-control-btn';
+    const actionBtn = document.createElement('button');
+    actionBtn.type = 'button';
     actionBtn.id = 'state-city-action-btn';
+    actionBtn.dataset.focusKey = 'browse-toggle';
+    actionBtn.addEventListener('click', () => toggleBrowseSelected(container));
     controlsDiv.appendChild(actionBtn);
-    
     container.parentElement.insertBefore(controlsDiv, container.nextSibling);
-    
-    // Function to update the action button based on current selection
-    const updateActionButton = (index) => {
-        if (citiesData[index]) {
-            const cityData = citiesData[index];
-            const isInList = cities[cityData.display];
-            
-            if (isInList) {
-                actionBtn.textContent = '✖ Remove from My Cities';
-                actionBtn.className = 'list-control-btn remove-btn';
-            } else {
-                actionBtn.textContent = '➕ Add to My Cities';
-                actionBtn.className = 'list-control-btn';
-            }
-        }
-    };
-    
-    // Set initial button state
-    updateActionButton(0);
-    
-    // Remove old keyboard navigation handler if exists
+    setBrowseListActive(container, 0);
+
     if (container._stateCityNavHandler) {
         container.removeEventListener('keydown', container._stateCityNavHandler);
     }
-    
-    // Add keyboard navigation for state cities list
+    // Focus mode reads the active item, so nothing is announced on top of it
     const stateCityNavHandler = (e) => {
-        const items = container.querySelectorAll('.state-city-item');
-        const currentActive = container.getAttribute('aria-activedescendant');
-        let activeIndex = 0;
-        
-        // Parse the index from the current active descendant
-        if (currentActive && currentActive.startsWith('state-city-item-')) {
-            activeIndex = parseInt(currentActive.split('-')[3]);
-        }
-        
-        let handled = false;
-        let newIndex = activeIndex;
-        
-        switch(e.key) {
-            case 'ArrowDown':
-                e.preventDefault();
-                if (activeIndex < items.length - 1) {
-                    newIndex = activeIndex + 1;
-                }
-                handled = true;
-                break;
-                
-            case 'ArrowUp':
-                e.preventDefault();
-                if (activeIndex > 0) {
-                    newIndex = activeIndex - 1;
-                }
-                handled = true;
-                break;
-                
-            case 'Home':
-                e.preventDefault();
-                newIndex = 0;
-                handled = true;
-                break;
-                
-            case 'End':
-                e.preventDefault();
-                newIndex = items.length - 1;
-                handled = true;
-                break;
-                
+        const items = [...container.querySelectorAll('.state-city-item')];
+        if (!items.length) return;
+        const current = Math.max(0, items.findIndex(i => i.id === container.getAttribute('aria-activedescendant')));
+        let next = current;
+        switch (e.key) {
+            case 'ArrowDown': next = Math.min(items.length - 1, current + 1); break;
+            case 'ArrowUp': next = Math.max(0, current - 1); break;
+            case 'Home': next = 0; break;
+            case 'End': next = items.length - 1; break;
             case 'Enter':
             case ' ':
-                // Activate the add/remove action for the selected city
                 e.preventDefault();
-                if (citiesData[activeIndex]) {
-                    const cityData = citiesData[activeIndex];
-                    const isInList = cities[cityData.display];
-                    
-                    if (isInList) {
-                        removeCityFromState(cityData);
-                    } else {
-                        addCityFromState(cityData);
-                    }
-                }
-                handled = true;
-                break;
+                toggleBrowseSelected(container);
+                return;
+            default: return;
         }
-        
-        if (handled && newIndex !== activeIndex) {
-            // Update aria-selected on all items
-            items.forEach((item, i) => {
-                item.setAttribute('aria-selected', i === newIndex ? 'true' : 'false');
-            });
-            
-            // Update aria-activedescendant
-            container.setAttribute('aria-activedescendant', `state-city-item-${newIndex}`);
-            
-            // Scroll item into view
-            items[newIndex].scrollIntoView({ block: 'nearest' });
-            
-            // Update the action button text based on new selection
-            updateActionButton(newIndex);
-            
-            // Announce the new item to screen readers
-            if (items[newIndex]) {
-                announceToScreenReader(items[newIndex].textContent);
-            }
-        }
+        e.preventDefault();
+        if (next !== current) setBrowseListActive(container, next);
     };
-    
     container._stateCityNavHandler = stateCityNavHandler;
     container.addEventListener('keydown', stateCityNavHandler);
+}
+
+// Select an item in a browse list and relabel the Add/Remove button for it
+function setBrowseListActive(container, index) {
+    const items = [...container.querySelectorAll('.state-city-item')];
+    const data = container._browseCities || [];
+    if (!items[index] || !data[index]) return;
+    items.forEach((item, i) => item.setAttribute('aria-selected', i === index ? 'true' : 'false'));
+    container.setAttribute('aria-activedescendant', items[index].id);
+    items[index].scrollIntoView({ block: 'nearest' });
+    const btn = document.getElementById('state-city-action-btn');
+    if (!btn) return;
+    const place = data[index];
+    const label = place.label || place.display;
+    const inList = !!cities[place.display];
+    btn.textContent = inList ? `Remove ${label} from My Cities` : `Add ${label} to My Cities`;
+    btn.className = inList ? 'list-control-btn remove-btn' : 'list-control-btn';
+}
+
+function toggleBrowseSelected(container) {
+    const items = [...container.querySelectorAll('.state-city-item')];
+    const index = items.findIndex(i => i.id === container.getAttribute('aria-activedescendant'));
+    const place = (container._browseCities || [])[index];
+    if (!place) return;
+    if (cities[place.display]) {
+        removeCityFromState(place);
+    } else {
+        addCityFromState(place);
+    }
 }
 
 // Fetch weather data
@@ -2184,8 +2145,10 @@ async function fetchWeatherForCity(cityName, lat, lon, detailed = false, silent 
         
         const data = await response.json();
         weatherData[cityName] = data;
-        
-        renderCityList();
+
+        // One rebuild for a burst of arrivals (page load, Refresh All), not
+        // one per city, each of which used to move you in the list
+        scheduleCityListRender();
         
         if (!silent) {
             announceToScreenReader(`Weather data updated for ${cityName}`);
@@ -2202,22 +2165,88 @@ async function fetchWeatherForCity(cityName, lat, lon, detailed = false, silent 
 }
 
 // Render city list
+let cityListRenderTimer = null;
+
+let cityListRenderDue = 0;   // when the first waiting arrival came in
+
+// Rebuild 150 ms after the last arrival, but never more than 500 ms after
+// the first: answers arriving less than 150 ms apart used to hold the whole
+// list on "Loading..." until the last one
+function scheduleCityListRender() {
+    const now = Date.now();
+    if (!cityListRenderTimer) cityListRenderDue = now + 500;
+    clearTimeout(cityListRenderTimer);
+    const wait = Math.max(0, Math.min(150, cityListRenderDue - now));
+    cityListRenderTimer = setTimeout(() => {
+        cityListRenderTimer = null;
+        renderCityList();
+    }, wait);
+}
+
+// Whether focus is somewhere the city list rebuild would destroy
+function focusInCityList() {
+    const a = document.activeElement;
+    if (!a || a === document.body) return false;
+    return !!(a.closest('#city-list') || a.closest('.list-view-controls'));
+}
+
 function renderCityList() {
-    console.log('renderCityList called, cities count:', Object.keys(cities).length);
-    console.log('Current view:', currentView);
-    console.log('City keys:', Object.keys(cities));
-    
     const container = document.getElementById('city-list');
     const emptyState = document.getElementById('empty-state');
-    
+
     if (!container) {
         console.error('city-list container not found!');
         return;
     }
+
+    // While a state, country or Places list is showing (or loading), the
+    // list holds those, not your cities; Back renders yours again
+    if (currentStateCities || browseLoading) return;
+
+    clearTimeout(cityListRenderTimer);
+    cityListRenderTimer = null;
+
+    // Remember where you were, to put you back after the rebuild
+    const saved = focusInCityList() ? rememberFocus() : null;
+    const activeOption = currentView === 'list'
+        ? container.querySelector(`#${container.getAttribute('aria-activedescendant') || '__none'}`)
+        : null;
+    const activeCity = pendingListActiveCity || (activeOption ? activeOption.dataset.cityName : null);
+    pendingListActiveCity = null;
+    const pending = pendingCityListFocus;
+    pendingCityListFocus = null;
+
+    renderCityListNow(container, emptyState);
+
+    if (activeCity) setListActiveByCity(container, activeCity);
+    if (pending) {
+        for (const key of pending) {
+            const el = key === '__city-input' ? document.getElementById('city-input') : findByFocusKey(key);
+            if (canFocus(el) && focusElement(el)) return;
+        }
+        restoreFocus(saved);
+    } else if (saved) {
+        restoreFocus(saved);
+    }
+}
+
+// In List view, make the option for this city the active one again
+function setListActiveByCity(container, cityName) {
+    const options = [...container.querySelectorAll(YOUR_LIST_ITEMS)];
+    const index = options.findIndex(o => o.dataset.cityName === cityName);
+    if (index >= 0) setActiveListIndex(container, index);
+}
+
+function renderCityListNow(container, emptyState) {
     
     if (Object.keys(cities).length === 0) {
         console.log('No cities, showing empty state');
         container.innerHTML = '';
+        // An empty list: not a list box you can Tab to, or one named for a
+        // browse list you just left
+        clearCityListRole(container);
+        container.setAttribute('role', 'list');
+        nameCityList(container, 'Your cities');
         emptyState.hidden = false;
         // Clean up list view controls if they exist
         const existingControls = document.querySelector('.list-view-controls');
@@ -2231,11 +2260,8 @@ function renderCityList() {
     emptyState.hidden = true;
     container.innerHTML = '';
     
-    // Remove any existing list navigation handler
-    if (listNavigationHandler) {
-        container.removeEventListener('keydown', listNavigationHandler);
-        listNavigationHandler = null;
-    }
+    // Neither List view's key handler outlives the view it belongs to
+    detachListHandlers(container);
     
     // Clean up list view controls if they exist
     const existingControls = document.querySelector('.list-view-controls');
@@ -2254,7 +2280,8 @@ function renderCityList() {
         console.log('Rendering flat view');
         renderFlatView(container);
     }
-    
+    nameCityList(container, 'Your cities');
+
     console.log('renderCityList completed, container children:', container.children.length);
 }
 
@@ -2278,11 +2305,10 @@ function openViewMenu() {
     viewMenu.hidden = false;
     viewMenuBtn.setAttribute('aria-expanded', 'true');
     
-    // Focus first menu item
-    const firstItem = viewMenu.querySelector('[role="menuitem"]');
-    if (firstItem) {
-        firstItem.focus();
-    }
+    // Focus the current view, which says which one is on
+    const item = viewMenu.querySelector('[role="menuitemradio"][aria-checked="true"]') ||
+        viewMenu.querySelector('[role="menuitemradio"]');
+    if (item) item.focus();
 }
 
 function closeViewMenu() {
@@ -2294,7 +2320,7 @@ function closeViewMenu() {
 }
 
 function handleViewMenuKeydown(e) {
-    const items = Array.from(e.currentTarget.querySelectorAll('[role="menuitem"]'));
+    const items = Array.from(e.currentTarget.querySelectorAll('[role="menuitemradio"]'));
     const currentIndex = items.indexOf(document.activeElement);
     
     let handled = false;
@@ -2337,6 +2363,11 @@ function handleViewMenuKeydown(e) {
             }
             handled = true;
             break;
+
+        case 'Tab':
+            // Leaving the menu closes it; Tab then moves on as usual
+            closeViewMenu();
+            break;
     }
 }
 
@@ -2349,7 +2380,7 @@ function switchView(view) {
     saveConfigToStorage();
     
     // Update menu item states
-    document.querySelectorAll('#view-menu [role="menuitem"]').forEach(item => {
+    document.querySelectorAll('#view-menu [role="menuitemradio"]').forEach(item => {
         const isSelected = item.dataset.view === view;
         item.setAttribute('aria-checked', isSelected ? 'true' : 'false');
     });
@@ -2390,22 +2421,27 @@ function renderFlatView(container) {
 
 // Create city card
 function createCityCard(cityName, lat, lon, weather, index) {
-    const card = document.createElement('article');
+    // A div, not an article: ARIA doesn't allow role=listitem on article
+    const card = document.createElement('div');
     card.className = 'city-card';
     card.setAttribute('role', 'listitem');
     
     const header = document.createElement('div');
     header.className = 'city-card-header';
     
-    const titleButton = document.createElement('button');
-    titleButton.className = 'city-title-btn';
-    titleButton.addEventListener('click', () => showFullWeather(cityName, lat, lon));
-    
+    // A heading holding the button (not a button holding a heading), so
+    // heading navigation lands on it and Enter opens Full Weather
     const title = document.createElement('h3');
-    title.textContent = cityName;
-    titleButton.appendChild(title);
-    
-    header.appendChild(titleButton);
+    title.className = 'city-title';
+    const titleButton = document.createElement('button');
+    titleButton.type = 'button';
+    titleButton.className = 'city-title-btn';
+    titleButton.textContent = cityName;
+    titleButton.dataset.focusKey = `title|${cityName}`;
+    titleButton.addEventListener('click', () => showFullWeather(cityName, lat, lon));
+    title.appendChild(titleButton);
+
+    header.appendChild(title);
     card.appendChild(header);
     
     // Weather content
@@ -2484,7 +2520,16 @@ function createCityCard(cityName, lat, lon, weather, index) {
                         uvBadge.style.backgroundColor = color;
                         uvBadge.style.color = current.uv_index <= 5 ? '#000' : '#fff';
                         uvBadge.textContent = `UV: ${Math.round(current.uv_index)} (${category})`;
-                        uvBadge.setAttribute('aria-label', getUVIndexDescription(current.uv_index));
+                        // An aria-label on a span with no role is ignored, so
+                        // the description is hidden text, read after the badge
+                        const uvMore = document.createElement('span');
+                        uvMore.className = 'visually-hidden';
+                        // Only the advice; the badge already says the number
+                        const advice = getUVIndexDescription(current.uv_index).split(' - ')[1];
+                        if (advice) {
+                            uvMore.textContent = `, ${advice}`;
+                            uvBadge.appendChild(uvMore);
+                        }
                         summary.appendChild(uvBadge);
                     }
                     break;
@@ -2555,7 +2600,9 @@ function createCityCard(cityName, lat, lon, weather, index) {
         () => showHistoricalWeather(cityName, lat, lon)
     );
     historyBtn.className = 'feature-btn';
-    historyBtn.setAttribute('aria-label', `View historical weather for ${cityName}`);
+    // Names start with the visible word, so "click History" works by voice
+    historyBtn.setAttribute('aria-label', `History for ${cityName}`);
+    historyBtn.dataset.focusKey = `history|${cityName}`;
     featureActions.appendChild(historyBtn);
     
     // Expected Precipitation button
@@ -2564,7 +2611,8 @@ function createCityCard(cityName, lat, lon, weather, index) {
         () => showPrecipitationNowcast(cityName, lat, lon)
     );
     precipBtn.className = 'feature-btn';
-    precipBtn.setAttribute('aria-label', `View precipitation forecast for ${cityName}`);
+    precipBtn.setAttribute('aria-label', `Precipitation for ${cityName}`);
+    precipBtn.dataset.focusKey = `precip|${cityName}`;
     featureActions.appendChild(precipBtn);
     
     // Weather Around Me button
@@ -2573,9 +2621,10 @@ function createCityCard(cityName, lat, lon, weather, index) {
         () => showWeatherAroundMe(cityName, lat, lon)
     );
     aroundBtn.className = 'feature-btn';
-    aroundBtn.setAttribute('aria-label', `View weather around ${cityName}`);
+    aroundBtn.setAttribute('aria-label', `Around Me for ${cityName}`);
+    aroundBtn.dataset.focusKey = `around|${cityName}`;
     featureActions.appendChild(aroundBtn);
-    
+
     // Weather Alert badge
     const alertContainer = document.createElement('span');
     alertContainer.id = `alert-badge-${index}`;
@@ -2588,12 +2637,12 @@ function createCityCard(cityName, lat, lon, weather, index) {
     // while the NWS request was in flight.
     const _flatCached = alertsCache[cityName];
     if (_flatCached && (Date.now() - _flatCached.timestamp < 600000)) {
-        alertContainer.innerHTML = renderAlertBadge(_flatCached.alerts);
+        alertContainer.innerHTML = renderAlertBadge(_flatCached.alerts, cityName);
     } else {
         const _flatBadgeId = `alert-badge-${index}`;
         fetchWeatherAlerts(cityName, lat, lon).then(alerts => {
             const el = document.getElementById(_flatBadgeId);
-            if (el) el.innerHTML = renderAlertBadge(alerts);
+            if (el) el.innerHTML = renderAlertBadge(alerts, cityName);
         });
     }
     
@@ -2607,19 +2656,22 @@ function createCityCard(cityName, lat, lon, weather, index) {
     if (index > 0) {
         const upBtn = createButton('↑', `Move ${cityName} up in list`, () => moveCityUp(cityName));
         upBtn.className = 'icon-btn';
+        upBtn.dataset.focusKey = `up|${cityName}`;
         controls.appendChild(upBtn);
     }
-    
+
     // Move down button
     if (index < Object.keys(cities).length - 1) {
         const downBtn = createButton('↓', `Move ${cityName} down in list`, () => moveCityDown(cityName));
         downBtn.className = 'icon-btn';
+        downBtn.dataset.focusKey = `down|${cityName}`;
         controls.appendChild(downBtn);
     }
-    
+
     // Remove button
     const removeBtn = createButton('🗑️', `Remove ${cityName} from list`, () => removeCity(cityName));
     removeBtn.className = 'icon-btn remove-btn';
+    removeBtn.dataset.focusKey = `remove|${cityName}`;
     controls.appendChild(removeBtn);
     
     card.appendChild(controls);
@@ -2638,6 +2690,7 @@ function addDetail(dl, label, value) {
 
 function createButton(text, ariaLabelOrOnClick, onClickIfThreeParams = null) {
     const btn = document.createElement('button');
+    btn.type = 'button';   // never a form submit
     btn.innerHTML = text;
     
     // Handle both old signature (text, ariaLabel, onClick) and new signature (text, onClick, ariaLabel)
@@ -2665,7 +2718,8 @@ function createButton(text, ariaLabelOrOnClick, onClickIfThreeParams = null) {
 
 // Table view
 function renderTableView(container) {
-    container.removeAttribute('role');
+    // A named region, like the browse table, so the name has a role to sit on
+    container.setAttribute('role', 'region');
     container.removeAttribute('tabindex');
     container.removeAttribute('aria-activedescendant');
     
@@ -2729,15 +2783,14 @@ function renderTableView(container) {
         const cityCell = document.createElement('th');
         cityCell.scope = 'row';
         
-        // Make city name a clickable link
-        const cityLink = document.createElement('a');
-        cityLink.href = '#';
+        // The city name opens Full Weather: a button, since it opens a
+        // dialog rather than going anywhere
+        const cityLink = document.createElement('button');
+        cityLink.type = 'button';
         cityLink.textContent = cityName;
-        cityLink.className = 'city-link';
-        cityLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            showFullWeather(cityName, lat, lon);
-        });
+        cityLink.className = 'city-link-btn';  // styled as a link (styles.css)
+        cityLink.dataset.focusKey = `title|${cityName}`;
+        cityLink.addEventListener('click', () => showFullWeather(cityName, lat, lon));
         
         cityCell.appendChild(cityLink);
         
@@ -2751,14 +2804,14 @@ function renderTableView(container) {
         // even if renderCityList() rebuilt the table while the NWS request was in flight.
         const _tableCached = alertsCache[cityName];
         if (_tableCached && (Date.now() - _tableCached.timestamp < 600000)) {
-            const badgeHTML = renderAlertBadge(_tableCached.alerts);
+            const badgeHTML = renderAlertBadge(_tableCached.alerts, cityName);
             if (badgeHTML) alertSpan.innerHTML = badgeHTML;
         } else {
             const _tableBadgeId = `alert-badge-table-${index}`;
             fetchWeatherAlerts(cityName, lat, lon).then(alerts => {
                 const el = document.getElementById(_tableBadgeId);
                 if (el) {
-                    const badgeHTML = renderAlertBadge(alerts);
+                    const badgeHTML = renderAlertBadge(alerts, cityName);
                     if (badgeHTML) el.innerHTML = badgeHTML;
                 }
             });
@@ -2865,37 +2918,43 @@ function renderTableView(container) {
         // Feature buttons with icons
         const historyBtn = createButton('📊', () => showHistoricalWeather(cityName, lat, lon));
         historyBtn.className = 'icon-btn-small feature-btn-small';
-        historyBtn.setAttribute('aria-label', `View historical weather for ${cityName}`);
+        historyBtn.setAttribute('aria-label', `History for ${cityName}`);
         historyBtn.title = 'Historical Weather';
+        historyBtn.dataset.focusKey = `history|${cityName}`;
         actionsDiv.appendChild(historyBtn);
-        
+
         const precipBtn = createButton('💧', () => showPrecipitationNowcast(cityName, lat, lon));
         precipBtn.className = 'icon-btn-small feature-btn-small';
-        precipBtn.setAttribute('aria-label', `View precipitation forecast for ${cityName}`);
+        precipBtn.setAttribute('aria-label', `Precipitation for ${cityName}`);
         precipBtn.title = 'Expected Precipitation';
+        precipBtn.dataset.focusKey = `precip|${cityName}`;
         actionsDiv.appendChild(precipBtn);
-        
+
         const aroundBtn = createButton('🧭', () => showWeatherAroundMe(cityName, lat, lon));
         aroundBtn.className = 'icon-btn-small feature-btn-small';
-        aroundBtn.setAttribute('aria-label', `View weather around ${cityName}`);
+        aroundBtn.setAttribute('aria-label', `Around Me for ${cityName}`);
         aroundBtn.title = 'Weather Around Me';
+        aroundBtn.dataset.focusKey = `around|${cityName}`;
         actionsDiv.appendChild(aroundBtn);
-        
+
         // Movement buttons
         if (index > 0) {
             const upBtn = createButton('↑', `Move ${cityName} up`, () => moveCityUp(cityName));
             upBtn.className = 'icon-btn-small';
+            upBtn.dataset.focusKey = `up|${cityName}`;
             actionsDiv.appendChild(upBtn);
         }
-        
+
         if (index < Object.keys(cities).length - 1) {
             const downBtn = createButton('↓', `Move ${cityName} down`, () => moveCityDown(cityName));
             downBtn.className = 'icon-btn-small';
+            downBtn.dataset.focusKey = `down|${cityName}`;
             actionsDiv.appendChild(downBtn);
         }
-        
+
         const removeBtn = createButton('🗑️', `Remove ${cityName}`, () => removeCity(cityName));
         removeBtn.className = 'icon-btn-small remove-btn';
+        removeBtn.dataset.focusKey = `remove|${cityName}`;
         actionsDiv.appendChild(removeBtn);
         
         actionsCell.appendChild(actionsDiv);
@@ -3001,11 +3060,8 @@ function addListboxNavigation(container, idPrefix, onNavigate) {
             if (onNavigate && onNavigate.onChange) {
                 onNavigate.onChange(newIndex, listItems[newIndex]);
             }
-            
-            // Announce to screen reader
-            if (listItems[newIndex]) {
-                announceToScreenReader(listItems[newIndex].textContent);
-            }
+            // Nothing announced: focus mode reads the new active item, and an
+            // announcement on top made every item speak twice
         }
     };
     
@@ -3020,416 +3076,259 @@ function addListboxNavigation(container, idPrefix, onNavigate) {
 }
 
 // List view (compact, keyboard navigable)
+//
+// A role=listbox of your cities with one set of buttons below it that act on
+// the selected city. Items are built in order, all at once; a city's alert
+// text comes from the cache and is filled in when its check returns, in
+// place, so items never arrive out of order or twice. Focus mode reads the
+// active item, so nothing is announced on top of it.
+let listViewRenderGen = 0;
+
+function listViewItemText(cityName, alertsList, weather, isCondensed) {
+    let text = cityName;
+    if (alertsList && alertsList.length) {
+        text += ` (${alertsList.length === 1 ? 'Alert' : 'Alerts'}: ${alertBadgeText(alertsList)})`;
+    }
+    if (!(weather && weather.current)) return `${text} - Loading...`;
+    const current = weather.current;
+    const unitT = `°${currentConfig.units.temperature}`;
+    const parts = [];
+    currentConfig.cityListOrder.forEach(key => {
+        if (!currentConfig.cityList[key]) return;
+        switch (key) {
+            case 'temperature': {
+                const t = `${convertTemperature(current.temperature_2m)}${unitT}`;
+                parts.push(isCondensed ? t : `Temperature: ${t}`);
+                break;
+            }
+            case 'conditions': {
+                const d = WEATHER_CODES[current.weather_code] || 'Unknown';
+                parts.push(isCondensed ? d : `Conditions: ${d}`);
+                break;
+            }
+            case 'feels_like': {
+                const f = `${convertTemperature(current.apparent_temperature)}${unitT}`;
+                parts.push(isCondensed ? f : `Feels Like: ${f}`);
+                break;
+            }
+            case 'humidity':
+                parts.push(isCondensed ? `${current.relative_humidity_2m}%` : `Humidity: ${current.relative_humidity_2m}%`);
+                break;
+            case 'wind_speed': {
+                const w = `${convertWindSpeed(current.wind_speed_10m)} ${currentConfig.units.wind_speed}`;
+                parts.push(isCondensed ? w : `Wind: ${w}`);
+                break;
+            }
+            case 'wind_direction': {
+                const dir = degreesToCardinal(current.wind_direction_10m);
+                parts.push(isCondensed ? dir : `Wind Direction: ${dir}`);
+                break;
+            }
+            case 'wind_gusts':
+                if (current.wind_gusts_10m) {
+                    const g = `${convertWindSpeed(current.wind_gusts_10m)} ${currentConfig.units.wind_speed}`;
+                    parts.push(isCondensed ? `gusts ${g}` : `Wind Gusts: ${g}`);
+                }
+                break;
+            case 'uv_index':
+                if (current.uv_index !== null && current.uv_index !== undefined) {
+                    const { category } = getUVIndexCategory(current.uv_index);
+                    parts.push(isCondensed ? `UV${Math.round(current.uv_index)}` : `UV: ${Math.round(current.uv_index)} (${category})`);
+                }
+                break;
+            case 'high_temp':
+                if (weather.daily) {
+                    const h = `${convertTemperature(weather.daily.temperature_2m_max[0])}${unitT}`;
+                    parts.push(isCondensed ? h : `High: ${h}`);
+                }
+                break;
+            case 'low_temp':
+                if (weather.daily) {
+                    const l = `${convertTemperature(weather.daily.temperature_2m_min[0])}${unitT}`;
+                    parts.push(isCondensed ? l : `Low: ${l}`);
+                }
+                break;
+            case 'sunrise':
+            case 'sunset':
+                if (weather.daily && weather.daily[key] && weather.daily[key][0]) {
+                    const s = new Date(weather.daily[key][0]).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                    parts.push(isCondensed ? s : `${key === 'sunrise' ? 'Sunrise' : 'Sunset'}: ${s}`);
+                }
+                break;
+        }
+    });
+    return `${text} - ${parts.join(', ')}`;
+}
+
 function renderListView(container) {
     setupListboxARIA(container, 'list-item');
-    
-    let activeIndex = 0;
+    const gen = ++listViewRenderGen;
     const cityNames = Object.keys(cities);
     const isCondensed = currentConfig.listViewStyle === 'condensed';
-    
-    // Create list items
-    cityNames.forEach(async (cityName, index) => {
+
+    const freshAlerts = (name) => {
+        const c = alertsCache[name];
+        return c && (Date.now() - c.timestamp < 600000) ? c.alerts : null;
+    };
+
+    cityNames.forEach((cityName, index) => {
         const [lat, lon] = cities[cityName];
-        const weather = weatherData[cityName];
-        
         const item = document.createElement('div');
         item.className = 'list-view-item';
         item.setAttribute('role', 'option');
         item.id = `list-item-${index}`;
         item.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
-        
-        // City name - we'll add alert button separately
-        let weatherText = cityName;
-        let alertInfo = null;
-        
-        // Check for alerts
-        try {
-            const alerts = await fetchWeatherAlerts(cityName, lat, lon);
-            if (alerts && alerts.length > 0) {
-                const severityOrder = { extreme: 0, severe: 1, moderate: 2, minor: 3, unknown: 4 };
-                const highestAlert = alerts.sort((a, b) => 
-                    (severityOrder[a.severity] || 4) - (severityOrder[b.severity] || 4)
-                )[0];
-                
-                if (alerts.length === 1) {
-                    alertInfo = { text: `Alert: ${highestAlert.event}`, alert: highestAlert };
-                } else {
-                    alertInfo = { text: `Alerts: ${highestAlert.event} and ${alerts.length - 1} more`, alert: highestAlert };
-                }
-            }
-        } catch (error) {
-            // Silently continue without alerts if fetch fails
-        }
-        
-        if (weather && weather.current) {
-            const current = weather.current;
-            const parts = [];
-            
-            // Add data in custom order
-            currentConfig.cityListOrder.forEach(key => {
-                if (!currentConfig.cityList[key]) return;
-                
-                switch(key) {
-                    case 'temperature':
-                        const temp = convertTemperature(current.temperature_2m);
-                        parts.push(isCondensed ? 
-                            `${temp}°${currentConfig.units.temperature}` : 
-                            `Temperature: ${temp}°${currentConfig.units.temperature}`);
-                        break;
-                    case 'conditions':
-                        const weatherDesc = WEATHER_CODES[current.weather_code] || 'Unknown';
-                        parts.push(isCondensed ? weatherDesc : `Conditions: ${weatherDesc}`);
-                        break;
-                    case 'feels_like':
-                        const feels = convertTemperature(current.apparent_temperature);
-                        parts.push(isCondensed ? 
-                            `${feels}°${currentConfig.units.temperature}` : 
-                            `Feels Like: ${feels}°${currentConfig.units.temperature}`);
-                        break;
-                    case 'humidity':
-                        parts.push(isCondensed ? 
-                            `${current.relative_humidity_2m}%` : 
-                            `Humidity: ${current.relative_humidity_2m}%`);
-                        break;
-                    case 'wind_speed':
-                        const windSpeed = convertWindSpeed(current.wind_speed_10m);
-                        parts.push(isCondensed ? 
-                            `${windSpeed} ${currentConfig.units.wind_speed}` : 
-                            `Wind: ${windSpeed} ${currentConfig.units.wind_speed}`);
-                        break;
-                    case 'wind_direction':
-                        const windDir = degreesToCardinal(current.wind_direction_10m);
-                        parts.push(isCondensed ? windDir : `Wind Direction: ${windDir}`);
-                        break;
-                    case 'wind_gusts':
-                        if (current.wind_gusts_10m) {
-                            const gusts = convertWindSpeed(current.wind_gusts_10m);
-                            parts.push(isCondensed ? 
-                                `gusts ${gusts} ${currentConfig.units.wind_speed}` : 
-                                `Wind Gusts: ${gusts} ${currentConfig.units.wind_speed}`);
-                        }
-                        break;
-                    case 'uv_index':
-                        if (current.uv_index !== null && current.uv_index !== undefined) {
-                            const { category } = getUVIndexCategory(current.uv_index);
-                            parts.push(isCondensed ? 
-                                `UV${Math.round(current.uv_index)}` : 
-                                `UV: ${Math.round(current.uv_index)} (${category})`);
-                        }
-                        break;
-                    case 'high_temp':
-                        if (weather.daily) {
-                            const high = convertTemperature(weather.daily.temperature_2m_max[0]);
-                            parts.push(isCondensed ? 
-                                `${high}°${currentConfig.units.temperature}` : 
-                                `High: ${high}°${currentConfig.units.temperature}`);
-                        }
-                        break;
-                    case 'low_temp':
-                        if (weather.daily) {
-                            const low = convertTemperature(weather.daily.temperature_2m_min[0]);
-                            parts.push(isCondensed ? 
-                                `${low}°${currentConfig.units.temperature}` : 
-                                `Low: ${low}°${currentConfig.units.temperature}`);
-                        }
-                        break;
-                    case 'sunrise':
-                        if (weather.daily && weather.daily.sunrise && weather.daily.sunrise[0]) {
-                            const sunriseTime = new Date(weather.daily.sunrise[0]);
-                            const timeStr = sunriseTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-                            parts.push(isCondensed ? timeStr : `Sunrise: ${timeStr}`);
-                        }
-                        break;
-                    case 'sunset':
-                        if (weather.daily && weather.daily.sunset && weather.daily.sunset[0]) {
-                            const sunsetTime = new Date(weather.daily.sunset[0]);
-                            const timeStr = sunsetTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-                            parts.push(isCondensed ? timeStr : `Sunset: ${timeStr}`);
-                        }
-                        break;
-                }
-            });
-            
-            // Add alert info right after city name if present
-            if (alertInfo) {
-                weatherText = `${weatherText} (${alertInfo.text})`;
-            }
-            
-            weatherText = `${weatherText} - ${parts.join(', ')}`;
-        } else {
-            // Add alert info right after city name if present
-            if (alertInfo) {
-                weatherText = `${weatherText} (${alertInfo.text})`;
-            }
-            weatherText = `${weatherText} - Loading...`;
-        }
-        
-        // Create text node for main content
-        const textNode = document.createTextNode(weatherText);
-        item.appendChild(textNode);
-        
         item.dataset.cityName = cityName;
         item.dataset.lat = lat;
         item.dataset.lon = lon;
         item.dataset.index = index;
-        
+        item.textContent = listViewItemText(cityName, freshAlerts(cityName), weatherData[cityName], isCondensed);
+        item.addEventListener('click', () => {
+            setActiveListIndex(container, index);
+            container.focus();
+        });
         container.appendChild(item);
+
+        // Alerts not checked yet: fill them in when they arrive, in place
+        if (!freshAlerts(cityName)) {
+            fetchWeatherAlerts(cityName, lat, lon).then(alerts => {
+                if (gen !== listViewRenderGen || !item.isConnected || !alerts || !alerts.length) return;
+                item.textContent = listViewItemText(cityName, alerts, weatherData[cityName], isCondensed);
+                if (item.getAttribute('aria-selected') === 'true') updateListControls(container);
+            }).catch(() => {});
+        }
     });
-    
-    // Set initial active descendant
-    container.setAttribute('aria-activedescendant', 'list-item-0');
-    
-    // Keyboard navigation handler
-    listNavigationHandler = (e) => {
-        const items = container.querySelectorAll('.list-view-item');
-        const currentActive = container.getAttribute('aria-activedescendant');
-        activeIndex = parseInt(currentActive.split('-')[2]);
-        
-        let handled = false;
-        
-        switch(e.key) {
-            case 'ArrowDown':
-                e.preventDefault();
-                if (activeIndex < items.length - 1) {
-                    activeIndex++;
-                    setActiveListItem(container, items, activeIndex);
-                }
-                handled = true;
-                break;
-                
-            case 'ArrowUp':
-                e.preventDefault();
-                if (activeIndex > 0) {
-                    activeIndex--;
-                    setActiveListItem(container, items, activeIndex);
-                }
-                handled = true;
-                break;
-                
-            case 'Home':
-                e.preventDefault();
-                activeIndex = 0;
-                setActiveListItem(container, items, activeIndex);
-                handled = true;
-                break;
-                
-            case 'End':
-                e.preventDefault();
-                activeIndex = items.length - 1;
-                setActiveListItem(container, items, activeIndex);
-                handled = true;
-                break;
-                
-            case 'Enter':
-            case ' ':
-                e.preventDefault();
-                const activeItem = items[activeIndex];
-                const cityName = activeItem.dataset.cityName;
-                const lat = parseFloat(activeItem.dataset.lat);
-                const lon = parseFloat(activeItem.dataset.lon);
-                showFullWeather(cityName, lat, lon);
-                handled = true;
-                break;
-        }
-    };
-    
-    // Function to update button labels and alert badge based on current selection
-    const updateButtonLabels = async (index) => {
-        const items = container.querySelectorAll('.list-view-item');
-        if (items[index]) {
-            const cityName = items[index].dataset.cityName;
-            const lat = parseFloat(items[index].dataset.lat);
-            const lon = parseFloat(items[index].dataset.lon);
-            
-            upBtn.textContent = `↑ Move ${cityName} Up`;
-            historyBtn.textContent = `📊 ${cityName} History`;
-            precipBtn.textContent = `💧 ${cityName} Precipitation`;
-            aroundBtn.textContent = `🧭 Around ${cityName}`;
-            alertBtn.textContent = `⚠️ ${cityName} Alerts`;
-            downBtn.textContent = `↓ Move ${cityName} Down`;
-            removeBtn.textContent = `🗑️ Remove ${cityName}`;
-            detailsBtn.textContent = `📋 ${cityName} Details`;
-            
-            // Update alert badge for selected city
-            try {
-                const alerts = await fetchWeatherAlerts(cityName, lat, lon);
-                const alertBadge = renderAlertBadge(alerts, cityName, lat, lon);
-                alertSpan.innerHTML = alertBadge; // renderAlertBadge returns HTML string, not DOM element
-            } catch (error) {
-                console.error('Error loading alerts for list view:', error);
-                alertSpan.innerHTML = '';
-            }
-        }
-    };
-    
-    // Wrap the existing navigation handler to update button labels
-    const originalHandler = listNavigationHandler;
-    listNavigationHandler = (e) => {
-        const items = container.querySelectorAll('.list-view-item');
-        const currentActive = container.getAttribute('aria-activedescendant');
-        const oldIndex = parseInt(currentActive.split('-')[2]);
-        
-        // Call original handler
-        originalHandler(e);
-        
-        // Check if index changed
-        const newActive = container.getAttribute('aria-activedescendant');
-        const newIndex = parseInt(newActive.split('-')[2]);
-        
-        if (newIndex !== oldIndex) {
-            updateButtonLabels(newIndex);
-            // Announce after button labels update to avoid conflicts
-            if (items[newIndex]) {
-                announceToScreenReader(items[newIndex].textContent);
-            }
-        }
-    };
-    
-    // Remove old handler if exists (prevent memory leak)
+
+    container.setAttribute('aria-activedescendant', cityNames.length ? 'list-item-0' : '');
+
+    // One key handler for the list
     if (container._cityListNavHandler) {
         container.removeEventListener('keydown', container._cityListNavHandler);
     }
-    
-    container._cityListNavHandler = listNavigationHandler;
-    container.addEventListener('keydown', listNavigationHandler);
-    
-    // Add control buttons for list view (single set that acts on focused city)
+    const onKey = (e) => {
+        const items = [...container.querySelectorAll(YOUR_LIST_ITEMS)];
+        if (!items.length) return;
+        const current = Math.max(0, items.findIndex(i => i.id === container.getAttribute('aria-activedescendant')));
+        let next = current;
+        switch (e.key) {
+            case 'ArrowDown': next = Math.min(items.length - 1, current + 1); break;
+            case 'ArrowUp': next = Math.max(0, current - 1); break;
+            case 'Home': next = 0; break;
+            case 'End': next = items.length - 1; break;
+            case 'Enter':
+            case ' ': {
+                e.preventDefault();
+                const it = items[current];
+                showFullWeather(it.dataset.cityName, parseFloat(it.dataset.lat), parseFloat(it.dataset.lon));
+                return;
+            }
+            default: return;
+        }
+        e.preventDefault();
+        if (next !== current) setActiveListIndex(container, next);
+    };
+    container._cityListNavHandler = onKey;
+    container.addEventListener('keydown', onKey);
+
+    // The buttons act on the selected city and say which in their own words
+    // (no separate aria-label), so speech and voice control match.
     const controlsDiv = document.createElement('div');
     controlsDiv.className = 'list-view-controls';
-    
-    // Feature buttons
-    const historyBtn = createButton('📊 History', 'View historical weather for selected city', () => {
-        const items = container.querySelectorAll('.list-view-item');
-        const currentActive = container.getAttribute('aria-activedescendant');
-        const activeIndex = parseInt(currentActive.split('-')[2]);
-        const cityName = items[activeIndex].dataset.cityName;
-        const lat = parseFloat(items[activeIndex].dataset.lat);
-        const lon = parseFloat(items[activeIndex].dataset.lon);
-        showHistoricalWeather(cityName, lat, lon);
-    });
-    historyBtn.className = 'list-control-btn feature-btn';
-    
-    const precipBtn = createButton('💧 Precipitation', 'View precipitation forecast for selected city', () => {
-        const items = container.querySelectorAll('.list-view-item');
-        const currentActive = container.getAttribute('aria-activedescendant');
-        const activeIndex = parseInt(currentActive.split('-')[2]);
-        const cityName = items[activeIndex].dataset.cityName;
-        const lat = parseFloat(items[activeIndex].dataset.lat);
-        const lon = parseFloat(items[activeIndex].dataset.lon);
-        showPrecipitationNowcast(cityName, lat, lon);
-    });
-    precipBtn.className = 'list-control-btn feature-btn';
-    
-    const aroundBtn = createButton('🧭 Around Me', 'View weather around selected city', () => {
-        const items = container.querySelectorAll('.list-view-item');
-        const currentActive = container.getAttribute('aria-activedescendant');
-        const activeIndex = parseInt(currentActive.split('-')[2]);
-        const cityName = items[activeIndex].dataset.cityName;
-        const lat = parseFloat(items[activeIndex].dataset.lat);
-        const lon = parseFloat(items[activeIndex].dataset.lon);
-        showWeatherAroundMe(cityName, lat, lon);
-    });
-    aroundBtn.className = 'list-control-btn feature-btn';
-    
-    const alertBtn = createButton('⚠️ Alerts', 'View weather alerts for selected city', async () => {
-        const items = container.querySelectorAll('.list-view-item');
-        const currentActive = container.getAttribute('aria-activedescendant');
-        const activeIndex = parseInt(currentActive.split('-')[2]);
-        const cityName = items[activeIndex].dataset.cityName;
-        const lat = parseFloat(items[activeIndex].dataset.lat);
-        const lon = parseFloat(items[activeIndex].dataset.lon);
-        
+    const selected = () => {
+        const it = container.querySelector(`#${container.getAttribute('aria-activedescendant') || '__none'}`);
+        return it ? { name: it.dataset.cityName, lat: parseFloat(it.dataset.lat), lon: parseFloat(it.dataset.lon) } : null;
+    };
+    const make = (action, onClick, extraClass = '') => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `list-control-btn ${extraClass}`.trim();
+        btn.dataset.action = action;
+        btn.addEventListener('click', () => {
+            const s = selected();
+            if (s) onClick(s);
+        });
+        controlsDiv.appendChild(btn);
+        return btn;
+    };
+    make('title', s => showFullWeather(s.name, s.lat, s.lon));
+    make('history', s => showHistoricalWeather(s.name, s.lat, s.lon), 'feature-btn');
+    make('precip', s => showPrecipitationNowcast(s.name, s.lat, s.lon), 'feature-btn');
+    make('around', s => showWeatherAroundMe(s.name, s.lat, s.lon), 'feature-btn');
+    make('alerts', async s => {
         try {
-            const alerts = await fetchWeatherAlerts(cityName, lat, lon);
-            if (alerts && alerts.length > 0) {
-                showAlertDetails(alerts[0]);
+            const alerts = await fetchWeatherAlerts(s.name, s.lat, s.lon);
+            if (alerts && alerts.length) {
+                showAlertDetails(alerts, s.name);
+            } else {
+                // Pressing the button and hearing nothing sounds broken
+                announceToScreenReader(`No active weather alerts for ${s.name}`);
             }
-            // If no alerts, do nothing - absence doesn't need announcement
         } catch (error) {
-            announceToScreenReader(`Error loading alerts for ${cityName}`);
+            announceToScreenReader(`Couldn't check alerts for ${s.name}`);
         }
-    });
-    alertBtn.className = 'list-control-btn feature-btn';
-    alertBtn.id = 'list-alert-btn';
-    
-    // Alert badge for selected city (visual indicator)
-    const alertSpan = document.createElement('span');
-    alertSpan.id = 'list-view-alert-badge';
-    alertSpan.className = 'alert-container';
-    
-    // Movement and action buttons
-    const upBtn = createButton('↑ Move Up', 'Move selected city up in list', () => {
-        const items = container.querySelectorAll('.list-view-item');
-        const currentActive = container.getAttribute('aria-activedescendant');
-        const activeIndex = parseInt(currentActive.split('-')[2]);
-        const cityName = items[activeIndex].dataset.cityName;
-        moveCityUp(cityName);
-    });
-    upBtn.className = 'list-control-btn';
-    
-    const downBtn = createButton('↓ Move Down', 'Move selected city down in list', () => {
-        const items = container.querySelectorAll('.list-view-item');
-        const currentActive = container.getAttribute('aria-activedescendant');
-        const activeIndex = parseInt(currentActive.split('-')[2]);
-        const cityName = items[activeIndex].dataset.cityName;
-        moveCityDown(cityName);
-    });
-    downBtn.className = 'list-control-btn';
-    
-    const removeBtn = createButton('🗑️ Remove', 'Remove selected city from list', () => {
-        const items = container.querySelectorAll('.list-view-item');
-        const currentActive = container.getAttribute('aria-activedescendant');
-        const activeIndex = parseInt(currentActive.split('-')[2]);
-        const cityName = items[activeIndex].dataset.cityName;
-        removeCity(cityName);
-    });
-    removeBtn.className = 'list-control-btn remove-btn';
-    
-    const detailsBtn = createButton('📋 Full Details', 'View full weather details for selected city', () => {
-        const items = container.querySelectorAll('.list-view-item');
-        const currentActive = container.getAttribute('aria-activedescendant');
-        const activeIndex = parseInt(currentActive.split('-')[2]);
-        const cityName = items[activeIndex].dataset.cityName;
-        const lat = parseFloat(items[activeIndex].dataset.lat);
-        const lon = parseFloat(items[activeIndex].dataset.lon);
-        showFullWeather(cityName, lat, lon);
-    });
-    detailsBtn.className = 'list-control-btn';
-    
-    controlsDiv.appendChild(detailsBtn);
-    controlsDiv.appendChild(historyBtn);
-    controlsDiv.appendChild(precipBtn);
-    controlsDiv.appendChild(aroundBtn);
-    controlsDiv.appendChild(alertBtn);
-    controlsDiv.appendChild(alertSpan);
-    controlsDiv.appendChild(upBtn);
-    controlsDiv.appendChild(downBtn);
-    controlsDiv.appendChild(removeBtn);
-    
+    }, 'feature-btn').id = 'list-alert-btn';
+    make('up', s => moveCityUp(s.name));
+    make('down', s => moveCityDown(s.name));
+    make('remove', s => removeCity(s.name), 'remove-btn');
+
     container.parentElement.insertBefore(controlsDiv, container.nextSibling);
-    
-    // Set initial button labels
-    updateButtonLabels(0);
+    updateListControls(container);
 }
 
-function setActiveListItem(container, items, index) {
-    // Update aria-selected
-    items.forEach((item, i) => {
-        item.setAttribute('aria-selected', i === index ? 'true' : 'false');
+// Label the List view buttons for the selected city, and key them so focus
+// can find them again after the list is rebuilt
+function updateListControls(container) {
+    const controls = document.querySelector('.list-view-controls');
+    if (!controls) return;
+    const items = [...container.querySelectorAll(YOUR_LIST_ITEMS)];
+    const index = items.findIndex(i => i.id === container.getAttribute('aria-activedescendant'));
+    const it = items[index];
+    if (!it) return;
+    const name = it.dataset.cityName;
+    const labels = {
+        title: `Full Details for ${name}`,
+        history: `History for ${name}`,
+        precip: `Precipitation for ${name}`,
+        around: `Around Me for ${name}`,
+        alerts: `Alerts for ${name}`,
+        up: `Move ${name} Up`,
+        down: `Move ${name} Down`,
+        remove: `Remove ${name}`
+    };
+    controls.querySelectorAll('button[data-action]').forEach(btn => {
+        const action = btn.dataset.action;
+        btn.textContent = labels[action];
+        btn.dataset.focusKey = `${action}|${name}`;
+        if (action === 'up') btn.disabled = index === 0;
+        if (action === 'down') btn.disabled = index === items.length - 1;
     });
-    
-    // Update aria-activedescendant
-    container.setAttribute('aria-activedescendant', `list-item-${index}`);
-    
-    // Scroll into view
-    items[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function setActiveListIndex(container, index) {
+    const items = [...container.querySelectorAll(YOUR_LIST_ITEMS)];
+    if (!items[index]) return;
+    items.forEach((item, i) => item.setAttribute('aria-selected', i === index ? 'true' : 'false'));
+    container.setAttribute('aria-activedescendant', items[index].id);
+    items[index].scrollIntoView({ block: 'nearest' });
+    updateListControls(container);
 }
 
 // City management
+// Where focus goes after the next renderCityList: the first of these focus
+// keys that exists. Set by actions that know where the user should land.
+let pendingCityListFocus = null;
+let pendingListActiveCity = null;   // List view: the city to select after the rebuild
+
+function focusAfterRender(...keys) {
+    pendingCityListFocus = keys.filter(Boolean);
+}
+
 function moveCityUp(cityName) {
     const keys = Object.keys(cities);
     const index = keys.indexOf(cityName);
     if (index <= 0) return;
+    // Stay on the arrow you pressed; at the top it's gone, so the other one
+    focusAfterRender(`up|${cityName}`, `down|${cityName}`, `title|${cityName}`);
     
     const newCities = {};
     keys.forEach((key, i) => {
@@ -3452,7 +3351,8 @@ function moveCityDown(cityName) {
     const keys = Object.keys(cities);
     const index = keys.indexOf(cityName);
     if (index < 0 || index >= keys.length - 1) return;
-    
+    focusAfterRender(`down|${cityName}`, `up|${cityName}`, `title|${cityName}`);
+
     const newCities = {};
     keys.forEach((key, i) => {
         if (i === index) {
@@ -3499,7 +3399,22 @@ async function refreshAllCities() {
 
 function removeCity(cityName) {
     if (!confirm(`Remove ${cityName} from your cities?`)) return;
-    
+
+    // Land on the city that takes its place (the next, or the one before
+    // if it was last); with none left, the search box
+    const keys = Object.keys(cities);
+    const i = keys.indexOf(cityName);
+    const neighbour = keys[i + 1] || keys[i - 1];
+    // Flat and Table: the neighbour's title. List: the same Remove button,
+    // now for the neighbour, which becomes the selected city.
+    if (currentView === 'list') {
+        focusAfterRender(neighbour && `remove|${neighbour}`);
+    } else {
+        focusAfterRender(neighbour && `title|${neighbour}`);
+    }
+    pendingListActiveCity = neighbour || null;
+    if (!neighbour) pendingCityListFocus = ['__city-input'];
+
     delete cities[cityName];
     delete weatherData[cityName];
     saveCitiesToStorage();
@@ -3508,6 +3423,9 @@ function removeCity(cityName) {
 }
 
 // Full weather details
+let fullWeatherGen = 0;      // only the newest Full Weather load may render
+let precipitationGen = 0;    // likewise for Expected Precipitation
+
 async function showFullWeather(cityName, lat, lon) {
     const dialog = document.getElementById('weather-details-dialog');
     const title = document.getElementById('weather-details-title');
@@ -3516,59 +3434,50 @@ async function showFullWeather(cityName, lat, lon) {
     title.textContent = `Full Weather Details - ${cityName}`;
     content.innerHTML = '<p class="loading-text">Loading detailed forecast...</p>';
     
-    closeAllModals();
-    focusReturnElement = document.activeElement;
-    dialog.hidden = false;
-    trapFocus(dialog);
-    
+    // Focus goes to the title, which names the city; the content is busy
+    // until the forecast is in
+    content.setAttribute('aria-busy', 'true');
+    openDialog(dialog, title);
+    const gen = ++fullWeatherGen;
+
     try {
-        const weather = await fetchWeatherForCity(cityName, lat, lon, true);
+        const weather = await fetchWeatherForCity(cityName, lat, lon, true, true);
+        // Closed while loading, or reopened for another city
+        if (gen !== fullWeatherGen || dialog.hidden) return;
         content.innerHTML = renderFullWeatherDetails(weather);
-        
-        // Setup keyboard navigation for list views if they exist
-        // Setup keyboard navigation for list views if they exist
+
+        // Keyboard navigation for the list views, if they're shown. The
+        // focus ring comes from :focus-visible, so only the list with focus
+        // shows one.
         const currentList = document.getElementById('current-conditions-list');
         if (currentList) {
             addListboxNavigation(currentList, 'current-item', {});
             currentList.setAttribute('aria-activedescendant', 'current-item-0');
-            currentList.style.outline = '2px solid var(--focus-outline)';
-            currentList.addEventListener('focus', () => {
-                currentList.style.outline = '2px solid var(--focus-outline)';
-            });
-            currentList.addEventListener('blur', () => {
-                currentList.style.outline = '2px solid transparent';
-            });
-            // Set focus to current conditions list if it exists
-            currentList.focus();
         }
-        
+
         const hourlyList = document.getElementById('hourly-forecast-list');
         if (hourlyList) {
             addListboxNavigation(hourlyList, 'hourly-item', {});
             hourlyList.setAttribute('aria-activedescendant', 'hourly-item-0');
-            hourlyList.style.outline = '2px solid var(--focus-outline)';
-            hourlyList.addEventListener('focus', () => {
-                hourlyList.style.outline = '2px solid var(--focus-outline)';
-            });
-            hourlyList.addEventListener('blur', () => {
-                hourlyList.style.outline = '2px solid transparent';
-            });
         }
-        
+
         const dailyList = document.getElementById('daily-forecast-list');
         if (dailyList) {
             addListboxNavigation(dailyList, 'daily-item', {});
             dailyList.setAttribute('aria-activedescendant', 'daily-item-0');
-            dailyList.style.outline = '2px solid var(--focus-outline)';
-            dailyList.addEventListener('focus', () => {
-                dailyList.style.outline = '2px solid var(--focus-outline)';
-            });
-            dailyList.addEventListener('blur', () => {
-                dailyList.style.outline = '2px solid transparent';
-            });
         }
+        content.removeAttribute('aria-busy');
+        // Focus stays on the title, so nothing is skipped; say it's ready
+        announceToScreenReader(`Forecast loaded for ${cityName}`);
     } catch (error) {
-        content.innerHTML = `<p class="error-message">Failed to load detailed forecast: ${error.message}</p>`;
+        if (gen !== fullWeatherGen || dialog.hidden) return;
+        content.removeAttribute('aria-busy');
+        content.innerHTML = '';
+        const p = document.createElement('p');
+        p.className = 'error-message';
+        p.setAttribute('role', 'alert');
+        p.textContent = `Couldn't load the forecast for ${cityName}. Check your connection, then close this and try again.`;
+        content.appendChild(p);
     }
 }
 
@@ -3609,7 +3518,7 @@ function renderCurrentConditions(weather) {
         html += '</tbody></table></div>';
     } else if (viewMode === 'list') {
         const isCondensed = currentConfig.listViewStyle === 'condensed';
-        html += '<div role="listbox" tabindex="0" class="weather-list" id="current-conditions-list" style="list-style: none; padding: 0; outline: 2px solid transparent; transition: outline 0.2s;">';
+        html += '<div role="listbox" tabindex="0" class="weather-list" id="current-conditions-list" aria-label="Current conditions" style="list-style: none; padding: 0;">';
         
         const fields = [
             { label: 'Temperature', value: `${convertTemperature(current.temperature_2m)}°${currentConfig.units.temperature}` },
@@ -3639,7 +3548,8 @@ function renderCurrentConditions(weather) {
         
         fields.forEach((field, i) => {
             const visualText = isCondensed ? `${field.label}: ${field.value}` : `${field.label} • ${field.value}`;
-            html += `<div role="option" id="current-item-${i}" aria-selected="${i === 0 ? 'true' : 'false'}" style="padding: 0.75rem; border-bottom: 1px solid var(--border-color);">${visualText}</div>`;
+            // Spoken without the bullet, which screen readers read aloud
+            html += `<div role="option" id="current-item-${i}" aria-selected="${i === 0 ? 'true' : 'false'}" aria-label="${escapeHtml(`${field.label}: ${field.value}`)}" style="padding: 0.75rem; border-bottom: 1px solid var(--border-color);">${visualText}</div>`;
         });
         
         html += '</div>';
@@ -3766,7 +3676,7 @@ function renderHourlyForecast(weather) {
         html += '</tbody></table></div>';
     } else if (viewMode === 'list') {
         // Listbox pattern for keyboard navigation
-        html += '<div role="listbox" tabindex="0" class="weather-list" id="hourly-forecast-list" style="list-style: none; padding: 0; outline: 2px solid transparent; transition: outline 0.2s;">';
+        html += '<div role="listbox" tabindex="0" class="weather-list" id="hourly-forecast-list" aria-label="Hourly forecast" style="list-style: none; padding: 0;">';
         
         const isCondensed = currentConfig.listViewStyle === 'condensed';
         
@@ -3821,13 +3731,19 @@ function renderHourlyForecast(weather) {
                 ariaLabel += `, ${details.join(', ')}`;
             }
             
-            html += `<div role="option" id="hourly-item-${i}" aria-selected="${i === 0 ? 'true' : 'false'}" style="padding: 0.75rem; border-bottom: 1px solid var(--border-color);">${visualText}</div>`;
+            // IDs count from the first hour shown, which the list's
+            // aria-activedescendant ("hourly-item-0") and arrow keys expect;
+            // they used to count from midnight, so after 1 a.m. the active
+            // item didn't exist. Spoken without the bullets.
+            const n = i - startIndex;
+            html += `<div role="option" id="hourly-item-${n}" aria-selected="${n === 0 ? 'true' : 'false'}" aria-label="${escapeHtml(ariaLabel)}" style="padding: 0.75rem; border-bottom: 1px solid var(--border-color);">${visualText}</div>`;
         }
         
         html += '</div>';
     } else {
         // Flat/Card view (default)
-        html += '<ul class="hourly-forecast">';
+        // Focusable, so the arrow keys can scroll it (it scrolls sideways)
+        html += '<ul class="hourly-forecast" tabindex="0" aria-label="Hourly forecast">';
         
         for (let i = startIndex; i < endIndex; i++) {
             const hourTime = new Date(weather.hourly.time[i]);
@@ -3946,7 +3862,7 @@ function renderDailyForecast(weather) {
         html += '</tbody></table></div>';
     } else if (viewMode === 'list') {
         // Listbox pattern for keyboard navigation
-        html += '<div role="listbox" tabindex="0" class="weather-list" id="daily-forecast-list" style="list-style: none; padding: 0; outline: 2px solid transparent; transition: outline 0.2s;">';
+        html += '<div role="listbox" tabindex="0" class="weather-list" id="daily-forecast-list" aria-label="Daily forecast" style="list-style: none; padding: 0;">';
         
         const isCondensed = currentConfig.listViewStyle === 'condensed';
         
@@ -4010,8 +3926,10 @@ function renderDailyForecast(weather) {
             if (details.length > 0) {
                 visualText += ` • ${details.join(' • ')}`;
             }
-            
-            html += `<div role="option" id="daily-item-${i}" aria-selected="${i === 0 ? 'true' : 'false'}" style="padding: 0.75rem; border-bottom: 1px solid var(--border-color);">${visualText}</div>`;
+
+            // Spoken without markup or the bullets, which screen readers read aloud
+            const spoken = visualText.replace(/<[^>]+>/g, '').replace(/\s*•\s*/g, ', ');
+            html += `<div role="option" id="daily-item-${i}" aria-selected="${i === 0 ? 'true' : 'false'}" aria-label="${escapeHtml(spoken)}" style="padding: 0.75rem; border-bottom: 1px solid var(--border-color);">${visualText}</div>`;
         }
         
         html += '</div>';
@@ -4085,12 +4003,7 @@ function renderDailyForecast(weather) {
 }
 
 function closeWeatherDetailsDialog() {
-    const dialog = document.getElementById('weather-details-dialog');
-    dialog.hidden = true;
-    if (focusReturnElement) {
-        focusReturnElement.focus();
-        focusReturnElement = null;
-    }
+    closeDialog(document.getElementById('weather-details-dialog'));
 }
 
 // Configuration dialog
@@ -4098,6 +4011,7 @@ function openConfigDialog() {
     console.log('openConfigDialog called');
     try {
         const dialog = document.getElementById('config-dialog');
+        configOrderSnapshot = [...currentConfig.cityListOrder];
         console.log('Dialog element:', dialog);
         
         // Load current config into form
@@ -4158,30 +4072,52 @@ function openConfigDialog() {
         if (dailyDetailViewInput) dailyDetailViewInput.checked = true;
         
         console.log('About to close modals and show dialog');
-        closeAllModals();
-        focusReturnElement = document.activeElement;
-        dialog.hidden = false;
-        trapFocus(dialog);
-        document.getElementById('current-tab').focus();
-        console.log('Dialog should now be visible');
+        // Opens on whichever tab is selected
+        openDialog(dialog, dialog.querySelector('[role="tab"][aria-selected="true"]') ||
+            document.getElementById('current-tab'));
     } catch (error) {
         console.error('Error in openConfigDialog:', error);
         alert('Error opening configuration dialog. Check console for details.');
     }
 }
 
+// Field moves change the order as you make them, so Cancel puts back the
+// order from when Configure opened (or was last applied)
+let configOrderSnapshot = null;
+
+// Redraw whatever list is showing: a browse list keeps its place, and
+// your own list otherwise (renderCityList skips while browsing, so a units
+// change used to leave a browse list in the old units)
+function refreshShownList() {
+    if (currentStateCities && currentStateName) {
+        rerenderBrowseList();
+    } else {
+        renderCityList();
+    }
+}
+
 function applyConfiguration() {
     updateConfigFromForm();
-    renderCityList();
+    configOrderSnapshot = [...currentConfig.cityListOrder];
+    refreshShownList();
     announceToScreenReader('Configuration applied');
 }
 
 function saveConfiguration() {
     updateConfigFromForm();
     saveConfigToStorage();
-    renderCityList();
+    configOrderSnapshot = null;
+    refreshShownList();
     closeConfigDialog();
     announceToScreenReader('Configuration saved');
+}
+
+function cancelConfigDialog() {
+    if (configOrderSnapshot) {
+        currentConfig.cityListOrder = configOrderSnapshot;
+        configOrderSnapshot = null;
+    }
+    closeConfigDialog();
 }
 
 function updateConfigFromForm() {
@@ -4242,9 +4178,34 @@ function updateConfigFromForm() {
     }
 }
 
-function renderCityListOrderControls() {
+const CITY_LIST_FIELD_LABELS = {
+    'temperature': 'Temperature',
+    'conditions': 'Weather Conditions',
+    'uv_index': 'UV Index',
+    'feels_like': 'Feels Like',
+    'humidity': 'Humidity',
+    'wind_speed': 'Wind Speed',
+    'wind_gusts': 'Wind Gusts',
+    'wind_direction': 'Wind Direction',
+    'high_temp': "Today's High",
+    'low_temp': "Today's Low",
+    'sunrise': 'Sunrise',
+    'sunset': 'Sunset'
+};
+
+function renderCityListOrderControls({ keepUnsaved = false } = {}) {
     const container = document.getElementById('citylist-order-container');
     if (!container) return;
+
+    // Moving a field keeps check boxes you've changed but not saved yet (the
+    // rebuild used to reset them). Opening, Cancel and Reset show the saved
+    // settings, so a cancelled change doesn't come back.
+    const unsaved = {};
+    if (keepUnsaved) {
+        container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            unsaved[cb.name.replace(/^citylist-/, '')] = cb.checked;
+        });
+    }
     
     container.innerHTML = '';
     
@@ -4272,8 +4233,8 @@ function renderCityListOrderControls() {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.name = `citylist-${key}`;
-        checkbox.checked = currentConfig.cityList[key];
-        checkbox.setAttribute('aria-label', fieldLabels[key]);
+        checkbox.checked = key in unsaved ? unsaved[key] : currentConfig.cityList[key];
+        // Named by its label (it's inside it); no separate aria-label
         
         label.appendChild(checkbox);
         label.appendChild(document.createTextNode(' ' + fieldLabels[key]));
@@ -4287,6 +4248,7 @@ function renderCityListOrderControls() {
         upBtn.innerHTML = '↑';
         upBtn.setAttribute('aria-label', `Move ${fieldLabels[key]} up`);
         upBtn.disabled = index === 0;
+        upBtn.dataset.focusKey = `order-up|${key}`;
         upBtn.addEventListener('click', () => moveCityListFieldUp(key));
         
         const downBtn = document.createElement('button');
@@ -4295,6 +4257,7 @@ function renderCityListOrderControls() {
         downBtn.innerHTML = '↓';
         downBtn.setAttribute('aria-label', `Move ${fieldLabels[key]} down`);
         downBtn.disabled = index === currentConfig.cityListOrder.length - 1;
+        downBtn.dataset.focusKey = `order-down|${key}`;
         downBtn.addEventListener('click', () => moveCityListFieldDown(key));
         
         controls.appendChild(upBtn);
@@ -4314,8 +4277,8 @@ function moveCityListFieldUp(key) {
     [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
     currentConfig.cityListOrder = newOrder;
     
-    renderCityListOrderControls();
-    announceToScreenReader(`Moved ${key} up`);
+    renderCityListOrderControls({ keepUnsaved: true });
+    afterCityListFieldMove(key, 'up');
 }
 
 function moveCityListFieldDown(key) {
@@ -4326,17 +4289,23 @@ function moveCityListFieldDown(key) {
     [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
     currentConfig.cityListOrder = newOrder;
     
-    renderCityListOrderControls();
-    announceToScreenReader(`Moved ${key} down`);
+    renderCityListOrderControls({ keepUnsaved: true });
+    afterCityListFieldMove(key, 'down');
+}
+
+// After a field moves: stay on the arrow you pressed (or the other one, once
+// it's at the end and yours is off), and say where it is now by its name
+function afterCityListFieldMove(key, direction) {
+    const other = direction === 'up' ? 'down' : 'up';
+    const target = [findByFocusKey(`order-${direction}|${key}`), findByFocusKey(`order-${other}|${key}`)]
+        .find(el => el && !el.disabled);
+    if (target) target.focus();
+    const order = currentConfig.cityListOrder;
+    announceToScreenReader(`${CITY_LIST_FIELD_LABELS[key] || key} moved to ${order.indexOf(key) + 1} of ${order.length}`);
 }
 
 function closeConfigDialog() {
-    const dialog = document.getElementById('config-dialog');
-    dialog.hidden = true;
-    if (focusReturnElement) {
-        focusReturnElement.focus();
-        focusReturnElement = null;
-    }
+    closeDialog(document.getElementById('config-dialog'), document.getElementById('configure-btn'));
 }
 
 // Reset functions
@@ -4759,72 +4728,243 @@ function saveConfigToStorage() {
 }
 
 // Utility functions
+// The field an error message is about, so the field can say it's invalid
+// and repeat the message when you come back to it
+function errorFieldFor(element) {
+    if (element.id === 'city-search-error') return document.getElementById('city-input');
+    if (element.id === 'state-selector-error') {
+        return document.getElementById({
+            us: 'state-select', international: 'country-select-browse', places: 'places-select'
+        }[currentLocationType]);
+    }
+    return null;
+}
+
+function linkFieldError(field, errorId, on) {
+    if (!field) return;
+    const ids = (field.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean)
+        .filter(id => id !== errorId);
+    if (on) ids.push(errorId);
+    ids.length ? field.setAttribute('aria-describedby', ids.join(' ')) : field.removeAttribute('aria-describedby');
+    on ? field.setAttribute('aria-invalid', 'true') : field.removeAttribute('aria-invalid');
+}
+
 function showError(element, message) {
-    element.textContent = message;
+    // Every field the message could be about is cleared first (the Browse
+    // error can follow a tab change)
+    ['state-select', 'country-select-browse', 'places-select', 'city-input'].forEach(id =>
+        linkFieldError(document.getElementById(id), element.id, false));
+    // Emptied first, so the same message twice in a row is read again. The
+    // timer is kept so a clearError (or a newer message) can cancel it.
+    clearTimeout(element._errorTimer);
+    element.textContent = '';
     element.classList.add('visible');
+    element._errorTimer = setTimeout(() => { element.textContent = message; }, 50);
+    linkFieldError(errorFieldFor(element), element.id, true);
 }
 
 function clearError(element) {
+    clearTimeout(element._errorTimer);
     element.textContent = '';
     element.classList.remove('visible');
+    ['state-select', 'country-select-browse', 'places-select', 'city-input'].forEach(id =>
+        linkFieldError(document.getElementById(id), element.id, false));
+}
+
+// One live region that's always there (a region created for each message is
+// sometimes missed by JAWS), plus one inside whichever dialog is open: while
+// a modal is open, Chromium hides everything outside it from screen readers,
+// announcements included.
+function liveRegionFor(container, id) {
+    let region = id ? document.getElementById(id) : container.querySelector(':scope > .sr-announcer');
+    if (!region) {
+        region = document.createElement('div');
+        if (id) region.id = id;
+        region.className = 'visually-hidden sr-announcer';
+        region.setAttribute('role', 'status');
+        region.setAttribute('aria-live', 'polite');
+        region.setAttribute('aria-atomic', 'true');
+        container.appendChild(region);
+    }
+    return region;
 }
 
 function announceToScreenReader(message) {
-    const announcement = document.createElement('div');
-    announcement.setAttribute('role', 'status');
-    announcement.setAttribute('aria-live', 'polite');
-    announcement.setAttribute('aria-atomic', 'true');
-    announcement.className = 'visually-hidden';
-    document.body.appendChild(announcement);
-    
-    // Add text after a brief delay to ensure screen readers detect the change
-    setTimeout(() => {
-        announcement.textContent = message;
-    }, 100);
-    
-    // Remove after screen readers have had time to announce
-    setTimeout(() => {
-        if (announcement.parentNode) {
-            document.body.removeChild(announcement);
-        }
-    }, 2000);
+    const dialog = topDialog();
+    const region = dialog
+        ? liveRegionFor(dialog.querySelector('.modal-content') || dialog)
+        : liveRegionFor(document.body, 'sr-announcer');
+    // Empty it first, so the same message twice in a row is read again.
+    // Each region has its own timer: one shared timer let a message to the
+    // page cancel one waiting to be read in a dialog.
+    region.textContent = '';
+    clearTimeout(region._announceTimer);
+    region._announceTimer = setTimeout(() => { region.textContent = message; }, 100);
 }
 
-function closeAllModals() {
-    document.querySelectorAll('.modal:not([hidden])').forEach(modal => {
-        modal.hidden = true;
-    });
-    
-    if (focusReturnElement) {
-        focusReturnElement.focus();
-        focusReturnElement = null;
+// ===== Focus and dialogs =====
+//
+// Every modal goes through openDialog / closeDialog. They move focus into the
+// dialog, keep Tab inside the dialog on top, close it on Escape, and put focus
+// back where it came from. The list behind a dialog is often rebuilt while
+// it's open (weather arriving), which replaces the button that opened it, so
+// focus is remembered by the button's data-focus-key as well as the element.
+
+const dialogStack = [];   // [{ dialog, saved }], top last
+
+// The stable key of the element (or its nearest keyed ancestor), e.g.
+// "history|Madison, Wisconsin, United States"
+function focusKeyOf(el) {
+    const keyed = el && el.closest ? el.closest('[data-focus-key]') : null;
+    return keyed ? keyed.dataset.focusKey : null;
+}
+
+function findByFocusKey(key) {
+    if (!key) return null;
+    return [...document.querySelectorAll('[data-focus-key]')].find(e => e.dataset.focusKey === key) || null;
+}
+
+function isShown(el) {
+    if (!el || !el.isConnected || el.closest('[hidden]')) return false;
+    // Without layout (tests run in jsdom, which has none) the hidden
+    // attribute is all there is to go on
+    const hasLayout = document.documentElement.getClientRects().length > 0;
+    return !hasLayout || el.getClientRects().length > 0;
+}
+
+function canFocus(el) {
+    return isShown(el) && !el.disabled;
+}
+
+function rememberFocus() {
+    const el = document.activeElement;
+    const real = el && el !== document.body ? el : null;
+    return { el: real, key: focusKeyOf(real) };
+}
+
+// Focus an element that isn't normally focusable (a heading, a container)
+function focusElement(el) {
+    if (!el) return false;
+    if (el.tabIndex < 0 && !el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+    el.focus();
+    return document.activeElement === el;
+}
+
+// Put focus back: the same element if it's still there, else the element
+// that replaced it (same focus key), else the fallback, else the list heading.
+function restoreFocus(saved, fallback) {
+    const candidates = [
+        saved && saved.el,
+        saved && findByFocusKey(saved.key),
+        fallback,
+        document.getElementById('your-cities-heading')
+    ];
+    for (const el of candidates) {
+        if (canFocus(el) && focusElement(el)) return el;
+    }
+    return null;
+}
+
+function topDialog() {
+    return dialogStack.length ? dialogStack[dialogStack.length - 1].dialog : null;
+}
+
+// Show a modal and move focus into it: to initialFocus if given, else the
+// dialog's title. Opening a dialog that's already open just moves focus.
+function openDialog(dialog, initialFocus) {
+    if (!dialog) return;
+    const existing = dialogStack.findIndex(d => d.dialog === dialog);
+    if (existing === -1) {
+        dialogStack.push({ dialog, saved: rememberFocus() });
+    }
+    dialog.hidden = false;
+    // Its live region exists before anything is announced in it: a region
+    // created for the first message is the kind JAWS sometimes misses
+    liveRegionFor(dialog.querySelector('.modal-content') || dialog);
+    const target = initialFocus || dialog.querySelector('h1, h2, h3, [role="heading"]');
+    if (!focusElement(target)) {
+        focusElement(dialog.querySelector('.modal-content') || dialog);
     }
 }
 
-// Focus trap for modal dialogs
-function trapFocus(element) {
-    const focusableElements = element.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), [role="listbox"]'
-    );
-    const firstFocusable = focusableElements[0];
-    const lastFocusable = focusableElements[focusableElements.length - 1];
-    
-    element.addEventListener('keydown', function(e) {
-        if (e.key !== 'Tab') return;
-        
-        if (e.shiftKey) {
-            if (document.activeElement === firstFocusable) {
-                lastFocusable.focus();
-                e.preventDefault();
-            }
-        } else {
-            if (document.activeElement === lastFocusable) {
-                firstFocusable.focus();
-                e.preventDefault();
-            }
+// Hide a modal and return focus to where it was opened from (or fallback).
+function closeDialog(dialog, fallback) {
+    if (!dialog) return;
+    const i = dialogStack.findIndex(d => d.dialog === dialog);
+    dialog.hidden = true;
+    if (i === -1) return;
+    const [{ saved }] = dialogStack.splice(i, 1);
+    restoreFocus(saved, fallback);
+}
+
+// The elements Tab actually stops on, in order: not tabindex="-1" (the
+// unselected tabs in a tab list), and one radio per group (the checked one,
+// or the first if none is). Counting stops Tab skips let Shift+Tab from the
+// real first stop slip out of the dialog.
+function focusableIn(container) {
+    const seenRadioGroups = new Set();
+    return [...container.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex], [role="listbox"]'
+    )].filter(el => {
+        if (!canFocus(el) || el.tabIndex < 0) return false;
+        if (el.type === 'radio') {
+            const group = `${el.form ? el.form.id : ''}|${el.name}`;
+            if (seenRadioGroups.has(group)) return false;
+            const checked = el.name
+                ? [...container.querySelectorAll('input[type="radio"]')].find(r => r.name === el.name && r.checked)
+                : null;
+            if (checked && checked !== el) return false;
+            seenRadioGroups.add(group);
         }
+        return true;
     });
 }
+
+// Tab stays in the top dialog. Worked out on every press, so content that
+// loads after the dialog opens (forecast lists) is part of the cycle.
+document.addEventListener('keydown', (e) => {
+    const dialog = topDialog();
+    if (!dialog || dialog.hidden) return;
+    if (e.key === 'Escape') {
+        // This runs first (capture phase), so Escape always closes the top
+        // dialog; nothing inside a dialog uses Escape for itself
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const closer = dialogClosers[dialog.id];
+        closer ? closer() : closeDialog(dialog);
+        return;
+    }
+    if (e.key !== 'Tab') return;
+    const items = focusableIn(dialog);
+    if (items.length === 0) { e.preventDefault(); return; }
+    const first = items[0];
+    const last = items[items.length - 1];
+    const active = document.activeElement;
+    if (!dialog.contains(active)) {
+        e.preventDefault();
+        (e.shiftKey ? last : first).focus();
+    } else if (e.shiftKey && (active === first || !items.includes(active) && active === dialog.querySelector('h3'))) {
+        e.preventDefault();
+        last.focus();
+    } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+    }
+}, true);
+
+// Focus can't wander behind an open dialog (a click on the overlay, a script)
+document.addEventListener('focusin', (e) => {
+    const dialog = topDialog();
+    if (!dialog || dialog.hidden || dialog.contains(e.target)) return;
+    const items = focusableIn(dialog);
+    focusElement(items[0] || dialog.querySelector('h3') || dialog);
+});
+
+// Dialogs whose Close does more than hide (state to tidy up); Escape uses these
+const dialogClosers = {
+    'city-selection-dialog': () => closeCitySelectionDialog(),
+    'config-dialog': () => cancelConfigDialog()   // Escape is Cancel
+};
 // ==================== NEW FEATURES ====================
 
 // ===== WEATHER ALERTS (NWS API for US locations) =====
@@ -4929,107 +5069,111 @@ function parseNWSAlerts(nwsResponse) {
     }).filter(alert => !alert.isExpired); // Filter out expired alerts
 }
 
-function renderAlertBadge(alerts) {
-    if (!alerts || alerts.length === 0) return '';
-    
-    // Find highest severity alert
-    const severityOrder = ['extreme', 'severe', 'moderate', 'minor', 'unknown'];
-    const highestSeverityAlert = alerts.reduce((highest, alert) => {
-        const currentIndex = severityOrder.indexOf(alert.severity);
-        const highestIndex = severityOrder.indexOf(highest.severity);
-        return currentIndex < highestIndex ? alert : highest;
-    }, alerts[0]);
-    
-    const severityIcons = {
-        'extreme': '⚠️',
-        'severe': '⚠️',
-        'moderate': '⚠️',
-        'minor': 'ℹ️',
-        'unknown': 'ℹ️'
-    };
-    
-    const icon = severityIcons[highestSeverityAlert.severity] || 'ℹ️';
-    
-    // Build screen reader label
-    const srLabel = alerts.length === 1 
-        ? `Weather alert: ${escapeHtml(highestSeverityAlert.event)}`
-        : `${alerts.length} weather alerts: ${escapeHtml(highestSeverityAlert.event)} and ${alerts.length - 1} more`;
-    
-    return `<button class="alert-badge ${highestSeverityAlert.severity}" 
-                    onclick="showAlertDetails('${encodeURIComponent(JSON.stringify(highestSeverityAlert))}')" 
-                    aria-label="${srLabel}"
-                    title="${escapeHtml(highestSeverityAlert.event)}">
-                <span aria-hidden="true">${icon}</span>
-            </button>`;
+const ALERT_SEVERITY_ORDER = ['extreme', 'severe', 'moderate', 'minor', 'unknown'];
+
+function capitalize(s) {
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 }
 
-function showAlertDetails(alertDataStr) {
-    const alert = JSON.parse(decodeURIComponent(alertDataStr));
+// Most serious first
+function sortAlertsBySeverity(alerts) {
+    const rank = a => {
+        const i = ALERT_SEVERITY_ORDER.indexOf(a.severity);
+        return i === -1 ? ALERT_SEVERITY_ORDER.length : i;
+    };
+    return [...alerts].sort((a, b) => rank(a) - rank(b));
+}
+
+// The badge's words: "Severe: Coastal Flood Warning" or "... , +1 more". The
+// severity is in the text, not only in the colour (WCAG 1.4.1).
+function alertBadgeText(alerts) {
+    const [top] = sortAlertsBySeverity(alerts);
+    const more = alerts.length > 1 ? `, +${alerts.length - 1} more` : '';
+    return `${capitalize(top.severity === 'unknown' ? 'alert' : top.severity)}: ${top.event}${more}`;
+}
+
+// Alerts the badges open, by key. A badge is plain markup (it's built as a
+// string in several views) and names its alerts by key; one click handler
+// opens them. Alerts used to travel inside an inline onclick as JSON, and any
+// apostrophe in an alert's text ("don't") broke the handler, so the badge did
+// nothing.
+const alertBadgeSets = new Map();
+
+function renderAlertBadge(alerts, cityName = '') {
+    if (!alerts || alerts.length === 0) return '';
+    // One entry per place, replaced each time: a badge always shows the
+    // newest alerts, and the map no longer grows with every new set
+    const key = `city|${cityName}`;
+    alertBadgeSets.set(key, { alerts, cityName });
+    const [top] = sortAlertsBySeverity(alerts);
+    const icon = ['extreme', 'severe', 'moderate'].includes(top.severity) ? '⚠️' : 'ℹ️';
+    // No aria-label: the visible words are the name, so speech and voice
+    // control say the same thing ("click Severe")
+    return `<button type="button" class="alert-badge ${escapeHtml(top.severity)}" data-alert-key="${escapeHtml(key)}"` +
+        ` data-focus-key="${escapeHtml(`alerts|${cityName}`)}">` +
+        `<span aria-hidden="true">${icon}</span> ${escapeHtml(alertBadgeText(alerts))}</button>`;
+}
+
+document.addEventListener('click', (e) => {
+    const badge = e.target.closest('[data-alert-key]');
+    if (!badge) return;
+    const set = alertBadgeSets.get(badge.dataset.alertKey);
+    if (set) showAlertDetails(set.alerts, set.cityName);
+});
+
+// Every alert for a place, most serious first, each under its own heading.
+// Takes a list (or one alert).
+function showAlertDetails(alertsIn, cityName = '') {
+    const alerts = sortAlertsBySeverity(Array.isArray(alertsIn) ? alertsIn : [alertsIn]);
     const dialog = document.getElementById('alert-details-dialog');
     const content = document.getElementById('alert-details-content');
-    
-    const severityIcons = {
-        'extreme': '⚠️',
-        'severe': '⚠️',
-        'moderate': '⚠️',
-        'minor': 'ℹ️',
-        'unknown': 'ℹ️'
-    };
-    
-    const icon = severityIcons[alert.severity] || 'ℹ️';
-    
-    content.innerHTML = `
-        <div class="alert-details">
-            <div class="alert-severity-header ${alert.severity}">
-                <div class="alert-severity-icon" aria-hidden="true">${icon}</div>
+    const where = cityName ? ` for ${cityName}` : '';
+    const title = alerts.length === 1
+        ? `Weather alert${where}: ${alerts[0].event}`
+        : `${alerts.length} weather alerts${where}`;
+
+    const section = (alert, i) => `
+        <section class="alert-details" aria-labelledby="alert-event-${i}">
+            <div class="alert-severity-header ${escapeHtml(alert.severity)}">
+                <div class="alert-severity-icon" aria-hidden="true">${['extreme', 'severe', 'moderate'].includes(alert.severity) ? '⚠️' : 'ℹ️'}</div>
                 <div>
-                    <div class="alert-event">${escapeHtml(alert.event)}</div>
-                    <div class="alert-headline">${escapeHtml(alert.headline)}</div>
+                    <h4 class="alert-event" id="alert-event-${i}">${escapeHtml(capitalize(alert.severity))}: ${escapeHtml(alert.event)}</h4>
+                    ${alert.headline ? `<p class="alert-headline"${i === 0 ? ' id="alert-details-headline"' : ''}>${escapeHtml(alert.headline)}</p>` : ''}
                 </div>
             </div>
-            
+            ${alert.description ? `
             <div class="alert-section">
-                <h4>Details</h4>
+                <h5>Details</h5>
                 <p>${escapeHtml(alert.description)}</p>
-            </div>
-            
+            </div>` : ''}
             ${alert.instruction ? `
-                <div class="alert-section">
-                    <h4>Instructions</h4>
-                    <p>${escapeHtml(alert.instruction)}</p>
-                </div>
-            ` : ''}
-            
-            <div class="alert-meta">
-                <div class="alert-meta-item">
-                    <span class="alert-meta-label">Severity</span>
-                    <span class="alert-meta-value">${alert.severity.charAt(0).toUpperCase() + alert.severity.slice(1)}</span>
-                </div>
-                <div class="alert-meta-item">
-                    <span class="alert-meta-label">Onset</span>
-                    <span class="alert-meta-value">${formatDateTime(alert.onset)}</span>
-                </div>
-                <div class="alert-meta-item">
-                    <span class="alert-meta-label">Expires</span>
-                    <span class="alert-meta-value">${formatDateTime(alert.expires)}</span>
-                </div>
-                ${alert.areaDesc ? `
-                    <div class="alert-meta-item">
-                        <span class="alert-meta-label">Areas Affected</span>
-                        <span class="alert-meta-value">${escapeHtml(alert.areaDesc)}</span>
-                    </div>
-                ` : ''}
-            </div>
-        </div>
-    `;
-    
-    closeAllModals();
-    dialog.hidden = false;
-    announceToScreenReader(`Weather alert: ${alert.event}. ${alert.severity} severity.`);
+            <div class="alert-section">
+                <h5>Instructions</h5>
+                <p>${escapeHtml(alert.instruction)}</p>
+            </div>` : ''}
+            <dl class="alert-meta">
+                <div class="alert-meta-item"><dt class="alert-meta-label">Severity</dt><dd class="alert-meta-value">${escapeHtml(capitalize(alert.severity))}</dd></div>
+                <div class="alert-meta-item"><dt class="alert-meta-label">Onset</dt><dd class="alert-meta-value">${formatDateTime(alert.onset)}</dd></div>
+                <div class="alert-meta-item"><dt class="alert-meta-label">Expires</dt><dd class="alert-meta-value">${formatDateTime(alert.expires)}</dd></div>
+                ${alert.areaDesc ? `<div class="alert-meta-item"><dt class="alert-meta-label">Areas Affected</dt><dd class="alert-meta-value">${escapeHtml(alert.areaDesc)}</dd></div>` : ''}
+            </dl>
+        </section>`;
+
+    // The dialog's name (aria-labelledby="alert-details-title") used to point
+    // at an ID nothing had, so it was read as an unnamed alert dialog
+    content.innerHTML = `<h3 id="alert-details-title">${escapeHtml(title)}</h3>` + alerts.map(section).join('');
+    if (alerts[0].headline) {
+        dialog.setAttribute('aria-describedby', 'alert-details-headline');
+    } else {
+        dialog.removeAttribute('aria-describedby');
+    }
+    // An alertdialog's name and description are read when it opens, so no
+    // separate announcement
+    openDialog(dialog, document.getElementById('alert-details-title'));
 }
 
 document.getElementById('close-alert-details-btn')?.addEventListener('click', () => {
-    document.getElementById('alert-details-dialog').hidden = true;
+    closeDialog(document.getElementById('alert-details-dialog'));
 });
 
 // ===== HISTORICAL WEATHER =====
@@ -5053,20 +5197,22 @@ async function showHistoricalWeather(cityKey, lat, lon) {
     content.innerHTML = `
         <div class="historical-controls">
             <div class="historical-date-nav">
-                <button id="hist-prev-btn" onclick="adjustHistoricalYear(20)">← Previous 20 Years</button>
+                <button type="button" id="hist-prev-btn"><span aria-hidden="true">← </span>Previous 20 Years</button>
                 <div class="historical-date-display" id="historical-current-date">${dateStr}</div>
-                <button id="hist-next-btn" onclick="adjustHistoricalYear(-20)">Next 20 Years →</button>
+                <button type="button" id="hist-next-btn" disabled>Next 20 Years<span aria-hidden="true"> →</span></button>
             </div>
         </div>
         <div id="historical-data-container">
             <p>Loading historical weather data...</p>
         </div>
     `;
-    
-    closeAllModals();
-    dialog.hidden = false;
-    announceToScreenReader(`Historical weather for ${cityKey.split(',')[0]} - showing this day over the past 20 years`);
-    
+    // Next is off until you've gone back: there are no later years than now
+    document.getElementById('hist-prev-btn').addEventListener('click', () => adjustHistoricalYear(20));
+    document.getElementById('hist-next-btn').addEventListener('click', () => adjustHistoricalYear(-20));
+
+    // Focus goes to the title, which names the city
+    openDialog(dialog, title);
+
     // Automatically load data
     loadHistoricalData();
 }
@@ -5075,26 +5221,33 @@ let currentHistoricalDate = new Date();
 let currentHistoricalCity = null;
 let historicalYearOffset = 0; // Tracks how many years to shift the 20-year window
 
+let historicalLoadGen = 0;   // only the newest page of years may render
+
 async function loadHistoricalData() {
     if (!currentHistoricalCity) return;
-    
+    const gen = ++historicalLoadGen;
+    const dialog = document.getElementById('historical-weather-dialog');
     const container = document.getElementById('historical-data-container');
     container.innerHTML = '<p>Loading historical data...</p>';
-    
+    container.setAttribute('aria-busy', 'true');
+
     try {
         // Fetch the same month/day for 20 years, starting from offset
         const data = await fetchHistoricalWeatherMultiYear(
-            currentHistoricalCity.lat, 
-            currentHistoricalCity.lon, 
+            currentHistoricalCity.lat,
+            currentHistoricalCity.lon,
             currentHistoricalDate,
             20, // 20 years
             historicalYearOffset // Year offset for the window
         );
-        
+        if (gen !== historicalLoadGen || dialog.hidden) return;
+        container.removeAttribute('aria-busy');
         renderHistoricalData(data);
-        
+
     } catch (error) {
-        container.innerHTML = `<p class="error-message">Error loading historical data: ${escapeHtml(error.message)}</p>`;
+        if (gen !== historicalLoadGen) return;
+        container.removeAttribute('aria-busy');
+        container.innerHTML = `<p class="error-message" role="alert">Couldn't load the historical weather. Check your connection, then try again.</p>`;
     }
 }
 
@@ -5139,27 +5292,39 @@ async function fetchHistoricalWeatherMultiYear(lat, lon, date, yearCount = 20, y
 
 function renderHistoricalData(data) {
     const container = document.getElementById('historical-data-container');
-    
+    // A list box only in List view; otherwise a plain container again
+    ['role', 'tabindex', 'aria-label', 'aria-activedescendant'].forEach(a => container.removeAttribute(a));
+    if (container._histNavHandler) {
+        container.removeEventListener('keydown', container._histNavHandler);
+        container._histNavHandler = null;
+    }
+
     if (!data || data.length === 0) {
         container.innerHTML = '<p>No historical data available for this date.</p>';
+        announceToScreenReader('No historical data for these years');
         return;
     }
-    
-    // Show loading for list view
-    if (currentView === 'list') {
-        container.innerHTML = '<p>Rendering historical data...</p>';
-    } else {
-        container.innerHTML = '';
+    container.innerHTML = '';
+
+    // Say which years are shown, on screen and once out loud: paging used
+    // to replace the data silently
+    const years = data.map(d => d.year);
+    const range = `${Math.min(...years)} to ${Math.max(...years)}`;
+    const dateDisplay = document.getElementById('historical-current-date');
+    if (dateDisplay) {
+        const dateStr = currentHistoricalDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        dateDisplay.textContent = `${dateStr}, ${range}`;
     }
-    
+
     // Render based on main page's current view mode
     if (currentView === 'table') {
         renderHistoricalTableView(container, data);
-    } else if (currentView === 'flat') {
-        renderHistoricalFlatView(container, data);
     } else if (currentView === 'list') {
         renderHistoricalListView(container, data);
+    } else {
+        renderHistoricalFlatView(container, data);
     }
+    announceToScreenReader(`Historical weather loaded, ${range}`);
 }
 
 function renderHistoricalTableView(container, data) {
@@ -5250,7 +5415,8 @@ function renderHistoricalFlatView(container, data) {
             </div>
         `;
         
-        card.setAttribute('aria-label', `${yearData.year}: High ${high}, Low ${low}, ${condition}`);
+        // No aria-label: on a div with no role it's ignored; the card's own
+        // text (year heading, high, low, conditions) is what's read
         grid.appendChild(card);
     });
     
@@ -5258,122 +5424,60 @@ function renderHistoricalFlatView(container, data) {
 }
 
 function renderHistoricalListView(container, data) {
-    // Clear container first
     container.innerHTML = '';
-    
     container.setAttribute('role', 'listbox');
     container.setAttribute('tabindex', '0');
-    container.setAttribute('aria-label', 'Historical weather data - use arrow keys to navigate');
-    
+    // A name only; how to use a list box is the screen reader's job
+    container.setAttribute('aria-label', 'Historical weather by year');
+
     const isCondensed = currentConfig.listViewStyle === 'condensed';
-    
+    const unitT = `°${currentConfig.units.temperature}`;
+
     data.forEach((yearData, index) => {
         const item = document.createElement('div');
         item.className = 'list-view-item historical-list-item';
         item.setAttribute('role', 'option');
         item.id = `hist-list-item-${index}`;
         item.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
-        
+
         const high = convertTemperature(yearData.temperature_2m_max);
         const low = convertTemperature(yearData.temperature_2m_min);
         const precip = convertPrecipitation(yearData.precipitation_sum);
         const condition = WEATHER_CODES[yearData.weathercode] || 'Unknown';
-        
-        // Build parts array based on condensed/detailed style
-        const parts = [];
-        parts.push(isCondensed ? 
-            `${high}°${currentConfig.units.temperature}` : 
-            `High: ${high}°${currentConfig.units.temperature}`);
-        parts.push(isCondensed ? 
-            `${low}°${currentConfig.units.temperature}` : 
-            `Low: ${low}°${currentConfig.units.temperature}`);
-        parts.push(isCondensed ? condition : `Conditions: ${condition}`);
-        parts.push(isCondensed ? 
-            `${precip} ${currentConfig.units.precipitation}` : 
-            `Precipitation: ${precip} ${currentConfig.units.precipitation}`);
-        
-        // Create concatenated string for screen reader
-        const weatherText = `${yearData.year} - ${parts.join(', ')}`;
-        
-        // Create text node for main content
-        const textNode = document.createTextNode(weatherText);
-        item.appendChild(textNode);
-        
-        // Set aria-label for screen reader announcement
-        item.setAttribute('aria-label', weatherText);
-        
+        const parts = [
+            isCondensed ? `${high}${unitT}` : `High: ${high}${unitT}`,
+            isCondensed ? `${low}${unitT}` : `Low: ${low}${unitT}`,
+            isCondensed ? condition : `Conditions: ${condition}`,
+            isCondensed ? `${precip} ${currentConfig.units.precipitation}` : `Precipitation: ${precip} ${currentConfig.units.precipitation}`
+        ];
+        item.textContent = `${yearData.year} - ${parts.join(', ')}`;
         container.appendChild(item);
     });
-    
-    // Set initial active descendant
+
     container.setAttribute('aria-activedescendant', 'hist-list-item-0');
-    
-    // Simple keyboard navigation for historical list
+
+    // One handler, however often you page: a new one used to be added on
+    // every page, so each arrow moved two or more years and spoke twice.
+    // Focus mode reads the active item, so nothing is announced on top.
     const navHandler = (e) => {
-        const items = container.querySelectorAll('.list-view-item');
-        const currentActive = container.getAttribute('aria-activedescendant');
-        let activeIndex = parseInt(currentActive.split('-').pop());
-        
-        let handled = false;
-        
-        switch(e.key) {
-            case 'ArrowDown':
-                e.preventDefault();
-                if (activeIndex < items.length - 1) {
-                    activeIndex++;
-                    items.forEach((item, i) => {
-                        item.setAttribute('aria-selected', i === activeIndex ? 'true' : 'false');
-                    });
-                    container.setAttribute('aria-activedescendant', `hist-list-item-${activeIndex}`);
-                    announceToScreenReader(items[activeIndex].textContent);
-                }
-                handled = true;
-                break;
-                
-            case 'ArrowUp':
-                e.preventDefault();
-                if (activeIndex > 0) {
-                    activeIndex--;
-                    items.forEach((item, i) => {
-                        item.setAttribute('aria-selected', i === activeIndex ? 'true' : 'false');
-                    });
-                    container.setAttribute('aria-activedescendant', `hist-list-item-${activeIndex}`);
-                    announceToScreenReader(items[activeIndex].textContent);
-                }
-                handled = true;
-                break;
-                
-            case 'Home':
-                e.preventDefault();
-                activeIndex = 0;
-                items.forEach((item, i) => {
-                    item.setAttribute('aria-selected', i === activeIndex ? 'true' : 'false');
-                });
-                container.setAttribute('aria-activedescendant', `hist-list-item-${activeIndex}`);
-                announceToScreenReader(items[activeIndex].textContent);
-                handled = true;
-                break;
-                
-            case 'End':
-                e.preventDefault();
-                activeIndex = items.length - 1;
-                items.forEach((item, i) => {
-                    item.setAttribute('aria-selected', i === activeIndex ? 'true' : 'false');
-                });
-                container.setAttribute('aria-activedescendant', `hist-list-item-${activeIndex}`);
-                announceToScreenReader(items[activeIndex].textContent);
-                handled = true;
-                break;
+        const items = [...container.querySelectorAll('.list-view-item')];
+        if (!items.length) return;
+        const current = Math.max(0, items.findIndex(i => i.id === container.getAttribute('aria-activedescendant')));
+        let next;
+        switch (e.key) {
+            case 'ArrowDown': next = Math.min(items.length - 1, current + 1); break;
+            case 'ArrowUp': next = Math.max(0, current - 1); break;
+            case 'Home': next = 0; break;
+            case 'End': next = items.length - 1; break;
+            default: return;
         }
+        e.preventDefault();
+        items.forEach((item, i) => item.setAttribute('aria-selected', i === next ? 'true' : 'false'));
+        container.setAttribute('aria-activedescendant', items[next].id);
+        items[next].scrollIntoView({ block: 'nearest' });
     };
-    
+    container._histNavHandler = navHandler;
     container.addEventListener('keydown', navHandler);
-    
-    // Set focus to the container now that it's fully rendered
-    setTimeout(() => {
-        container.focus();
-        announceToScreenReader(`Historical data loaded, ${data.length} years`);
-    }, 50);
 }
 
 function adjustHistoricalYear(yearShift) {
@@ -5388,14 +5492,16 @@ function adjustHistoricalYear(yearShift) {
     const nextBtn = document.getElementById('hist-next-btn');
     const prevBtn = document.getElementById('hist-prev-btn');
     
-    if (nextBtn) {
-        // Disable next button if we're at the current period (offset = 0)
-        nextBtn.disabled = historicalYearOffset === 0;
-    }
-    
-    if (prevBtn) {
-        // Always enable previous button (can go back indefinitely)
-        prevBtn.disabled = false;
+    // The archive starts in 1940, so Previous stops once the next page
+    // would begin before it; Next stops at the most recent years
+    const oldestShown = currentHistoricalDate.getFullYear() - historicalYearOffset - 19;
+    const hadFocus = document.activeElement;
+    if (nextBtn) nextBtn.disabled = historicalYearOffset === 0;
+    if (prevBtn) prevBtn.disabled = oldestShown - 20 < 1940;
+    // A button that turns off while you're on it would drop focus
+    if (hadFocus && hadFocus.disabled) {
+        const other = hadFocus === nextBtn ? prevBtn : nextBtn;
+        if (other && !other.disabled) other.focus();
     }
     
     if (currentHistoricalCity) {
@@ -5404,7 +5510,7 @@ function adjustHistoricalYear(yearShift) {
 }
 
 document.getElementById('close-historical-weather-btn')?.addEventListener('click', () => {
-    document.getElementById('historical-weather-dialog').hidden = true;
+    closeDialog(document.getElementById('historical-weather-dialog'));
 });
 
 // ===== PRECIPITATION NOWCAST =====
@@ -5415,16 +5521,21 @@ async function showPrecipitationNowcast(cityKey, lat, lon) {
     
     title.textContent = `Expected Precipitation - ${cityKey.split(',')[0]}`;
     content.innerHTML = '<p>Loading precipitation forecast...</p>';
-    
-    closeAllModals();
-    dialog.hidden = false;
-    
+    content.setAttribute('aria-busy', 'true');
+    openDialog(dialog, title);
+    const gen = ++precipitationGen;
+
     try {
         const data = await fetchPrecipitationNowcast(lat, lon);
+        // Closed while loading, or reopened for another city
+        if (gen !== precipitationGen || dialog.hidden) return;
         renderPrecipitationNowcast(data);
+        content.removeAttribute('aria-busy');
         announceToScreenReader(`Precipitation forecast loaded for ${cityKey.split(',')[0]}`);
     } catch (error) {
-        content.innerHTML = `<p class="error-message">Error loading precipitation data: ${escapeHtml(error.message)}</p>`;
+        if (gen !== precipitationGen || dialog.hidden) return;
+        content.removeAttribute('aria-busy');
+        content.innerHTML = `<p class="error-message" role="alert">Couldn't load the precipitation forecast. Check your connection, then close this and try again.</p>`;
     }
 }
 
@@ -5507,7 +5618,7 @@ function renderPrecipitationNowcast(data) {
 }
 
 document.getElementById('close-precipitation-nowcast-btn')?.addEventListener('click', () => {
-    document.getElementById('precipitation-nowcast-dialog').hidden = true;
+    closeDialog(document.getElementById('precipitation-nowcast-dialog'));
 });
 
 // ===== WEATHER AROUND ME =====
@@ -5543,26 +5654,41 @@ async function showWeatherAroundMe(cityKey, lat, lon) {
     content.innerHTML = `
         <div class="distance-selector">
             <label for="around-me-distance">Distance Radius:</label>
-            <select id="around-me-distance" onchange="loadWeatherAroundMe('${cityKey}', ${lat}, ${lon}, this.value)">
+            <select id="around-me-distance">
                 ${optionsHtml}
             </select>
+            <button type="button" id="around-me-update-btn">Update</button>
         </div>
         <div id="weather-around-me-data">
             <p>Loading regional weather data...</p>
         </div>
     `;
-    
-    closeAllModals();
-    dialog.hidden = false;
-    
+    // Loading takes several seconds and many requests, so it runs when you
+    // press Update (or Enter in the list), not on every arrow press in the
+    // list: Edge and Chrome fire change for each arrow on a closed select.
+    const distanceSelect = document.getElementById('around-me-distance');
+    const reload = () => loadWeatherAroundMe(cityKey, lat, lon, distanceSelect.value);
+    document.getElementById('around-me-update-btn').addEventListener('click', reload);
+    distanceSelect.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); reload(); }
+    });
+
+    openDialog(dialog, title);
+
     // Default distance based on unit
     const defaultDistance = isKm ? 240 : 150;
     loadWeatherAroundMe(cityKey, lat, lon, defaultDistance);
 }
 
+let aroundMeLoadGen = 0;   // only the newest Weather Around Me load may write
+
 async function loadWeatherAroundMe(cityKey, lat, lon, distance) {
+    const gen = ++aroundMeLoadGen;
+    const stale = () => gen !== aroundMeLoadGen ||
+        document.getElementById('weather-around-me-dialog').hidden;
     const container = document.getElementById('weather-around-me-data');
     container.innerHTML = '<p>Loading weather and location data...</p>';
+    container.setAttribute('aria-busy', 'true');
     
     try {
         const distanceUnit = currentConfig.units.distance;
@@ -5610,6 +5736,7 @@ async function loadWeatherAroundMe(cityKey, lat, lon, distance) {
             });
             
             // Update progress in UI
+            if (stale()) return;
             container.innerHTML = `<p>Loading location data... (${i + 1}/${directions.length})</p>`;
         }
         
@@ -5626,9 +5753,10 @@ async function loadWeatherAroundMe(cityKey, lat, lon, distance) {
                 
                 // Build location display text
                 let locationText = '';
-                if (locationInfo && locationInfo.cityName) {
-                    locationText = `<p class="location-name">${escapeHtml(locationInfo.cityName)}`;
-                    if (locationInfo.state) {
+                if (locationInfo && locationInfo.city && locationInfo.city !== 'Unknown') {  // reverseGeocode returns city, not cityName
+                    locationText = `<p class="location-name">${escapeHtml(locationInfo.city)}`;
+                    // city falls back to the state when there's no town
+                    if (locationInfo.state && locationInfo.state !== locationInfo.city) {
                         locationText += `, ${escapeHtml(locationInfo.state)}`;
                     }
                     locationText += `</p>`;
@@ -5659,17 +5787,19 @@ async function loadWeatherAroundMe(cityKey, lat, lon, distance) {
         // Add summary
         html += generateWeatherSummary(results.map(r => r.weather), cityKey);
         
+        if (stale()) return;
         container.innerHTML = html;
-        
-        // Use distance unit for screen reader announcement
-        const announceDistanceUnit = currentConfig.units.distance;
-        const announceIsKm = announceDistanceUnit === 'km';
-        const announceDisplayDistance = announceIsKm ? Math.round(distance * 1.60934) : Math.round(distance);
-        const announceUnitLabel = announceIsKm ? 'kilometer' : 'mile';
-        announceToScreenReader(`Regional weather loaded for ${announceDisplayDistance} ${announceUnitLabel} radius with location details`);
-        
+        container.removeAttribute('aria-busy');
+
+        // The radius is already in the chosen unit (the list offers km or
+        // miles); it used to be converted again, so 240 km was read as 386
+        const unitLabel = currentConfig.units.distance === 'km' ? 'kilometer' : 'mile';
+        announceToScreenReader(`Regional weather loaded for a ${Math.round(Number(distance))} ${unitLabel} radius`);
+
     } catch (error) {
-        container.innerHTML = `<p class="error-message">Error loading regional weather: ${escapeHtml(error.message)}</p>`;
+        if (stale()) return;
+        container.removeAttribute('aria-busy');
+        container.innerHTML = `<p class="error-message" role="alert">Couldn't load the regional weather. Check your connection, then press Update to try again.</p>`;
     }
 }
 
@@ -5731,7 +5861,7 @@ function generateWeatherSummary(weatherResults, cityKey) {
 }
 
 document.getElementById('close-weather-around-me-btn')?.addEventListener('click', () => {
-    document.getElementById('weather-around-me-dialog').hidden = true;
+    closeDialog(document.getElementById('weather-around-me-dialog'));
 });
 
 // Helper function for date/time formatting
