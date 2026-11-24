@@ -1,9 +1,9 @@
 // FastWeather Service Worker
 // Enables offline functionality and faster loading
-// UPDATED: November 24, 2026 - Places of the World
+// UPDATED: November 24, 2026 - accessibility audit fixes
 
-const CACHE_NAME = 'fastweather-v10';
-const RUNTIME_CACHE = 'fastweather-runtime-v10';
+const CACHE_NAME = 'fastweather-v11';
+const RUNTIME_CACHE = 'fastweather-runtime-v11';
 
 // Files to cache for offline use
 const STATIC_CACHE_URLS = [

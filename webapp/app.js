@@ -1688,7 +1688,7 @@ function renderStateCitiesFlatWithWeather(container, citiesData) {
                 const forecast = document.createElement('div');
                 forecast.className = 'daily-forecast';
                 
-                const forecastTitle = document.createElement('h5');
+                const forecastTitle = document.createElement('h4');  // under the card's h3
                 forecastTitle.textContent = 'Today';
                 forecast.appendChild(forecastTitle);
                 forecast.appendChild(forecastDetails);
