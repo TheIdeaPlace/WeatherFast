@@ -1,6 +1,6 @@
 {
-  "name": "FastWeather",
-  "short_name": "FastWeather",
+  "name": "WeatherFast",
+  "short_name": "WeatherFast",
   "description": "Fast, accessible weather application providing current conditions and detailed forecasts",
   "start_url": "./",
   "display": "standalone",

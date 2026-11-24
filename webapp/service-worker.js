@@ -1,9 +1,9 @@
 // FastWeather Service Worker
 // Enables offline functionality and faster loading
-// UPDATED: November 24, 2026 - accessibility audit fixes
+// UPDATED: November 24, 2026 - WeatherFast name
 
-const CACHE_NAME = 'fastweather-v11';
-const RUNTIME_CACHE = 'fastweather-runtime-v11';
+const CACHE_NAME = 'fastweather-v12';
+const RUNTIME_CACHE = 'fastweather-runtime-v12';
 
 // Files to cache for offline use
 const STATIC_CACHE_URLS = [

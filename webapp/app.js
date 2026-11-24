@@ -1,5 +1,5 @@
 /**
- * FastWeather Web Application
+ * WeatherFast Web Application
  * Accessible weather application with WCAG 2.2 AA compliance
  * Version: 2.1.1 - Location detection fixed
  */
@@ -751,7 +751,7 @@ async function reverseGeocode(lat, lon) {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`, {
-        headers: { 'User-Agent': 'FastWeather Web/1.0' }
+        headers: { 'User-Agent': 'WeatherFast Web/2.3' }
     });
     
     if (!response.ok) {
@@ -865,7 +865,7 @@ async function geocodeCity(cityName, countryCode = '') {
     }
     
     const response = await fetch(`${NOMINATIM_URL}?${params}`, {
-        headers: { 'User-Agent': 'FastWeather Web/1.0' }
+        headers: { 'User-Agent': 'WeatherFast Web/2.3' }
     });
     
     if (!response.ok) throw new Error('Failed to search for city');
@@ -4998,7 +4998,7 @@ async function fetchWeatherAlerts(cityKey, lat, lon) {
         const url = `https://api.weather.gov/alerts/active?point=${lat},${lon}`;
         const response = await fetch(url, {
             headers: {
-                'User-Agent': 'FastWeather/1.1 Web'
+                'User-Agent': 'WeatherFast Web/2.3'
             }
         });
         
