@@ -8,6 +8,7 @@ WeatherFast is a Windows desktop weather app. It shows current conditions, hourl
 - The Main Window
 - Adding Places
 - Browse Cities by State or Country
+- Places of the World
 - Add My Location
 - Full Weather View
 - Configure Display and Units
@@ -96,7 +97,8 @@ The dialog has tabs:
 
 - **U.S. States** — pick a state, then **Load Cities**.
 - **International** — pick a country, then **Load Cities**.
-- **Favorites** — your saved regions; pick one and **Load Favorite** to jump straight to it.
+- **Places of the World** — pick a list of famous places, then **Load Places** (see below).
+- **Favorites** — your saved regions and lists; pick one and **Load Favorite** to jump straight to it.
 
 Once a region is loaded, its cities appear in a checklist, and Load Cities takes you there. Each city shows the same line as your own list (temperature, sky, today's high and low, and for US cities the most serious alert) as soon as its weather arrives, or "weather unavailable" if it couldn't be fetched. Press Space to check or uncheck a city. Check any number of them (or use **Select All** / **Deselect All**), then choose **Add Selected Cities** to add them to your list. Cities already in your list are skipped, and the app reports how many were added.
 
@@ -108,6 +110,18 @@ Use the **Sort** control to order the loaded cities by:
 - Temperature, warmest-to-coldest or coldest-to-warmest (if the weather is still arriving, the list is sorted once it has)
 
 **Add Region to Favorites** saves the currently loaded state or country so you can reload it quickly from the Favorites tab later; the button toggles to remove it again. Favorites are saved whether you close the dialog with OK or Cancel.
+
+## Places of the World
+
+**Places of the World** is a tab in the Browse dialog. To open the dialog straight on it, choose **Browse Places of the World...** on the Cities menu. It holds lists of famous places around the world, each with its current weather:
+
+- **Famous Bridges** — iconic, historic and record-setting bridges.
+- **Extreme Weather** — places known for the hottest, coldest, wettest, driest, windiest and stormiest weather on Earth, including mountain summits and Antarctic research stations.
+- **Beaches of the World** — famous beaches on every continent.
+
+Choose a list; the box below the list chooser, **About this list**, says what it holds. Then choose **Load Places**. Each line gives the place's name and weather first, then where it is and a short note on why it's known. For example: `Golden Gate Bridge - 55°F, Clear (High: 60°F, Low: 50°F). San Francisco, California, United States. Art Deco suspension bridge across the Golden Gate strait`. Places in the United States, Puerto Rico and the US Virgin Islands also show their most serious weather alert.
+
+Everything else works as it does for a state or country. Sort the list, check places and choose **Add Selected Cities**, or choose **Add List to Favorites** to keep the list on the Favorites tab. A place keeps its name in your list, with its nearest town: for example, `Golden Gate Bridge, San Francisco`.
 
 ## Add My Location
 
@@ -261,7 +275,7 @@ When a newer version exists, the app tells you the new version number and offers
 
 | Menu | Items |
 |------|-------|
-| Cities | Add City, Browse Cities by State/Country, Add My Location, Browse Weather Alerts, Full Weather, Refresh, Remove City, Move Up, Move Down, Copy Weather Report, Save Weather Report, Exit |
+| Cities | Add City, Browse Cities by State/Country, Browse Places of the World, Add My Location, Browse Weather Alerts, Full Weather, Refresh, Remove City, Move Up, Move Down, Copy Weather Report, Save Weather Report, Exit |
 | Weather | Weather Alerts, Expected Precipitation, Weather Around Me, Historical Weather, My Data, Marine Forecast, Astronomy (Moon) — each acts on the selected city |
 | Settings | Configure Display & Units, Search: Use Specific Place Names |
 | Help | User Guide, Check for Updates, Automatically Check for Updates, About |
