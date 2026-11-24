@@ -86,14 +86,17 @@
         </section>
 
         <section class="state-selector-section">
-            <h2 id="state-selector-heading">Browse Cities</h2>
+            <h2 id="state-selector-heading">Browse Cities and Places</h2>
             
-            <div class="location-tabs" role="tablist">
+            <div class="location-tabs" role="tablist" aria-label="Browse by">
                 <button role="tab" aria-selected="true" aria-controls="us-states-panel" id="us-states-tab" tabindex="0">
                     U.S. States
                 </button>
                 <button role="tab" aria-selected="false" aria-controls="international-panel" id="international-tab" tabindex="-1">
                     International
+                </button>
+                <button role="tab" aria-selected="false" aria-controls="places-panel" id="places-tab" tabindex="-1">
+                    Places of the World
                 </button>
             </div>
             
@@ -167,6 +170,18 @@
                     <button type="submit" id="choose-country-btn">
                         Load Cities
                     </button>
+                </div>
+
+                <div class="input-group" id="places-panel" role="tabpanel" aria-labelledby="places-tab" hidden>
+                    <label for="places-select">Select a List of Places:</label>
+                    <select id="places-select" name="places" aria-describedby="places-description">
+                        <option value="">-- Select a List --</option>
+                        <!-- Populated dynamically from places-of-the-world.json -->
+                    </select>
+                    <button type="submit" id="choose-places-btn">
+                        Load Places
+                    </button>
+                    <p id="places-description" class="places-description">Famous bridges, beaches and extreme weather places, each with its weather.</p>
                 </div>
                 
                 <div id="state-selector-error" role="alert" aria-live="polite" class="error-message"></div>
@@ -575,7 +590,8 @@
         <p>FastWeather v1.1 &copy; 2025 Kelly Ford | <a href="user-guide.html">User Guide</a> | <a href="https://testflight.apple.com/join/QwMz3Hep" target="_blank" rel="noopener noreferrer">Try the iOS Version</a> | <a href="https://github.com/TheIdeaPlace/WeatherFast">GitHub</a> | <a href="https://github.com/TheIdeaPlace/WeatherFast/issues/new" target="_blank" rel="noopener noreferrer">Report an Issue</a></p>
     </footer>
 
-    <script src="app.js?v=2.1.2"></script>
+    <script src="places.js?v=2.2.0"></script>
+    <script src="app.js?v=2.2.0"></script>
     
     <!-- PWA Service Worker Registration -->
     <script>

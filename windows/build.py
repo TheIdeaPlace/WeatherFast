@@ -95,6 +95,7 @@ def main():
         "--add-data", "city.json;.", # Embed city.json as a resource
         "--add-data", "us-cities-cached.json;.", # Embed US cities cache
         "--add-data", "international-cities-cached.json;.", # Embed international cities cache
+        "--add-data", "places-of-the-world.json;.", # Embed Places of the World lists
         "--hidden-import=wx", # Explicitly include wxPython
         "--collect-all=wx", # Collect all wxPython modules and resources
         "--exclude-module=tkinter", # Exclude unnecessary standard library GUI

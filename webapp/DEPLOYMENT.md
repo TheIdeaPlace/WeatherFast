@@ -10,6 +10,7 @@ Upload these files from `webapp/` folder to your server:
 - [ ] `.htaccess` ⭐ **CRITICAL - Security & HTTPS**
 - [ ] `index.html`
 - [ ] `styles.css`
+- [ ] `places.js` (Places of the World helpers; `index.html` loads it before `app.js`)
 - [ ] `app.js`
 - [ ] `service-worker.js`
 - [ ] `manifest.json`
@@ -19,6 +20,7 @@ Upload these files from `webapp/` folder to your server:
 ### Data Files
 - [ ] `us-cities-cached.json`
 - [ ] `international-cities-cached.json`
+- [ ] `places-of-the-world.json`
 
 ### Images
 - [ ] `WeatherIcon-192.png`

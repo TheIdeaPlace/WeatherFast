@@ -861,6 +861,24 @@ legend {
     font-style: italic;
 }
 
+/* Places of the World: where a place is, and why it's known */
+.place-location {
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs, 0.25rem);
+}
+
+.place-note {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-sm);
+}
+
+.places-description {
+    color: var(--text-secondary);
+    flex-basis: 100%;
+    margin-top: var(--spacing-sm);
+}
+
 .spinner {
     display: inline-block;
     width: 20px;

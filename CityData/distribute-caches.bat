@@ -28,7 +28,6 @@ if not exist "..\iOS\FastWeather\Resources\" (
 ) else (
     copy /Y international-cities-cached.json "..\iOS\FastWeather\Resources\"
     copy /Y us-cities-cached.json "..\iOS\FastWeather\Resources\"
-    REM Places of the World is iOS-only for now
     if exist "places-of-the-world.json" copy /Y places-of-the-world.json "..\iOS\FastWeather\Resources\"
     echo   Done: iOS\FastWeather\Resources\
 )
@@ -40,6 +39,7 @@ if not exist "..\webapp\" (
 ) else (
     copy /Y international-cities-cached.json "..\webapp\"
     copy /Y us-cities-cached.json "..\webapp\"
+    if exist "places-of-the-world.json" copy /Y places-of-the-world.json "..\webapp\"
     echo   Done: webapp\
 )
 echo.
@@ -50,6 +50,7 @@ if not exist "..\windows\" (
 ) else (
     copy /Y international-cities-cached.json "..\windows\"
     copy /Y us-cities-cached.json "..\windows\"
+    if exist "places-of-the-world.json" copy /Y places-of-the-world.json "..\windows\"
     echo   Done: windows\
 )
 echo.
