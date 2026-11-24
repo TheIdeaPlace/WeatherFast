@@ -107,7 +107,8 @@ let weatherData = {};
 let currentConfig = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 let currentCityMatches = [];
 let currentView = 'flat'; // 'flat', 'table', or 'list'
-let listNavigationHandler = null;
+// Your cities in List view, not a browse list drawn in the same container
+const YOUR_LIST_ITEMS = ".list-view-item:not(.state-city-item)";
 let cachedCityCoordinates = null; // Cache for pre-geocoded US city coordinates
 let cachedInternationalCoordinates = null; // Cache for pre-geocoded international city coordinates
 let cachedPlaceCategories = []; // Places of the World lists (see places.js)
@@ -393,7 +394,7 @@ function initializeEventListeners() {
     document.getElementById('configure-btn').addEventListener('click', openConfigDialog);
     document.getElementById('apply-config-btn').addEventListener('click', applyConfiguration);
     document.getElementById('save-config-btn').addEventListener('click', saveConfiguration);
-    document.getElementById('cancel-config-btn').addEventListener('click', closeConfigDialog);
+    document.getElementById('cancel-config-btn').addEventListener('click', cancelConfigDialog);
     
     // Reset buttons
     document.getElementById('reset-cities-btn').addEventListener('click', resetCities);
@@ -453,8 +454,13 @@ function initializeEventListeners() {
     });
 
     // Tabbing away closes it rather than leaving it open behind you
+    // Only when focus actually goes somewhere else: Safari and Firefox on a
+    // Mac don't focus a clicked button, so a click on an item blurs to
+    // nowhere first, and closing then would swallow the click. The outside
+    // click handler deals with the mouse.
     viewMenu.addEventListener('focusout', (e) => {
-        if (!viewMenu.hidden && !viewMenu.contains(e.relatedTarget) && e.relatedTarget !== viewMenuBtn) {
+        const to = e.relatedTarget;
+        if (to && !viewMenu.hidden && !viewMenu.contains(to) && to !== viewMenuBtn) {
             closeViewMenu();
         }
     });
@@ -490,10 +496,14 @@ function initializeEventListeners() {
 
 // Keyboard shortcuts
 function handleKeyboardShortcuts(e) {
-    // Shortcuts act on the page, so not while a dialog is open over it
-    if (topDialog()) return;
     // Caps Lock gives "V", not "v"
     const key = (e.key || '').toLowerCase();
+    // Shortcuts act on the page, so not while a dialog is open over it.
+    // Ctrl+R is still kept from reloading the whole page there.
+    if (topDialog()) {
+        if (e.ctrlKey && !e.altKey && key === 'r') e.preventDefault();
+        return;
+    }
 
     // Ctrl+R: Refresh all cities
     if (e.ctrlKey && !e.altKey && key === 'r') {
@@ -629,6 +639,10 @@ async function handleAddCity(e) {
     } finally {
         addBtn.disabled = false;
         addBtn.removeAttribute('aria-busy');
+        // A button that's disabled while focused drops focus to the page in
+        // some browsers (after a click on Add): back to the search box
+        const a = document.activeElement;
+        if ((!a || a === document.body) && !topDialog()) input.focus();
     }
 }
 
@@ -1026,8 +1040,8 @@ async function addCity(cityData, skipRender = false) {
     
     // Only render city list if not in state browsing mode
     if (!skipRender) {
-        console.log('Calling renderCityList');
-        renderCityList();
+        // A browse list on show gets its Add buttons updated instead
+        refreshShownList();
     } else {
         console.log('Skipping render');
     }
@@ -1474,7 +1488,8 @@ async function fetchWeatherData(lat, lon) {
 // Render state cities with weather in the current view
 function renderStateCitiesWithWeather(container, citiesData) {
     container.innerHTML = '';
-    
+    detachListHandlers(container);
+
     // Clean up list view controls if they exist (they're siblings, not children)
     const existingControls = document.querySelector('.list-view-controls');
     if (existingControls) {
@@ -1511,6 +1526,20 @@ function nameCityList(container, name) {
 
 // While a browse list loads, the container holds only the loading text: a
 // plain div, not a list box still named for what was there before.
+// #city-list stays while its contents change, so the List view key handlers
+// (your cities' and a browse list's) must come off when it's redrawn; left
+// on, both acted on every key, and Down skipped every other place
+function detachListHandlers(container) {
+    if (container._cityListNavHandler) {
+        container.removeEventListener('keydown', container._cityListNavHandler);
+        container._cityListNavHandler = null;
+    }
+    if (container._stateCityNavHandler) {
+        container.removeEventListener('keydown', container._stateCityNavHandler);
+        container._stateCityNavHandler = null;
+    }
+}
+
 function clearCityListRole(container) {
     ['role', 'tabindex', 'aria-activedescendant', 'aria-label']
         .forEach(attr => container.removeAttribute(attr));
@@ -2138,12 +2167,20 @@ async function fetchWeatherForCity(cityName, lat, lon, detailed = false, silent 
 // Render city list
 let cityListRenderTimer = null;
 
+let cityListRenderDue = 0;   // when the first waiting arrival came in
+
+// Rebuild 150 ms after the last arrival, but never more than 500 ms after
+// the first: answers arriving less than 150 ms apart used to hold the whole
+// list on "Loading..." until the last one
 function scheduleCityListRender() {
+    const now = Date.now();
+    if (!cityListRenderTimer) cityListRenderDue = now + 500;
     clearTimeout(cityListRenderTimer);
+    const wait = Math.max(0, Math.min(150, cityListRenderDue - now));
     cityListRenderTimer = setTimeout(() => {
         cityListRenderTimer = null;
         renderCityList();
-    }, 150);
+    }, wait);
 }
 
 // Whether focus is somewhere the city list rebuild would destroy
@@ -2195,7 +2232,7 @@ function renderCityList() {
 
 // In List view, make the option for this city the active one again
 function setListActiveByCity(container, cityName) {
-    const options = [...container.querySelectorAll('.list-view-item')];
+    const options = [...container.querySelectorAll(YOUR_LIST_ITEMS)];
     const index = options.findIndex(o => o.dataset.cityName === cityName);
     if (index >= 0) setActiveListIndex(container, index);
 }
@@ -2223,11 +2260,8 @@ function renderCityListNow(container, emptyState) {
     emptyState.hidden = true;
     container.innerHTML = '';
     
-    // Remove any existing list navigation handler
-    if (listNavigationHandler) {
-        container.removeEventListener('keydown', listNavigationHandler);
-        listNavigationHandler = null;
-    }
+    // Neither List view's key handler outlives the view it belongs to
+    detachListHandlers(container);
     
     // Clean up list view controls if they exist
     const existingControls = document.querySelector('.list-view-controls');
@@ -2754,7 +2788,7 @@ function renderTableView(container) {
         const cityLink = document.createElement('button');
         cityLink.type = 'button';
         cityLink.textContent = cityName;
-        cityLink.className = 'city-link link-button';
+        cityLink.className = 'city-link-btn';  // styled as a link (styles.css)
         cityLink.dataset.focusKey = `title|${cityName}`;
         cityLink.addEventListener('click', () => showFullWeather(cityName, lat, lon));
         
@@ -3172,7 +3206,7 @@ function renderListView(container) {
         container.removeEventListener('keydown', container._cityListNavHandler);
     }
     const onKey = (e) => {
-        const items = [...container.querySelectorAll('.list-view-item')];
+        const items = [...container.querySelectorAll(YOUR_LIST_ITEMS)];
         if (!items.length) return;
         const current = Math.max(0, items.findIndex(i => i.id === container.getAttribute('aria-activedescendant')));
         let next = current;
@@ -3195,7 +3229,6 @@ function renderListView(container) {
     };
     container._cityListNavHandler = onKey;
     container.addEventListener('keydown', onKey);
-    listNavigationHandler = onKey;
 
     // The buttons act on the selected city and say which in their own words
     // (no separate aria-label), so speech and voice control match.
@@ -3239,7 +3272,6 @@ function renderListView(container) {
     make('remove', s => removeCity(s.name), 'remove-btn');
 
     container.parentElement.insertBefore(controlsDiv, container.nextSibling);
-    container._updateListControls = () => updateListControls(container);
     updateListControls(container);
 }
 
@@ -3248,7 +3280,7 @@ function renderListView(container) {
 function updateListControls(container) {
     const controls = document.querySelector('.list-view-controls');
     if (!controls) return;
-    const items = [...container.querySelectorAll('.list-view-item')];
+    const items = [...container.querySelectorAll(YOUR_LIST_ITEMS)];
     const index = items.findIndex(i => i.id === container.getAttribute('aria-activedescendant'));
     const it = items[index];
     if (!it) return;
@@ -3273,7 +3305,7 @@ function updateListControls(container) {
 }
 
 function setActiveListIndex(container, index) {
-    const items = [...container.querySelectorAll('.list-view-item')];
+    const items = [...container.querySelectorAll(YOUR_LIST_ITEMS)];
     if (!items[index]) return;
     items.forEach((item, i) => item.setAttribute('aria-selected', i === index ? 'true' : 'false'));
     container.setAttribute('aria-activedescendant', items[index].id);
@@ -3391,6 +3423,9 @@ function removeCity(cityName) {
 }
 
 // Full weather details
+let fullWeatherGen = 0;      // only the newest Full Weather load may render
+let precipitationGen = 0;    // likewise for Expected Precipitation
+
 async function showFullWeather(cityName, lat, lon) {
     const dialog = document.getElementById('weather-details-dialog');
     const title = document.getElementById('weather-details-title');
@@ -3403,10 +3438,12 @@ async function showFullWeather(cityName, lat, lon) {
     // until the forecast is in
     content.setAttribute('aria-busy', 'true');
     openDialog(dialog, title);
+    const gen = ++fullWeatherGen;
 
     try {
         const weather = await fetchWeatherForCity(cityName, lat, lon, true, true);
-        if (dialog.hidden) return;   // closed while loading
+        // Closed while loading, or reopened for another city
+        if (gen !== fullWeatherGen || dialog.hidden) return;
         content.innerHTML = renderFullWeatherDetails(weather);
 
         // Keyboard navigation for the list views, if they're shown. The
@@ -3433,6 +3470,7 @@ async function showFullWeather(cityName, lat, lon) {
         // Focus stays on the title, so nothing is skipped; say it's ready
         announceToScreenReader(`Forecast loaded for ${cityName}`);
     } catch (error) {
+        if (gen !== fullWeatherGen || dialog.hidden) return;
         content.removeAttribute('aria-busy');
         content.innerHTML = '';
         const p = document.createElement('p');
@@ -3973,6 +4011,7 @@ function openConfigDialog() {
     console.log('openConfigDialog called');
     try {
         const dialog = document.getElementById('config-dialog');
+        configOrderSnapshot = [...currentConfig.cityListOrder];
         console.log('Dialog element:', dialog);
         
         // Load current config into form
@@ -4042,18 +4081,43 @@ function openConfigDialog() {
     }
 }
 
+// Field moves change the order as you make them, so Cancel puts back the
+// order from when Configure opened (or was last applied)
+let configOrderSnapshot = null;
+
+// Redraw whatever list is showing: a browse list keeps its place, and
+// your own list otherwise (renderCityList skips while browsing, so a units
+// change used to leave a browse list in the old units)
+function refreshShownList() {
+    if (currentStateCities && currentStateName) {
+        rerenderBrowseList();
+    } else {
+        renderCityList();
+    }
+}
+
 function applyConfiguration() {
     updateConfigFromForm();
-    renderCityList();
+    configOrderSnapshot = [...currentConfig.cityListOrder];
+    refreshShownList();
     announceToScreenReader('Configuration applied');
 }
 
 function saveConfiguration() {
     updateConfigFromForm();
     saveConfigToStorage();
-    renderCityList();
+    configOrderSnapshot = null;
+    refreshShownList();
     closeConfigDialog();
     announceToScreenReader('Configuration saved');
+}
+
+function cancelConfigDialog() {
+    if (configOrderSnapshot) {
+        currentConfig.cityListOrder = configOrderSnapshot;
+        configOrderSnapshot = null;
+    }
+    closeConfigDialog();
 }
 
 function updateConfigFromForm() {
@@ -4129,16 +4193,19 @@ const CITY_LIST_FIELD_LABELS = {
     'sunset': 'Sunset'
 };
 
-function renderCityListOrderControls() {
+function renderCityListOrderControls({ keepUnsaved = false } = {}) {
     const container = document.getElementById('citylist-order-container');
     if (!container) return;
 
-    // Keep check boxes you've changed but not saved yet: the rebuild used to
-    // reset them to the saved settings
+    // Moving a field keeps check boxes you've changed but not saved yet (the
+    // rebuild used to reset them). Opening, Cancel and Reset show the saved
+    // settings, so a cancelled change doesn't come back.
     const unsaved = {};
-    container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        unsaved[cb.name.replace(/^citylist-/, '')] = cb.checked;
-    });
+    if (keepUnsaved) {
+        container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            unsaved[cb.name.replace(/^citylist-/, '')] = cb.checked;
+        });
+    }
     
     container.innerHTML = '';
     
@@ -4210,7 +4277,7 @@ function moveCityListFieldUp(key) {
     [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
     currentConfig.cityListOrder = newOrder;
     
-    renderCityListOrderControls();
+    renderCityListOrderControls({ keepUnsaved: true });
     afterCityListFieldMove(key, 'up');
 }
 
@@ -4222,7 +4289,7 @@ function moveCityListFieldDown(key) {
     [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
     currentConfig.cityListOrder = newOrder;
     
-    renderCityListOrderControls();
+    renderCityListOrderControls({ keepUnsaved: true });
     afterCityListFieldMove(key, 'down');
 }
 
@@ -4687,14 +4754,17 @@ function showError(element, message) {
     // error can follow a tab change)
     ['state-select', 'country-select-browse', 'places-select', 'city-input'].forEach(id =>
         linkFieldError(document.getElementById(id), element.id, false));
-    // Emptied first, so the same message twice in a row is read again
+    // Emptied first, so the same message twice in a row is read again. The
+    // timer is kept so a clearError (or a newer message) can cancel it.
+    clearTimeout(element._errorTimer);
     element.textContent = '';
     element.classList.add('visible');
-    setTimeout(() => { element.textContent = message; }, 50);
+    element._errorTimer = setTimeout(() => { element.textContent = message; }, 50);
     linkFieldError(errorFieldFor(element), element.id, true);
 }
 
 function clearError(element) {
+    clearTimeout(element._errorTimer);
     element.textContent = '';
     element.classList.remove('visible');
     ['state-select', 'country-select-browse', 'places-select', 'city-input'].forEach(id =>
@@ -4719,17 +4789,17 @@ function liveRegionFor(container, id) {
     return region;
 }
 
-let announceTimer = null;
-
 function announceToScreenReader(message) {
     const dialog = topDialog();
     const region = dialog
         ? liveRegionFor(dialog.querySelector('.modal-content') || dialog)
         : liveRegionFor(document.body, 'sr-announcer');
-    // Empty it first, so the same message twice in a row is read again
+    // Empty it first, so the same message twice in a row is read again.
+    // Each region has its own timer: one shared timer let a message to the
+    // page cancel one waiting to be read in a dialog.
     region.textContent = '';
-    clearTimeout(announceTimer);
-    announceTimer = setTimeout(() => { region.textContent = message; }, 100);
+    clearTimeout(region._announceTimer);
+    region._announceTimer = setTimeout(() => { region.textContent = message; }, 100);
 }
 
 // ===== Focus and dialogs =====
@@ -4808,6 +4878,9 @@ function openDialog(dialog, initialFocus) {
         dialogStack.push({ dialog, saved: rememberFocus() });
     }
     dialog.hidden = false;
+    // Its live region exists before anything is announced in it: a region
+    // created for the first message is the kind JAWS sometimes misses
+    liveRegionFor(dialog.querySelector('.modal-content') || dialog);
     const target = initialFocus || dialog.querySelector('h1, h2, h3, [role="heading"]');
     if (!focusElement(target)) {
         focusElement(dialog.querySelector('.modal-content') || dialog);
@@ -4824,18 +4897,27 @@ function closeDialog(dialog, fallback) {
     restoreFocus(saved, fallback);
 }
 
-// Close every open modal and return focus to where the first was opened from
-function closeAllModals() {
-    const first = dialogStack[0];
-    document.querySelectorAll('.modal:not([hidden])').forEach(modal => { modal.hidden = true; });
-    dialogStack.length = 0;
-    if (first) restoreFocus(first.saved);
-}
-
+// The elements Tab actually stops on, in order: not tabindex="-1" (the
+// unselected tabs in a tab list), and one radio per group (the checked one,
+// or the first if none is). Counting stops Tab skips let Shift+Tab from the
+// real first stop slip out of the dialog.
 function focusableIn(container) {
+    const seenRadioGroups = new Set();
     return [...container.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), [role="listbox"]'
-    )].filter(canFocus);
+        'button, [href], input, select, textarea, [tabindex], [role="listbox"]'
+    )].filter(el => {
+        if (!canFocus(el) || el.tabIndex < 0) return false;
+        if (el.type === 'radio') {
+            const group = `${el.form ? el.form.id : ''}|${el.name}`;
+            if (seenRadioGroups.has(group)) return false;
+            const checked = el.name
+                ? [...container.querySelectorAll('input[type="radio"]')].find(r => r.name === el.name && r.checked)
+                : null;
+            if (checked && checked !== el) return false;
+            seenRadioGroups.add(group);
+        }
+        return true;
+    });
 }
 
 // Tab stays in the top dialog. Worked out on every press, so content that
@@ -4844,8 +4926,8 @@ document.addEventListener('keydown', (e) => {
     const dialog = topDialog();
     if (!dialog || dialog.hidden) return;
     if (e.key === 'Escape') {
-        // A menu or list inside the dialog may use Escape itself
-        if (e.defaultPrevented) return;
+        // This runs first (capture phase), so Escape always closes the top
+        // dialog; nothing inside a dialog uses Escape for itself
         e.preventDefault();
         e.stopImmediatePropagation();
         const closer = dialogClosers[dialog.id];
@@ -4881,7 +4963,7 @@ document.addEventListener('focusin', (e) => {
 // Dialogs whose Close does more than hide (state to tidy up); Escape uses these
 const dialogClosers = {
     'city-selection-dialog': () => closeCitySelectionDialog(),
-    'config-dialog': () => closeConfigDialog()   // Escape is Cancel
+    'config-dialog': () => cancelConfigDialog()   // Escape is Cancel
 };
 // ==================== NEW FEATURES ====================
 
@@ -5019,7 +5101,9 @@ const alertBadgeSets = new Map();
 
 function renderAlertBadge(alerts, cityName = '') {
     if (!alerts || alerts.length === 0) return '';
-    const key = `${cityName}|${alerts.map(a => a.id || a.event).join('|')}`;
+    // One entry per place, replaced each time: a badge always shows the
+    // newest alerts, and the map no longer grows with every new set
+    const key = `city|${cityName}`;
     alertBadgeSets.set(key, { alerts, cityName });
     const [top] = sortAlertsBySeverity(alerts);
     const icon = ['extreme', 'severe', 'moderate'].includes(top.severity) ? '⚠️' : 'ℹ️';
@@ -5439,14 +5523,17 @@ async function showPrecipitationNowcast(cityKey, lat, lon) {
     content.innerHTML = '<p>Loading precipitation forecast...</p>';
     content.setAttribute('aria-busy', 'true');
     openDialog(dialog, title);
+    const gen = ++precipitationGen;
 
     try {
         const data = await fetchPrecipitationNowcast(lat, lon);
-        if (dialog.hidden) return;   // closed while loading
+        // Closed while loading, or reopened for another city
+        if (gen !== precipitationGen || dialog.hidden) return;
         renderPrecipitationNowcast(data);
         content.removeAttribute('aria-busy');
         announceToScreenReader(`Precipitation forecast loaded for ${cityKey.split(',')[0]}`);
     } catch (error) {
+        if (gen !== precipitationGen || dialog.hidden) return;
         content.removeAttribute('aria-busy');
         content.innerHTML = `<p class="error-message" role="alert">Couldn't load the precipitation forecast. Check your connection, then close this and try again.</p>`;
     }

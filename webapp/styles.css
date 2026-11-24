@@ -1317,7 +1317,14 @@ a:hover {
     header, footer, .controls, .city-card-controls, button {
         display: none;
     }
-    
+
+    /* City names are buttons (they open Full Weather) but are the content
+       of a printed list or table */
+    .city-title-btn, .city-link-btn {
+        display: inline !important;
+        color: #000;
+    }
+
     .city-card {
         page-break-inside: avoid;
         border: 1px solid #000;

@@ -20,19 +20,41 @@ export async function until(check, ms = 3000) {
     throw new Error('timed out');
 }
 
-// One fake current-weather answer per requested coordinate, in order
+// One fake answer per requested coordinate, in order, with every hourly and
+// daily field the request asked for (so Full Weather can render)
 export function meteoAnswer(url) {
-    const lats = new URL(url).searchParams.get('latitude').split(',');
-    const one = lat => ({
-        latitude: Number(lat),
-        current: { temperature_2m: 10, weather_code: 0, apparent_temperature: 9,
-            relative_humidity_2m: 50, wind_speed_10m: 5, wind_direction_10m: 90, uv_index: 3 },
-        hourly: { time: Array.from({ length: 48 }, (_, i) => `2026-11-24T${String(i % 24).padStart(2, '0')}:00`),
-            temperature_2m: Array(48).fill(10), weathercode: Array(48).fill(0), cloudcover: Array(48).fill(10),
-            precipitation_probability: Array(48).fill(0), windspeed_10m: Array(48).fill(5), uv_index: Array(48).fill(1) },
-        daily: { time: ['2026-11-24'], temperature_2m_max: [12], temperature_2m_min: [4],
-            sunrise: ['2026-11-24T07:00'], sunset: ['2026-11-24T16:30'] }
-    });
+    const params = new URL(url).searchParams;
+    const lats = params.get('latitude').split(',');
+    const fields = name => (params.get(name) || '').split(',').filter(Boolean);
+    const days = Number(params.get('forecast_days') || 1);
+    const hours = Math.max(48, days * 24);
+    const valueFor = (field, i, daily) => {
+        if (field === 'sunrise') return `2026-11-${String(24 + i).padStart(2, '0')}T07:00`;
+        if (field === 'sunset') return `2026-11-${String(24 + i).padStart(2, '0')}T16:30`;
+        if (/weather_?code/.test(field)) return 0;
+        if (/duration/.test(field)) return 36000;
+        if (/probability|cover|humidity/.test(field)) return 20;
+        if (/temperature|dewpoint|apparent/.test(field)) return daily && /min/.test(field) ? 4 : 10;
+        return 1;
+    };
+    const one = lat => {
+        const hourly = { time: Array.from({ length: hours }, (_, i) => {
+            const d = new Date(Date.UTC(2026, 10, 24, i));
+            return d.toISOString().slice(0, 16);
+        }) };
+        fields('hourly').forEach(f => { hourly[f] = hourly.time.map((_, i) => valueFor(f, i, false)); });
+        const daily = { time: Array.from({ length: days }, (_, i) => `2026-11-${String(24 + i).padStart(2, '0')}`) };
+        fields('daily').forEach(f => { daily[f] = daily.time.map((_, i) => valueFor(f, i, true)); });
+        return {
+            latitude: Number(lat),
+            current: { time: '2026-11-24T12:00', temperature_2m: 10, weather_code: 0, apparent_temperature: 9,
+                relative_humidity_2m: 50, wind_speed_10m: 5, wind_direction_10m: 90, wind_gusts_10m: 8,
+                uv_index: 3, dewpoint_2m: 2, pressure_msl: 1013, visibility: 20000, cloud_cover: 10,
+                precipitation: 0, rain: 0, showers: 0, snowfall: 0, is_day: 1 },
+            hourly,
+            daily
+        };
+    };
     return lats.length === 1 ? one(lats[0]) : lats.map(one);
 }
 
@@ -80,6 +102,7 @@ export function loadApp() {
             get cities() { return cities; },
             get currentConfig() { return currentConfig; },
             fetchWeatherAlerts,
+            fetchWeatherForCity,
             switchView,
             showYourCities,
             renderCityList,

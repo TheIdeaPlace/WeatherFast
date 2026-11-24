@@ -258,6 +258,78 @@ describe('Browse', () => {
     }, 15000);
 });
 
+describe('found in code review', () => {
+    test('List view of a browse list: one key handler, so Down moves one place and Enter adds', async () => {
+        window.__t.switchView('list');
+        $('places-tab').click();
+        $('places-select').value = 'Extreme Weather';
+        $('state-selector-form').dispatchEvent(new Event('submit', { cancelable: true }));
+        await until(() => document.querySelectorAll('.state-city-item').length === 150, 10000);
+        const list = $('city-list');
+        list.focus();
+        key(list, 'ArrowDown');
+        // Your cities' List view handler used to act too, moving it to item 2
+        expect(list.getAttribute('aria-activedescendant')).toBe('state-city-item-1');
+        key(list, 'Enter');
+        // Enter adds the place; it used to open "Full Weather Details - undefined" too
+        expect($('weather-details-dialog').hidden).toBe(true);
+        await until(() => ($('state-city-action-btn') || {}).textContent.startsWith('Remove'), 3000);
+        key(list, 'Enter');
+        await until(() => $('state-city-action-btn').textContent.startsWith('Add'), 3000);
+        window.__t.showYourCities();
+        window.__t.switchView('flat');
+    }, 15000);
+
+    test('a burst of weather arrivals rebuilds the list once', async () => {
+        const list = $('city-list');
+        let rebuilds = 0;
+        const observer = new MutationObserver(records => {
+            rebuilds += records.filter(r => r.target === list && r.removedNodes.length > 0).length;
+        });
+        observer.observe(list, { childList: true });
+        await Promise.all([1, 2, 3, 4, 5].map(() =>
+            window.__t.fetchWeatherForCity(MADISON, 43.07, -89.38, false, true)));
+        await sleep(700);
+        observer.disconnect();
+        expect(rebuilds).toBe(1);
+    });
+
+    test('Configure Cancel undoes field moves and unsaved checks', () => {
+        const before = [...window.__t.currentConfig.cityListOrder];
+        $('configure-btn').click();
+        $('citylist-tab').click();
+        const box = document.querySelector(`input[name="citylist-${before[0]}"]`);
+        const saved = box.checked;
+        box.checked = !saved;
+        byKey(`order-up|${before[1]}`).click();
+        $('cancel-config-btn').click();
+        expect(window.__t.currentConfig.cityListOrder).toEqual(before);
+        $('configure-btn').click();
+        $('citylist-tab').click();
+        expect(document.querySelector(`input[name="citylist-${before[0]}"]`).checked).toBe(saved);
+        key(focused(), 'Escape');
+    });
+
+    test('closing Full Weather and opening it for another city: the first answer is dropped', async () => {
+        let release;
+        state.holdMeteo = new Promise(resolve => { release = resolve; });
+        byKey(`title|${MADISON}`).click();
+        await sleep(20);
+        $('close-weather-details-btn').click();
+        state.holdMeteo = null;
+        byKey(`title|${SAN_DIEGO}`).click();
+        release();
+        await until(() => !$('weather-details-content').hasAttribute('aria-busy'), 5000);
+        await sleep(200);
+        expect($('weather-details-title').textContent).toContain('San Diego');
+        const region = $('weather-details-dialog').querySelector('.sr-announcer');
+        // A real forecast, for San Diego, not Madison's late answer
+        expect($('weather-details-content').textContent).toContain('Current Conditions');
+        expect(region.textContent).toBe(`Forecast loaded for ${SAN_DIEGO}`);
+        $('close-weather-details-btn').click();
+    });
+});
+
 describe('View menu', () => {
     test('items are menuitemradio; the current one is focused; choosing returns to the button', () => {
         const btn = $('view-menu-btn');
