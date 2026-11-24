@@ -2,8 +2,8 @@
 // Enables offline functionality and faster loading
 // UPDATED: November 24, 2026 - Places of the World
 
-const CACHE_NAME = 'fastweather-v8';
-const RUNTIME_CACHE = 'fastweather-runtime-v8';
+const CACHE_NAME = 'fastweather-v9';
+const RUNTIME_CACHE = 'fastweather-runtime-v9';
 
 // Files to cache for offline use
 const STATIC_CACHE_URLS = [

@@ -4,6 +4,7 @@
  */
 import fs from 'fs';
 import path from 'path';
+import { axe } from 'jest-axe';
 
 const WEBAPP = path.join(__dirname, '..');
 const read = f => fs.readFileSync(path.join(WEBAPP, f), 'utf8');
@@ -66,7 +67,9 @@ beforeAll(() => {
             get currentStateCities() { return currentStateCities; },
             get currentLocationType() { return currentLocationType; },
             get nwsPlaceNames() { return nwsPlaceNames; },
-            fetchWeatherAlerts
+            fetchWeatherAlerts,
+            switchView,
+            showYourCities
         };`);
     document.dispatchEvent(new Event('DOMContentLoaded'));
 });
@@ -107,6 +110,39 @@ describe('Browse tabs', () => {
         expect(configTab.getAttribute('aria-selected')).toBe('true');
         expect(configPanel.hidden).toBe(false);
     });
+});
+
+describe('the city list has a screen reader name in every view (WCAG 4.1.2)', () => {
+    // Accessibility Insights flagged the list view's listbox as unnamed
+    const cityListViolations = async () => {
+        const results = await axe($('city-list').closest('section'));
+        return results.violations.map(v => v.id);
+    };
+
+    afterAll(() => {
+        window.__t.showYourCities();
+        window.__t.switchView('flat');
+    });
+
+    test.each(['list', 'flat', 'table'])('Your Cities, %s view', async (view) => {
+        window.__t.showYourCities();
+        window.__t.switchView(view);
+        expect($('city-list').getAttribute('aria-label')).toBe('Your cities');
+        expect(await cityListViolations()).not.toContain('aria-input-field-name');
+    });
+
+    test('a Places list in list view is named for the list', async () => {
+        window.__t.switchView('list');
+        $('places-tab').click();
+        $('places-select').value = 'Beaches of the World';
+        submit();
+        await until(() => document.querySelectorAll('.state-city-item').length === 144, 10000);
+        expect($('city-list').getAttribute('role')).toBe('listbox');
+        expect($('city-list').getAttribute('aria-label')).toBe('Beaches of the World');
+        expect(await cityListViolations()).not.toContain('aria-input-field-name');
+        window.__t.showYourCities();
+        expect($('city-list').getAttribute('aria-label')).toBe('Your cities');
+    }, 15000);
 });
 
 describe('Places of the World', () => {

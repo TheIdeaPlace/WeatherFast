@@ -1461,6 +1461,19 @@ function renderStateCitiesWithWeather(container, citiesData) {
     } else {
         renderStateCitiesFlatWithWeather(container, citiesData);
     }
+    nameCityList(container);
+}
+
+// Give the city list a short name for screen readers, in every view: the
+// list view's listbox must have one (WCAG 4.1.2). Just the name, no usage
+// instructions, which were read again on every visit.
+function nameCityList(container, yourCities = false) {
+    let name = 'Your cities';
+    if (!yourCities && currentStateName) {
+        const isPlacesList = cachedPlaceCategories.some(c => c.name === currentStateName);
+        name = isPlacesList ? currentStateName : `Cities in ${currentStateName}`;
+    }
+    container.setAttribute('aria-label', name);
 }
 
 // Add city from state selection
@@ -2254,7 +2267,8 @@ function renderCityList() {
         console.log('Rendering flat view');
         renderFlatView(container);
     }
-    
+    nameCityList(container, true);
+
     console.log('renderCityList completed, container children:', container.children.length);
 }
 
