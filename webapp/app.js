@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Update view button label and menu checkmarks to match initial view
     const viewLabel = currentView.charAt(0).toUpperCase() + currentView.slice(1);
     document.getElementById('current-view-label').textContent = `View: ${viewLabel}`;
-    document.querySelectorAll('#view-menu [role="menuitem"]').forEach(item => {
+    document.querySelectorAll('#view-menu [role="menuitemradio"]').forEach(item => {
         const isSelected = item.dataset.view === currentView;
         item.setAttribute('aria-checked', isSelected ? 'true' : 'false');
     });
@@ -156,7 +156,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await placesReady;
 
-    announceToScreenReader('FastWeather application loaded');
+    // No "application loaded" announcement: the page title and the first
+    // heading already say where you are, on every visit
     console.log('=== FastWeather Initialization Complete ===');
 });
 
@@ -400,22 +401,17 @@ function initializeEventListeners() {
     document.getElementById('reset-all-btn').addEventListener('click', resetAll);
     
     // Check All / Uncheck All buttons
+    // They change many boxes at once, out of sight, so say what happened
+    const setAllChecks = (target, checked) => {
+        const boxes = document.querySelectorAll(`input[name^="${target}-"]`);
+        boxes.forEach(checkbox => { checkbox.checked = checked; });
+        announceToScreenReader(`${boxes.length} options ${checked ? 'checked' : 'unchecked'}`);
+    };
     document.querySelectorAll('.check-all-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const target = e.target.dataset.target;
-            document.querySelectorAll(`input[name^="${target}-"]`).forEach(checkbox => {
-                checkbox.checked = true;
-            });
-        });
+        btn.addEventListener('click', (e) => setAllChecks(e.currentTarget.dataset.target, true));
     });
-    
     document.querySelectorAll('.uncheck-all-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const target = e.target.dataset.target;
-            document.querySelectorAll(`input[name^="${target}-"]`).forEach(checkbox => {
-                checkbox.checked = false;
-            });
-        });
+        btn.addEventListener('click', (e) => setAllChecks(e.currentTarget.dataset.target, false));
     });
     
     // Debug panel buttons
@@ -436,13 +432,31 @@ function initializeEventListeners() {
     
     viewMenuBtn.addEventListener('click', toggleViewMenu);
     
-    // Menu item clicks
-    document.querySelectorAll('#view-menu [role="menuitem"]').forEach(item => {
+    // Menu item clicks (mouse, touch, and a screen reader in browse mode,
+    // which sends a click): focus goes back to the button, not lost on a
+    // hidden item
+    document.querySelectorAll('#view-menu [role="menuitemradio"]').forEach(item => {
         item.addEventListener('click', (e) => {
-            const view = e.target.dataset.view;
+            const view = e.currentTarget.dataset.view;
             switchView(view);
             closeViewMenu();
+            viewMenuBtn.focus();
         });
+    });
+
+    // Down arrow on the button opens the menu, as menu buttons do
+    viewMenuBtn.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown' && viewMenu.hidden) {
+            e.preventDefault();
+            openViewMenu();
+        }
+    });
+
+    // Tabbing away closes it rather than leaving it open behind you
+    viewMenu.addEventListener('focusout', (e) => {
+        if (!viewMenu.hidden && !viewMenu.contains(e.relatedTarget) && e.relatedTarget !== viewMenuBtn) {
+            closeViewMenu();
+        }
     });
     
     // Close menu on Escape or outside click
@@ -476,40 +490,34 @@ function initializeEventListeners() {
 
 // Keyboard shortcuts
 function handleKeyboardShortcuts(e) {
+    // Shortcuts act on the page, so not while a dialog is open over it
+    if (topDialog()) return;
+    // Caps Lock gives "V", not "v"
+    const key = (e.key || '').toLowerCase();
+
     // Ctrl+R: Refresh all cities
-    if (e.ctrlKey && e.key === 'r') {
+    if (e.ctrlKey && !e.altKey && key === 'r') {
         e.preventDefault();
         refreshAllCities();
     }
-    
-    // Alt+V: Open view menu
-    if (e.altKey && e.key === 'v') {
+
+    // Alt+V: Open view menu (focus lands on the current view, which says enough)
+    if (e.altKey && !e.ctrlKey && key === 'v') {
         e.preventDefault();
-        const viewMenuBtn = document.getElementById('view-menu-btn');
-        if (viewMenuBtn && !document.getElementById('config-dialog').hidden === false) {
-            toggleViewMenu();
-            announceToScreenReader('View menu opened');
-        }
+        if (document.getElementById('view-menu-btn')) toggleViewMenu();
     }
-    
-    // Alt+G: Open configuration dialog
-    if (e.altKey && e.key === 'g') {
+
+    // Alt+G: Open configuration dialog (the dialog announces itself)
+    if (e.altKey && !e.ctrlKey && key === 'g') {
         e.preventDefault();
-        const configDialog = document.getElementById('config-dialog');
-        if (configDialog && configDialog.hidden) {
-            openConfigDialog();
-            announceToScreenReader('Configuration dialog opened');
-        }
+        openConfigDialog();
     }
-    
-    // Alt+L: Use current location
-    if (e.altKey && e.key === 'l') {
+
+    // Alt+L: Use current location (the location code says what it's doing)
+    if (e.altKey && !e.ctrlKey && key === 'l') {
         e.preventDefault();
         const locationBtn = document.getElementById('location-btn');
-        if (locationBtn && !locationBtn.disabled) {
-            locationBtn.click();
-            announceToScreenReader('Getting current location');
-        }
+        if (locationBtn && !locationBtn.disabled) locationBtn.click();
     }
 }
 
@@ -584,20 +592,29 @@ async function handleAddCity(e) {
     const errorDiv = document.getElementById('city-search-error');
     
     if (!cityName) {
-        showError(errorDiv, 'Please enter a city name');
+        showError(errorDiv, 'Please enter a city name or zip code');
+        input.focus();
         return;
     }
     
     clearError(errorDiv);
-    
+
+    // Searching takes a moment: say so, and don't start a second search
+    const addBtn = document.getElementById('add-city-btn');
+    if (addBtn.disabled) return;
+    addBtn.disabled = true;
+    addBtn.setAttribute('aria-busy', 'true');
+    announceToScreenReader(`Searching for ${cityName}`);
+
     try {
         const matches = await geocodeCity(cityName, countryCode);
-        
+
         if (matches.length === 0) {
-            showError(errorDiv, `No cities found for "${cityName}"`);
+            showError(errorDiv, `No places found for "${cityName}". Check the spelling, or add a state or country.`);
+            input.focus();
             return;
         }
-        
+
         if (matches.length === 1) {
             await addCity(matches[0]);
             input.value = '';
@@ -606,7 +623,12 @@ async function handleAddCity(e) {
             showCitySelectionDialog(cityName, matches);
         }
     } catch (error) {
-        showError(errorDiv, `Error searching for city: ${error.message}`);
+        console.error('City search failed:', error);
+        showError(errorDiv, `Couldn't search for "${cityName}". Check your connection, then try again.`);
+        input.focus();
+    } finally {
+        addBtn.disabled = false;
+        addBtn.removeAttribute('aria-busy');
     }
 }
 
@@ -674,9 +696,8 @@ async function detectLocation() {
             return;
         }
         
-        // Add the city
+        // Add the city (addCity says it was added)
         await addCity(cityData);
-        announceToScreenReader(`Added ${cityData.display} to your cities`);
         
     } catch (error) {
         console.error('Location detection error:', error);
@@ -1738,13 +1759,16 @@ function renderStateCitiesTableWithWeather(container, citiesData) {
         { key: 'sunset', label: 'Sunset' }
     ];
     
-    columnConfig.forEach(col => {
-        if (currentConfig.cityList[col.key]) {
-            const th = document.createElement('th');
-            th.textContent = col.label;
-            th.scope = 'col';
-            headerRow.appendChild(th);
-        }
+    // Headers in the same order as the cells: your Configure order. They
+    // used to follow this fixed list, so after turning on Feels Like or
+    // reordering, table navigation read "Feels Like" over the high.
+    const columnLabels = Object.fromEntries(columnConfig.map(c => [c.key, c.label]));
+    currentConfig.cityListOrder.forEach(key => {
+        if (!currentConfig.cityList[key]) return;
+        const th = document.createElement('th');
+        th.textContent = columnLabels[key] || CITY_LIST_FIELD_LABELS[key] || key;
+        th.scope = 'col';
+        headerRow.appendChild(th);
     });
 
     // Places of the World lists say where each place is and why it's known
@@ -1856,7 +1880,7 @@ function renderStateCitiesTableWithWeather(container, citiesData) {
                 row.appendChild(cell);
             });
         } else {
-            const enabledColumns = columnConfig.filter(col => currentConfig.cityList[col.key]).length;
+            const enabledColumns = currentConfig.cityListOrder.filter(key => currentConfig.cityList[key]).length;
             for (let i = 0; i < enabledColumns; i++) {
                 const loadingCell = document.createElement('td');
                 loadingCell.textContent = 'N/A';
@@ -2247,11 +2271,10 @@ function openViewMenu() {
     viewMenu.hidden = false;
     viewMenuBtn.setAttribute('aria-expanded', 'true');
     
-    // Focus first menu item
-    const firstItem = viewMenu.querySelector('[role="menuitem"]');
-    if (firstItem) {
-        firstItem.focus();
-    }
+    // Focus the current view, which says which one is on
+    const item = viewMenu.querySelector('[role="menuitemradio"][aria-checked="true"]') ||
+        viewMenu.querySelector('[role="menuitemradio"]');
+    if (item) item.focus();
 }
 
 function closeViewMenu() {
@@ -2263,7 +2286,7 @@ function closeViewMenu() {
 }
 
 function handleViewMenuKeydown(e) {
-    const items = Array.from(e.currentTarget.querySelectorAll('[role="menuitem"]'));
+    const items = Array.from(e.currentTarget.querySelectorAll('[role="menuitemradio"]'));
     const currentIndex = items.indexOf(document.activeElement);
     
     let handled = false;
@@ -2306,6 +2329,11 @@ function handleViewMenuKeydown(e) {
             }
             handled = true;
             break;
+
+        case 'Tab':
+            // Leaving the menu closes it; Tab then moves on as usual
+            closeViewMenu();
+            break;
     }
 }
 
@@ -2318,7 +2346,7 @@ function switchView(view) {
     saveConfigToStorage();
     
     // Update menu item states
-    document.querySelectorAll('#view-menu [role="menuitem"]').forEach(item => {
+    document.querySelectorAll('#view-menu [role="menuitemradio"]').forEach(item => {
         const isSelected = item.dataset.view === view;
         item.setAttribute('aria-checked', isSelected ? 'true' : 'false');
     });
@@ -2458,7 +2486,16 @@ function createCityCard(cityName, lat, lon, weather, index) {
                         uvBadge.style.backgroundColor = color;
                         uvBadge.style.color = current.uv_index <= 5 ? '#000' : '#fff';
                         uvBadge.textContent = `UV: ${Math.round(current.uv_index)} (${category})`;
-                        uvBadge.setAttribute('aria-label', getUVIndexDescription(current.uv_index));
+                        // An aria-label on a span with no role is ignored, so
+                        // the description is hidden text, read after the badge
+                        const uvMore = document.createElement('span');
+                        uvMore.className = 'visually-hidden';
+                        // Only the advice; the badge already says the number
+                        const advice = getUVIndexDescription(current.uv_index).split(' - ')[1];
+                        if (advice) {
+                            uvMore.textContent = `, ${advice}`;
+                            uvBadge.appendChild(uvMore);
+                        }
                         summary.appendChild(uvBadge);
                     }
                     break;
@@ -2989,11 +3026,8 @@ function addListboxNavigation(container, idPrefix, onNavigate) {
             if (onNavigate && onNavigate.onChange) {
                 onNavigate.onChange(newIndex, listItems[newIndex]);
             }
-            
-            // Announce to screen reader
-            if (listItems[newIndex]) {
-                announceToScreenReader(listItems[newIndex].textContent);
-            }
+            // Nothing announced: focus mode reads the new active item, and an
+            // announcement on top made every item speak twice
         }
     };
     
@@ -3670,7 +3704,8 @@ function renderHourlyForecast(weather) {
         html += '</div>';
     } else {
         // Flat/Card view (default)
-        html += '<ul class="hourly-forecast">';
+        // Focusable, so the arrow keys can scroll it (it scrolls sideways)
+        html += '<ul class="hourly-forecast" tabindex="0" aria-label="Hourly forecast">';
         
         for (let i = startIndex; i < endIndex; i++) {
             const hourTime = new Date(weather.hourly.time[i]);
@@ -4079,9 +4114,31 @@ function updateConfigFromForm() {
     }
 }
 
+const CITY_LIST_FIELD_LABELS = {
+    'temperature': 'Temperature',
+    'conditions': 'Weather Conditions',
+    'uv_index': 'UV Index',
+    'feels_like': 'Feels Like',
+    'humidity': 'Humidity',
+    'wind_speed': 'Wind Speed',
+    'wind_gusts': 'Wind Gusts',
+    'wind_direction': 'Wind Direction',
+    'high_temp': "Today's High",
+    'low_temp': "Today's Low",
+    'sunrise': 'Sunrise',
+    'sunset': 'Sunset'
+};
+
 function renderCityListOrderControls() {
     const container = document.getElementById('citylist-order-container');
     if (!container) return;
+
+    // Keep check boxes you've changed but not saved yet: the rebuild used to
+    // reset them to the saved settings
+    const unsaved = {};
+    container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        unsaved[cb.name.replace(/^citylist-/, '')] = cb.checked;
+    });
     
     container.innerHTML = '';
     
@@ -4109,8 +4166,8 @@ function renderCityListOrderControls() {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.name = `citylist-${key}`;
-        checkbox.checked = currentConfig.cityList[key];
-        checkbox.setAttribute('aria-label', fieldLabels[key]);
+        checkbox.checked = key in unsaved ? unsaved[key] : currentConfig.cityList[key];
+        // Named by its label (it's inside it); no separate aria-label
         
         label.appendChild(checkbox);
         label.appendChild(document.createTextNode(' ' + fieldLabels[key]));
@@ -4124,6 +4181,7 @@ function renderCityListOrderControls() {
         upBtn.innerHTML = '↑';
         upBtn.setAttribute('aria-label', `Move ${fieldLabels[key]} up`);
         upBtn.disabled = index === 0;
+        upBtn.dataset.focusKey = `order-up|${key}`;
         upBtn.addEventListener('click', () => moveCityListFieldUp(key));
         
         const downBtn = document.createElement('button');
@@ -4132,6 +4190,7 @@ function renderCityListOrderControls() {
         downBtn.innerHTML = '↓';
         downBtn.setAttribute('aria-label', `Move ${fieldLabels[key]} down`);
         downBtn.disabled = index === currentConfig.cityListOrder.length - 1;
+        downBtn.dataset.focusKey = `order-down|${key}`;
         downBtn.addEventListener('click', () => moveCityListFieldDown(key));
         
         controls.appendChild(upBtn);
@@ -4152,7 +4211,7 @@ function moveCityListFieldUp(key) {
     currentConfig.cityListOrder = newOrder;
     
     renderCityListOrderControls();
-    announceToScreenReader(`Moved ${key} up`);
+    afterCityListFieldMove(key, 'up');
 }
 
 function moveCityListFieldDown(key) {
@@ -4164,7 +4223,18 @@ function moveCityListFieldDown(key) {
     currentConfig.cityListOrder = newOrder;
     
     renderCityListOrderControls();
-    announceToScreenReader(`Moved ${key} down`);
+    afterCityListFieldMove(key, 'down');
+}
+
+// After a field moves: stay on the arrow you pressed (or the other one, once
+// it's at the end and yours is off), and say where it is now by its name
+function afterCityListFieldMove(key, direction) {
+    const other = direction === 'up' ? 'down' : 'up';
+    const target = [findByFocusKey(`order-${direction}|${key}`), findByFocusKey(`order-${other}|${key}`)]
+        .find(el => el && !el.disabled);
+    if (target) target.focus();
+    const order = currentConfig.cityListOrder;
+    announceToScreenReader(`${CITY_LIST_FIELD_LABELS[key] || key} moved to ${order.indexOf(key) + 1} of ${order.length}`);
 }
 
 function closeConfigDialog() {
@@ -4591,35 +4661,75 @@ function saveConfigToStorage() {
 }
 
 // Utility functions
+// The field an error message is about, so the field can say it's invalid
+// and repeat the message when you come back to it
+function errorFieldFor(element) {
+    if (element.id === 'city-search-error') return document.getElementById('city-input');
+    if (element.id === 'state-selector-error') {
+        return document.getElementById({
+            us: 'state-select', international: 'country-select-browse', places: 'places-select'
+        }[currentLocationType]);
+    }
+    return null;
+}
+
+function linkFieldError(field, errorId, on) {
+    if (!field) return;
+    const ids = (field.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean)
+        .filter(id => id !== errorId);
+    if (on) ids.push(errorId);
+    ids.length ? field.setAttribute('aria-describedby', ids.join(' ')) : field.removeAttribute('aria-describedby');
+    on ? field.setAttribute('aria-invalid', 'true') : field.removeAttribute('aria-invalid');
+}
+
 function showError(element, message) {
-    element.textContent = message;
+    // Every field the message could be about is cleared first (the Browse
+    // error can follow a tab change)
+    ['state-select', 'country-select-browse', 'places-select', 'city-input'].forEach(id =>
+        linkFieldError(document.getElementById(id), element.id, false));
+    // Emptied first, so the same message twice in a row is read again
+    element.textContent = '';
     element.classList.add('visible');
+    setTimeout(() => { element.textContent = message; }, 50);
+    linkFieldError(errorFieldFor(element), element.id, true);
 }
 
 function clearError(element) {
     element.textContent = '';
     element.classList.remove('visible');
+    ['state-select', 'country-select-browse', 'places-select', 'city-input'].forEach(id =>
+        linkFieldError(document.getElementById(id), element.id, false));
 }
 
+// One live region that's always there (a region created for each message is
+// sometimes missed by JAWS), plus one inside whichever dialog is open: while
+// a modal is open, Chromium hides everything outside it from screen readers,
+// announcements included.
+function liveRegionFor(container, id) {
+    let region = id ? document.getElementById(id) : container.querySelector(':scope > .sr-announcer');
+    if (!region) {
+        region = document.createElement('div');
+        if (id) region.id = id;
+        region.className = 'visually-hidden sr-announcer';
+        region.setAttribute('role', 'status');
+        region.setAttribute('aria-live', 'polite');
+        region.setAttribute('aria-atomic', 'true');
+        container.appendChild(region);
+    }
+    return region;
+}
+
+let announceTimer = null;
+
 function announceToScreenReader(message) {
-    const announcement = document.createElement('div');
-    announcement.setAttribute('role', 'status');
-    announcement.setAttribute('aria-live', 'polite');
-    announcement.setAttribute('aria-atomic', 'true');
-    announcement.className = 'visually-hidden';
-    document.body.appendChild(announcement);
-    
-    // Add text after a brief delay to ensure screen readers detect the change
-    setTimeout(() => {
-        announcement.textContent = message;
-    }, 100);
-    
-    // Remove after screen readers have had time to announce
-    setTimeout(() => {
-        if (announcement.parentNode) {
-            document.body.removeChild(announcement);
-        }
-    }, 2000);
+    const dialog = topDialog();
+    const region = dialog
+        ? liveRegionFor(dialog.querySelector('.modal-content') || dialog)
+        : liveRegionFor(document.body, 'sr-announcer');
+    // Empty it first, so the same message twice in a row is read again
+    region.textContent = '';
+    clearTimeout(announceTimer);
+    announceTimer = setTimeout(() => { region.textContent = message; }, 100);
 }
 
 // ===== Focus and dialogs =====
@@ -5027,26 +5137,33 @@ let currentHistoricalDate = new Date();
 let currentHistoricalCity = null;
 let historicalYearOffset = 0; // Tracks how many years to shift the 20-year window
 
+let historicalLoadGen = 0;   // only the newest page of years may render
+
 async function loadHistoricalData() {
     if (!currentHistoricalCity) return;
-    
+    const gen = ++historicalLoadGen;
+    const dialog = document.getElementById('historical-weather-dialog');
     const container = document.getElementById('historical-data-container');
     container.innerHTML = '<p>Loading historical data...</p>';
-    
+    container.setAttribute('aria-busy', 'true');
+
     try {
         // Fetch the same month/day for 20 years, starting from offset
         const data = await fetchHistoricalWeatherMultiYear(
-            currentHistoricalCity.lat, 
-            currentHistoricalCity.lon, 
+            currentHistoricalCity.lat,
+            currentHistoricalCity.lon,
             currentHistoricalDate,
             20, // 20 years
             historicalYearOffset // Year offset for the window
         );
-        
+        if (gen !== historicalLoadGen || dialog.hidden) return;
+        container.removeAttribute('aria-busy');
         renderHistoricalData(data);
-        
+
     } catch (error) {
-        container.innerHTML = `<p class="error-message">Error loading historical data: ${escapeHtml(error.message)}</p>`;
+        if (gen !== historicalLoadGen) return;
+        container.removeAttribute('aria-busy');
+        container.innerHTML = `<p class="error-message" role="alert">Couldn't load the historical weather. Check your connection, then try again.</p>`;
     }
 }
 
@@ -5091,27 +5208,39 @@ async function fetchHistoricalWeatherMultiYear(lat, lon, date, yearCount = 20, y
 
 function renderHistoricalData(data) {
     const container = document.getElementById('historical-data-container');
-    
+    // A list box only in List view; otherwise a plain container again
+    ['role', 'tabindex', 'aria-label', 'aria-activedescendant'].forEach(a => container.removeAttribute(a));
+    if (container._histNavHandler) {
+        container.removeEventListener('keydown', container._histNavHandler);
+        container._histNavHandler = null;
+    }
+
     if (!data || data.length === 0) {
         container.innerHTML = '<p>No historical data available for this date.</p>';
+        announceToScreenReader('No historical data for these years');
         return;
     }
-    
-    // Show loading for list view
-    if (currentView === 'list') {
-        container.innerHTML = '<p>Rendering historical data...</p>';
-    } else {
-        container.innerHTML = '';
+    container.innerHTML = '';
+
+    // Say which years are shown, on screen and once out loud: paging used
+    // to replace the data silently
+    const years = data.map(d => d.year);
+    const range = `${Math.min(...years)} to ${Math.max(...years)}`;
+    const dateDisplay = document.getElementById('historical-current-date');
+    if (dateDisplay) {
+        const dateStr = currentHistoricalDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        dateDisplay.textContent = `${dateStr}, ${range}`;
     }
-    
+
     // Render based on main page's current view mode
     if (currentView === 'table') {
         renderHistoricalTableView(container, data);
-    } else if (currentView === 'flat') {
-        renderHistoricalFlatView(container, data);
     } else if (currentView === 'list') {
         renderHistoricalListView(container, data);
+    } else {
+        renderHistoricalFlatView(container, data);
     }
+    announceToScreenReader(`Historical weather loaded, ${range}`);
 }
 
 function renderHistoricalTableView(container, data) {
@@ -5202,7 +5331,8 @@ function renderHistoricalFlatView(container, data) {
             </div>
         `;
         
-        card.setAttribute('aria-label', `${yearData.year}: High ${high}, Low ${low}, ${condition}`);
+        // No aria-label: on a div with no role it's ignored; the card's own
+        // text (year heading, high, low, conditions) is what's read
         grid.appendChild(card);
     });
     
@@ -5210,122 +5340,60 @@ function renderHistoricalFlatView(container, data) {
 }
 
 function renderHistoricalListView(container, data) {
-    // Clear container first
     container.innerHTML = '';
-    
     container.setAttribute('role', 'listbox');
     container.setAttribute('tabindex', '0');
-    container.setAttribute('aria-label', 'Historical weather data - use arrow keys to navigate');
-    
+    // A name only; how to use a list box is the screen reader's job
+    container.setAttribute('aria-label', 'Historical weather by year');
+
     const isCondensed = currentConfig.listViewStyle === 'condensed';
-    
+    const unitT = `°${currentConfig.units.temperature}`;
+
     data.forEach((yearData, index) => {
         const item = document.createElement('div');
         item.className = 'list-view-item historical-list-item';
         item.setAttribute('role', 'option');
         item.id = `hist-list-item-${index}`;
         item.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
-        
+
         const high = convertTemperature(yearData.temperature_2m_max);
         const low = convertTemperature(yearData.temperature_2m_min);
         const precip = convertPrecipitation(yearData.precipitation_sum);
         const condition = WEATHER_CODES[yearData.weathercode] || 'Unknown';
-        
-        // Build parts array based on condensed/detailed style
-        const parts = [];
-        parts.push(isCondensed ? 
-            `${high}°${currentConfig.units.temperature}` : 
-            `High: ${high}°${currentConfig.units.temperature}`);
-        parts.push(isCondensed ? 
-            `${low}°${currentConfig.units.temperature}` : 
-            `Low: ${low}°${currentConfig.units.temperature}`);
-        parts.push(isCondensed ? condition : `Conditions: ${condition}`);
-        parts.push(isCondensed ? 
-            `${precip} ${currentConfig.units.precipitation}` : 
-            `Precipitation: ${precip} ${currentConfig.units.precipitation}`);
-        
-        // Create concatenated string for screen reader
-        const weatherText = `${yearData.year} - ${parts.join(', ')}`;
-        
-        // Create text node for main content
-        const textNode = document.createTextNode(weatherText);
-        item.appendChild(textNode);
-        
-        // Set aria-label for screen reader announcement
-        item.setAttribute('aria-label', weatherText);
-        
+        const parts = [
+            isCondensed ? `${high}${unitT}` : `High: ${high}${unitT}`,
+            isCondensed ? `${low}${unitT}` : `Low: ${low}${unitT}`,
+            isCondensed ? condition : `Conditions: ${condition}`,
+            isCondensed ? `${precip} ${currentConfig.units.precipitation}` : `Precipitation: ${precip} ${currentConfig.units.precipitation}`
+        ];
+        item.textContent = `${yearData.year} - ${parts.join(', ')}`;
         container.appendChild(item);
     });
-    
-    // Set initial active descendant
+
     container.setAttribute('aria-activedescendant', 'hist-list-item-0');
-    
-    // Simple keyboard navigation for historical list
+
+    // One handler, however often you page: a new one used to be added on
+    // every page, so each arrow moved two or more years and spoke twice.
+    // Focus mode reads the active item, so nothing is announced on top.
     const navHandler = (e) => {
-        const items = container.querySelectorAll('.list-view-item');
-        const currentActive = container.getAttribute('aria-activedescendant');
-        let activeIndex = parseInt(currentActive.split('-').pop());
-        
-        let handled = false;
-        
-        switch(e.key) {
-            case 'ArrowDown':
-                e.preventDefault();
-                if (activeIndex < items.length - 1) {
-                    activeIndex++;
-                    items.forEach((item, i) => {
-                        item.setAttribute('aria-selected', i === activeIndex ? 'true' : 'false');
-                    });
-                    container.setAttribute('aria-activedescendant', `hist-list-item-${activeIndex}`);
-                    announceToScreenReader(items[activeIndex].textContent);
-                }
-                handled = true;
-                break;
-                
-            case 'ArrowUp':
-                e.preventDefault();
-                if (activeIndex > 0) {
-                    activeIndex--;
-                    items.forEach((item, i) => {
-                        item.setAttribute('aria-selected', i === activeIndex ? 'true' : 'false');
-                    });
-                    container.setAttribute('aria-activedescendant', `hist-list-item-${activeIndex}`);
-                    announceToScreenReader(items[activeIndex].textContent);
-                }
-                handled = true;
-                break;
-                
-            case 'Home':
-                e.preventDefault();
-                activeIndex = 0;
-                items.forEach((item, i) => {
-                    item.setAttribute('aria-selected', i === activeIndex ? 'true' : 'false');
-                });
-                container.setAttribute('aria-activedescendant', `hist-list-item-${activeIndex}`);
-                announceToScreenReader(items[activeIndex].textContent);
-                handled = true;
-                break;
-                
-            case 'End':
-                e.preventDefault();
-                activeIndex = items.length - 1;
-                items.forEach((item, i) => {
-                    item.setAttribute('aria-selected', i === activeIndex ? 'true' : 'false');
-                });
-                container.setAttribute('aria-activedescendant', `hist-list-item-${activeIndex}`);
-                announceToScreenReader(items[activeIndex].textContent);
-                handled = true;
-                break;
+        const items = [...container.querySelectorAll('.list-view-item')];
+        if (!items.length) return;
+        const current = Math.max(0, items.findIndex(i => i.id === container.getAttribute('aria-activedescendant')));
+        let next;
+        switch (e.key) {
+            case 'ArrowDown': next = Math.min(items.length - 1, current + 1); break;
+            case 'ArrowUp': next = Math.max(0, current - 1); break;
+            case 'Home': next = 0; break;
+            case 'End': next = items.length - 1; break;
+            default: return;
         }
+        e.preventDefault();
+        items.forEach((item, i) => item.setAttribute('aria-selected', i === next ? 'true' : 'false'));
+        container.setAttribute('aria-activedescendant', items[next].id);
+        items[next].scrollIntoView({ block: 'nearest' });
     };
-    
+    container._histNavHandler = navHandler;
     container.addEventListener('keydown', navHandler);
-    
-    // Set focus to the container now that it's fully rendered
-    setTimeout(() => {
-        container.focus();
-        announceToScreenReader(`Historical data loaded, ${data.length} years`);
-    }, 50);
 }
 
 function adjustHistoricalYear(yearShift) {
@@ -5340,14 +5408,16 @@ function adjustHistoricalYear(yearShift) {
     const nextBtn = document.getElementById('hist-next-btn');
     const prevBtn = document.getElementById('hist-prev-btn');
     
-    if (nextBtn) {
-        // Disable next button if we're at the current period (offset = 0)
-        nextBtn.disabled = historicalYearOffset === 0;
-    }
-    
-    if (prevBtn) {
-        // Always enable previous button (can go back indefinitely)
-        prevBtn.disabled = false;
+    // The archive starts in 1940, so Previous stops once the next page
+    // would begin before it; Next stops at the most recent years
+    const oldestShown = currentHistoricalDate.getFullYear() - historicalYearOffset - 19;
+    const hadFocus = document.activeElement;
+    if (nextBtn) nextBtn.disabled = historicalYearOffset === 0;
+    if (prevBtn) prevBtn.disabled = oldestShown - 20 < 1940;
+    // A button that turns off while you're on it would drop focus
+    if (hadFocus && hadFocus.disabled) {
+        const other = hadFocus === nextBtn ? prevBtn : nextBtn;
+        if (other && !other.disabled) other.focus();
     }
     
     if (currentHistoricalCity) {

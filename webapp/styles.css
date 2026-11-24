@@ -226,7 +226,7 @@ section {
     margin: 0;
 }
 
-#view-menu [role="menuitem"] {
+#view-menu [role="menuitemradio"] {
     width: 100%;
     background: none;
     border: none;
@@ -241,25 +241,30 @@ section {
     gap: var(--spacing-sm);
 }
 
-#view-menu [role="menuitem"]::before {
+#view-menu [role="menuitemradio"]::before {
     content: '';
     width: 16px;
     height: 16px;
 }
 
-#view-menu [role="menuitem"][aria-checked="true"]::before {
+#view-menu [role="menuitemradio"][aria-checked="true"]::before {
     content: '✓';
     font-weight: bold;
 }
 
-#view-menu [role="menuitem"]:hover {
+#view-menu [role="menuitemradio"]:hover {
     background: var(--primary-bg);
 }
 
-#view-menu [role="menuitem"]:focus {
-    outline: none;
+/* Text in the page's background colour: white on blue in light mode, dark
+   on light blue in dark mode (white on #4da3ff was 2.6:1). The transparent
+   outline shows as a real one in Windows Contrast themes, where the
+   background colour is replaced. */
+#view-menu [role="menuitemradio"]:focus {
+    outline: 2px solid transparent;
+    outline-offset: -2px;
     background: var(--link-color);
-    color: white;
+    color: var(--primary-bg);
 }
 
 /* === Table View === */
@@ -484,7 +489,10 @@ select {
     color: var(--text-primary);
     min-height: 44px; /* WCAG touch target size */
     flex: 1;
-    min-width: 200px;
+    /* 200px when there's room; never wider than the screen, so the page
+       doesn't scroll sideways at 320px (WCAG 1.4.10) */
+    min-width: min(200px, 100%);
+    max-width: 100%;
 }
 
 input[type="text"]:hover,
@@ -2041,5 +2049,42 @@ a:hover {
     .config-feedback-banner.fade-out {
         animation: none;
         opacity: 0;
+    }
+}
+
+/* === New version available === */
+.update-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--secondary-bg);
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+/* === Windows Contrast themes (forced colours) ===
+   Background colours are replaced there, so anything shown only by a
+   background (the selected item in a list box, the focused menu item, an
+   alert badge) gets a border or outline the theme can colour. */
+@media (forced-colors: active) {
+    [role="option"][aria-selected="true"] {
+        outline: 2px solid Highlight;
+        outline-offset: -2px;
+    }
+
+    [role="listbox"]:focus [role="option"][aria-selected="true"] {
+        background: Highlight;
+        color: HighlightText;
+        forced-color-adjust: none;
+    }
+
+    #view-menu [role="menuitemradio"]:focus {
+        outline: 2px solid Highlight;
+    }
+
+    .alert-badge {
+        border: 2px solid ButtonText;
     }
 }

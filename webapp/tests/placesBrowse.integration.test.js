@@ -213,9 +213,21 @@ describe('Places of the World', () => {
     test('Load with no list chosen says so', async () => {
         $('places-select').value = '';
         submit();
-        await flush();
+        await until(() => $('state-selector-error').textContent.length > 0);
         expect($('state-selector-error').textContent).toMatch(/select a list of places/i);
-    });
+        // The chooser says it's invalid and points at the message
+        expect($('places-select').getAttribute('aria-invalid')).toBe('true');
+        expect($('places-select').getAttribute('aria-describedby')).toContain('state-selector-error');
+        // and stops saying so once a list is chosen and loaded
+        $('places-select').value = 'Famous Bridges';
+        submit();
+        await flush();
+        expect($('places-select').hasAttribute('aria-invalid')).toBe(false);
+        expect($('places-select').getAttribute('aria-describedby')).toBe('places-description');
+        // Let that load finish, so its requests don't count in the next test
+        await until(() => document.querySelectorAll('.state-city-card').length === 153, 10000);
+        window.__t.showYourCities();
+    }, 15000);
 
     test('a list loads 50 places to a request and shows every place', async () => {
         $('places-select').value = 'Famous Bridges';

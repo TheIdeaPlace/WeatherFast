@@ -31,7 +31,7 @@
             padding: 1.5rem;
             background-color: var(--secondary-bg);
             border-radius: var(--border-radius);
-            border-left: 4px solid var(--primary-color, #0066cc);
+            border-left: 4px solid var(--link-color);
         }
         
         .guide-section h2 {
@@ -62,13 +62,13 @@
         }
         
         .guide-section strong {
-            color: var(--primary-color, #0066cc);
+            color: var(--link-color);
             font-weight: 600;
         }
         
         .note-box {
             background-color: var(--card-bg);
-            border: 2px solid var(--primary-color, #0066cc);
+            border: 2px solid var(--link-color);
             border-radius: var(--border-radius);
             padding: 1rem;
             margin: 1rem 0;
@@ -81,7 +81,7 @@
         .back-link {
             display: inline-block;
             margin-bottom: 1.5rem;
-            color: var(--primary-color, #0066cc);
+            color: var(--link-color);
             text-decoration: none;
             font-weight: 500;
         }
@@ -102,12 +102,12 @@
 </head>
 <body>
     <div class="guide-container" role="main">
-        <a href="index.html" class="back-link" aria-label="Return to FastWeather">← Back to FastWeather</a>
+        <a href="index.html" class="back-link"><span aria-hidden="true">← </span>Back to FastWeather</a>
         
-        <header class="guide-header">
+        <div class="guide-header">
             <h1>FastWeather User Guide</h1>
             <p>Your accessible, feature-rich weather companion for the web</p>
-        </header>
+        </div>
         
         <!-- Getting Started -->
         <div class="guide-section">
@@ -122,9 +122,21 @@
                         <li>Requires HTTPS or localhost for security</li>
                     </ul>
                 </li>
-                <li><strong>Browse cities:</strong> Select "Browse Cities by State/Country" to explore pre-loaded locations</li>
+                <li><strong>Browse cities and places:</strong> Use the U.S. States, International and Places of the World tabs under "Browse Cities and Places" to explore pre-loaded locations</li>
                 <li><strong>View weather:</strong> Your cities will display current conditions automatically</li>
-                <li><strong>Refresh data:</strong> Activate the refresh button (🔄) next to any city, or press <kbd>F5</kbd></li>
+                <li><strong>Refresh data:</strong> Activate "Refresh All" (🔄), or press <kbd>Ctrl+R</kbd></li>
+            </ul>
+        </div>
+
+        <!-- Places of the World -->
+        <div class="guide-section">
+            <h2 id="places-of-the-world">Places of the World</h2>
+            <p>Lists of famous places around the world, each with its weather: Famous Bridges, Extreme Weather (record heat, cold, wind, rain and more, including summits and Antarctic stations), and Beaches of the World.</p>
+            <ul>
+                <li>Choose the <strong>Places of the World</strong> tab, pick a list, and activate <strong>Load Places</strong>. The description under the list chooser says what each list holds.</li>
+                <li>Each place shows its weather, where it is, and a short note on why it's known. When the list is ready, focus moves to its heading.</li>
+                <li><strong>Add to My Cities</strong> saves a place with its nearest town, for example "Golden Gate Bridge, San Francisco".</li>
+                <li><strong>Back to Your Cities</strong> returns you to your own list and to the Load Places button.</li>
             </ul>
         </div>
         
@@ -186,8 +198,8 @@
             <h3>Removing Cities</h3>
             <ul>
                 <li>Activate the "Remove" button (🗑️ icon) next to the city in Table or Flat view</li>
-                <li>In List view, select the city and activate the "Remove" button below the list</li>
-                <li>Keyboard shortcut: Select a city and press <kbd>Delete</kbd></li>
+                <li>In List view, select the city and activate its "Remove" button below the list</li>
+                <li>Focus moves to the next city, so you can carry on from where you were</li>
             </ul>
             
             <h3>Reordering Cities</h3>
@@ -261,7 +273,6 @@
             
             <h3>Advanced Options</h3>
             <ul>
-                <li><strong>Import/Export:</strong> Save your city list and settings as a file, or load from a backup</li>
                 <li><strong>Reset:</strong> Return to default settings if needed</li>
             </ul>
         </div>
@@ -277,7 +288,10 @@
                 <li><kbd>Enter</kbd> / <kbd>Space</kbd> - Activate buttons and links</li>
                 <li><kbd>Esc</kbd> - Close dialogs and return to main view</li>
                 <li><kbd>Ctrl+R</kbd> - Refresh all cities (alternative to "Refresh All" button)</li>
-                <li><kbd>Alt+V</kbd> - Open view mode menu</li>
+                <li><kbd>Alt+V</kbd> - Open view mode menu; the current view is checked</li>
+                <li><kbd>Alt+G</kbd> - Open Configure</li>
+                <li><kbd>Alt+L</kbd> - Use your current location</li>
+                <li>The shortcuts work on the main page, not while a dialog is open</li>
             </ul>
             
             <h3>List View (Virtual Cursor OFF)</h3>
@@ -290,9 +304,9 @@
             
             <h3>Dialogs and Modals</h3>
             <ul>
-                <li><kbd>Esc</kbd> - Close current dialog</li>
-                <li><kbd>Tab</kbd> - Move between controls within dialog</li>
-                <li>Focus automatically moves to the first interactive element when opening</li>
+                <li>When a dialog opens, focus moves to its title, which names the city</li>
+                <li><kbd>Tab</kbd> - Move between controls within the dialog; Tab stays inside it</li>
+                <li><kbd>Esc</kbd> - Close the dialog; focus returns to the button that opened it</li>
             </ul>
         </div>
         
@@ -304,8 +318,8 @@
             <h3>JAWS</h3>
             <ul>
                 <li><strong>Table/Flat View:</strong> Use standard virtual cursor navigation</li>
-                <li><strong>List View:</strong> Turn ON Forms Mode (press NumPad Plus to toggle) for arrow key navigation</li>
-                <li>ARIA live regions announce weather updates automatically</li>
+                <li><strong>List View:</strong> Tab to the list, or press <kbd>Enter</kbd> on it; JAWS switches to Forms Mode so the arrow keys move through your cities</li>
+                <li>Status messages, such as "Loaded 153 places", are announced as they happen</li>
             </ul>
             
             <h3>NVDA</h3>
@@ -355,15 +369,15 @@
         </div>
         
         <!-- Footer -->
-        <footer class="guide-section" style="border-left: none; text-align: center;">
+        <div class="guide-section guide-footer" style="border-left: none; text-align: center;">
             <h2>Need More Help?</h2>
             <p>FastWeather is designed to be intuitive and accessible. Explore the interface and discover features as you use them. Most actions are available through standard web navigation and keyboard shortcuts.</p>
             <p style="margin-top: 2rem; color: var(--text-secondary);">
-                <a href="index.html" style="color: var(--primary-color, #0066cc);">Return to FastWeather</a> | 
-                <a href="https://github.com/TheIdeaPlace/WeatherFast" target="_blank" rel="noopener noreferrer" style="color: var(--primary-color, #0066cc);">GitHub</a> | 
+                <a href="index.html" style="color: var(--link-color);">Return to FastWeather</a> | 
+                <a href="https://github.com/TheIdeaPlace/WeatherFast" target="_blank" rel="noopener noreferrer" style="color: var(--link-color);">GitHub</a> | 
                 Version 1.1
             </p>
-        </footer>
+        </div>
     </div>
 </body>
 </html>

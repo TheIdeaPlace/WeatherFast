@@ -34,7 +34,7 @@
     <main id="main-content" role="main">
         <section class="city-management">
             <h2 id="manage-cities-heading">Add New City</h2>
-            <form id="add-city-form">
+            <form id="add-city-form" novalidate>
                 <div class="input-group">
                     <label for="city-input">Enter city name or zip code:</label>
                     <input 
@@ -49,7 +49,7 @@
                         Enter a city name, state, and country, or a zip code to add weather information
                     </span>
                     <label for="country-select">Country (optional):</label>
-                    <select id="country-select" name="country" aria-label="Filter search by country">
+                    <select id="country-select" name="country">
                         <option value="">Any Country</option>
                         <!-- Populated dynamically from international-cities-cached.json -->
                     </select>
@@ -60,7 +60,7 @@
                         Use My Current Location <span class="shortcut-hint" aria-hidden="true">(Alt+L)</span>
                     </button>
                 </div>
-                <div id="city-search-error" role="alert" aria-live="polite" class="error-message"></div>
+                <div id="city-search-error" role="alert" class="error-message"></div>
             </form>
 
             <!-- City selection dialog for multiple matches -->
@@ -184,7 +184,7 @@
                     <p id="places-description" class="places-description">Famous bridges, beaches and extreme weather places, each with its weather.</p>
                 </div>
                 
-                <div id="state-selector-error" role="alert" aria-live="polite" class="error-message"></div>
+                <div id="state-selector-error" role="alert" class="error-message"></div>
             </form>
 
             <div id="state-cities-section" hidden>
@@ -207,13 +207,13 @@
                         </button>
                         <ul id="view-menu" role="menu" aria-labelledby="view-menu-btn" hidden>
                             <li role="none">
-                                <button role="menuitem" data-view="flat" aria-checked="true">Flat</button>
+                                <button type="button" role="menuitemradio" tabindex="-1" data-view="flat" aria-checked="true">Flat</button>
                             </li>
                             <li role="none">
-                                <button role="menuitem" data-view="table" aria-checked="false">Table</button>
+                                <button type="button" role="menuitemradio" tabindex="-1" data-view="table" aria-checked="false">Table</button>
                             </li>
                             <li role="none">
-                                <button role="menuitem" data-view="list" aria-checked="false">List</button>
+                                <button type="button" role="menuitemradio" tabindex="-1" data-view="list" aria-checked="false">List</button>
                             </li>
                         </ul>
                     </div>
@@ -614,13 +614,33 @@
                     });
             });
             
-            // Handle service worker updates
-            let refreshing = false;
+            // A new version: offer a reload rather than reloading by itself,
+            // which used to happen within a minute of every deploy, sometimes
+            // mid-dialog, and sent screen readers back to the top. The first
+            // visit also fires controllerchange; that's not an update.
+            const hadController = !!navigator.serviceWorker.controller;
+            let offered = false;
             navigator.serviceWorker.addEventListener('controllerchange', () => {
-                if (!refreshing) {
-                    refreshing = true;
-                    console.log('New service worker activated, reloading page...');
-                    window.location.reload();
+                if (!hadController || offered) return;
+                offered = true;
+                const bar = document.createElement('div');
+                bar.className = 'update-banner';
+                bar.setAttribute('role', 'region');
+                bar.setAttribute('aria-label', 'Update available');
+                const text = document.createElement('p');
+                text.textContent = 'A new version of WeatherFast is ready.';
+                const reload = document.createElement('button');
+                reload.type = 'button';
+                reload.textContent = 'Reload';
+                reload.addEventListener('click', () => window.location.reload());
+                const later = document.createElement('button');
+                later.type = 'button';
+                later.textContent = 'Not now';
+                later.addEventListener('click', () => bar.remove());
+                bar.append(text, reload, later);
+                document.body.prepend(bar);
+                if (typeof announceToScreenReader === 'function') {
+                    announceToScreenReader('A new version of WeatherFast is ready. Reload is at the top of the page.');
                 }
             });
         }
