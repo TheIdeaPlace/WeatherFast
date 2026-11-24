@@ -10,6 +10,11 @@
     box-sizing: border-box;
 }
 
+/* hidden always hides, even on elements whose class sets display */
+[hidden] {
+    display: none !important;
+}
+
 :root {
     /* Color palette meeting WCAG AA contrast ratios */
     --primary-bg: #ffffff;
@@ -771,9 +776,15 @@ legend {
     border-radius: var(--border-radius);
 }
 
-.city-title-btn h3 {
+/* The heading now holds the button; the button takes the heading's size */
+.city-title {
     margin: 0;
-    color: inherit;
+    font-size: var(--font-size-lg, 1.25rem);
+}
+
+.city-title .city-title-btn {
+    font-size: inherit;
+    font-weight: inherit;
 }
 
 .city-card-content {
@@ -1442,6 +1453,7 @@ a:hover {
     transform: translateY(-2px);
 }
 
+.state-city-card h3,
 .state-city-card h4 {
     color: var(--text-primary);
     margin-bottom: var(--spacing-sm);
@@ -1514,13 +1526,14 @@ a:hover {
     outline-offset: 2px;
 }
 
+/* The badge now has words on it, so each colour carries its text at 4.5:1 or better */
 .alert-badge.extreme {
-    background-color: #dc3545;
+    background-color: #b02a37;
     color: white;
 }
 
 .alert-badge.severe {
-    background-color: #fd7e14;
+    background-color: #a14a00;
     color: white;
 }
 
@@ -1596,7 +1609,8 @@ a:hover {
     margin-bottom: var(--spacing-lg);
 }
 
-.alert-section h4 {
+.alert-section h4,
+.alert-section h5 {
     font-size: 1.125rem;
     margin-bottom: var(--spacing-sm);
     color: var(--text-primary);
@@ -1630,6 +1644,13 @@ a:hover {
 .alert-meta-value {
     font-weight: 600;
     color: var(--text-primary);
+    margin: 0;
+}
+
+/* Several alerts in one dialog, each its own section */
+.alert-details + .alert-details {
+    border-top: 1px solid var(--border-color);
+    margin-top: var(--spacing-lg);
 }
 
 /* === Historical Weather === */

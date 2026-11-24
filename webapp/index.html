@@ -197,7 +197,9 @@
 
         <section class="city-list-section">
             <div class="section-header">
-                <h2 id="your-cities-heading">Your Cities</h2>
+                <h2 id="your-cities-heading" tabindex="-1">Your Cities</h2>
+                <!-- Shown while browsing; outside the heading, so the heading reads only its name -->
+                <button id="back-to-your-cities-btn" type="button" class="back-btn" hidden><span aria-hidden="true">← </span>Back to Your Cities</button>
                 <div class="controls">
                     <div class="view-menu-container">
                         <button id="view-menu-btn" aria-haspopup="menu" aria-expanded="false" aria-keyshortcuts="Alt+V" title="Change view mode (Alt+V)">

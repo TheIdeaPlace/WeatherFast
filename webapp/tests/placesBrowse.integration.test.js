@@ -225,10 +225,10 @@ describe('Places of the World', () => {
         expect(new URL(meteoCalls[0]).searchParams.get('latitude').split(',').length).toBe(50);
         expect($('your-cities-heading').textContent).toMatch(/^Famous Bridges \(153\)/);
         const card = [...document.querySelectorAll('.state-city-card')]
-            .find(c => c.querySelector('h4').textContent === 'Golden Gate Bridge');
+            .find(c => c.querySelector('h3').textContent === 'Golden Gate Bridge');
         expect(card.querySelector('.place-location').textContent).toBe('San Francisco, California, United States');
         expect(card.querySelector('button').getAttribute('aria-label'))
-            .toBe('Add Golden Gate Bridge, San Francisco to your cities list');
+            .toBe('Add to My Cities: Golden Gate Bridge, San Francisco');
     }, 15000);
 
     test('Back while a list is loading keeps Your Cities', async () => {
