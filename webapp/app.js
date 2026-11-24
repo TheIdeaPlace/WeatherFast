@@ -111,6 +111,7 @@ let currentView = 'flat'; // 'flat', 'table', or 'list'
 let listNavigationHandler = null;
 let cachedCityCoordinates = null; // Cache for pre-geocoded US city coordinates
 let cachedInternationalCoordinates = null; // Cache for pre-geocoded international city coordinates
+let cachedPlaceCategories = []; // Places of the World lists (see places.js)
 let currentStateCities = null; // Store current state cities being viewed
 let currentStateName = null; // Store current state name
 let currentLocationType = 'us'; // 'us' or 'international'
@@ -148,7 +149,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('About to load cached international city coordinates...');
     await loadCachedInternationalCoordinates();
     console.log('After loadCachedInternationalCoordinates, cachedInternationalCoordinates is:', cachedInternationalCoordinates ? 'LOADED' : 'NULL/UNDEFINED');
-    
+
+    await loadPlacesOfTheWorld();
+
     announceToScreenReader('FastWeather application loaded');
     console.log('=== FastWeather Initialization Complete ===');
 });
@@ -207,6 +210,49 @@ async function loadCachedInternationalCoordinates() {
     } catch (error) {
         console.error('❌ Could not load cached international city coordinates:', error);
         console.error('Error details:', error.message, error.stack);
+    }
+}
+
+// Load Places of the World and fill its list chooser. Without the file the
+// tab says so rather than offering an empty list.
+async function loadPlacesOfTheWorld() {
+    try {
+        const response = await fetch('places-of-the-world.json');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        cachedPlaceCategories = parsePlaceCategories(await response.json());
+    } catch (error) {
+        console.error('Could not load places-of-the-world.json:', error);
+        cachedPlaceCategories = [];
+    }
+    populatePlacesDropdown();
+}
+
+function populatePlacesDropdown() {
+    const select = document.getElementById('places-select');
+    const description = document.getElementById('places-description');
+    if (!select) return;
+    while (select.options.length > 1) {
+        select.remove(1);
+    }
+    cachedPlaceCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category.name;
+        option.textContent = placeCategoryLabel(category);
+        select.appendChild(option);
+    });
+    if (description && cachedPlaceCategories.length === 0) {
+        description.textContent = 'Places of the World could not be loaded. Please refresh the page.';
+    }
+}
+
+// The chosen list's description, read with the list chooser (aria-describedby)
+function updatePlacesDescription() {
+    const select = document.getElementById('places-select');
+    const description = document.getElementById('places-description');
+    if (!select || !description) return;
+    const category = cachedPlaceCategories.find(c => c.name === select.value);
+    if (category && category.description) {
+        description.textContent = category.description;
     }
 }
 
@@ -277,31 +323,29 @@ function populateCountryDropdown() {
     }
 }
 
-// Switch between U.S. States and International tabs
+// Browse tabs: type -> [tab id, panel id]
+const LOCATION_TABS = {
+    us: ['us-states-tab', 'us-states-panel'],
+    international: ['international-tab', 'international-panel'],
+    places: ['places-tab', 'places-panel']
+};
+
+// Switch between the U.S. States, International and Places of the World tabs
 function switchLocationTab(type) {
+    if (!LOCATION_TABS[type]) return;
     currentLocationType = type;
-    
-    const usTab = document.getElementById('us-states-tab');
-    const intlTab = document.getElementById('international-tab');
-    const usPanel = document.getElementById('us-states-panel');
-    const intlPanel = document.getElementById('international-panel');
-    
-    if (type === 'us') {
-        usTab.setAttribute('aria-selected', 'true');
-        usTab.setAttribute('tabindex', '0');
-        intlTab.setAttribute('aria-selected', 'false');
-        intlTab.setAttribute('tabindex', '-1');
-        usPanel.hidden = false;
-        intlPanel.hidden = true;
-    } else {
-        usTab.setAttribute('aria-selected', 'false');
-        usTab.setAttribute('tabindex', '-1');
-        intlTab.setAttribute('aria-selected', 'true');
-        intlTab.setAttribute('tabindex', '0');
-        usPanel.hidden = true;
-        intlPanel.hidden = false;
-    }
-    
+
+    Object.entries(LOCATION_TABS).forEach(([key, [tabId, panelId]]) => {
+        const tab = document.getElementById(tabId);
+        const panel = document.getElementById(panelId);
+        const selected = key === type;
+        if (tab) {
+            tab.setAttribute('aria-selected', selected ? 'true' : 'false');
+            tab.setAttribute('tabindex', selected ? '0' : '-1');
+        }
+        if (panel) panel.hidden = !selected;
+    });
+
     // Clear error messages when switching tabs
     const errorDiv = document.getElementById('state-selector-error');
     clearError(errorDiv);
@@ -332,7 +376,9 @@ function initializeEventListeners() {
     // Location tabs (U.S. States / International)
     document.getElementById('us-states-tab').addEventListener('click', () => switchLocationTab('us'));
     document.getElementById('international-tab').addEventListener('click', () => switchLocationTab('international'));
-    
+    document.getElementById('places-tab').addEventListener('click', () => switchLocationTab('places'));
+    document.getElementById('places-select').addEventListener('change', updatePlacesDescription);
+
     // State selector form
     document.getElementById('state-selector-form').addEventListener('submit', handleStateSelection);
     
@@ -466,13 +512,22 @@ function handleKeyboardShortcuts(e) {
     }
 }
 
-// Tab navigation
+// Tab navigation, one tablist at a time: the Browse tabs and the Configure
+// dialog's tabs are separate groups, so arrowing never leaves the group, and
+// selecting a tab hides only its own group's panels.
 function setupTabNavigation() {
-    const tabs = document.querySelectorAll('[role="tab"]');
-    const panels = document.querySelectorAll('[role="tabpanel"]');
-    
+    document.querySelectorAll('[role="tablist"]').forEach(tablist => {
+        setupTabList(Array.from(tablist.querySelectorAll('[role="tab"]')));
+    });
+}
+
+function setupTabList(tabs) {
+    const panels = tabs
+        .map(tab => document.getElementById(tab.getAttribute('aria-controls')))
+        .filter(Boolean);
+
     tabs.forEach((tab, index) => {
-        tab.addEventListener('click', () => activateTab(tab, panels));
+        tab.addEventListener('click', () => activateTab(tab, tabs, panels));
         tab.addEventListener('keydown', (e) => {
             let newIndex = index;
             
@@ -491,16 +546,16 @@ function setupTabNavigation() {
             }
             
             if (newIndex !== index) {
-                activateTab(tabs[newIndex], panels);
+                // A click, so the tab's own handlers run too (the Browse tabs
+                // track which kind of place the form loads).
+                tabs[newIndex].click();
                 tabs[newIndex].focus();
             }
         });
     });
 }
 
-function activateTab(selectedTab, panels) {
-    const tabs = document.querySelectorAll('[role="tab"]');
-    
+function activateTab(selectedTab, tabs, panels) {
     tabs.forEach(tab => {
         tab.setAttribute('aria-selected', 'false');
         tab.setAttribute('tabindex', '-1');
@@ -984,7 +1039,23 @@ async function handleStateSelection(e) {
     e.preventDefault();
     
     const errorDiv = document.getElementById('state-selector-error');
-    
+
+    if (currentLocationType === 'places') {
+        const categoryName = document.getElementById('places-select').value;
+        if (!categoryName) {
+            showError(errorDiv, 'Please select a list of places');
+            return;
+        }
+        const category = cachedPlaceCategories.find(c => c.name === categoryName);
+        if (!category || category.places.length === 0) {
+            showError(errorDiv, 'Places of the World could not be loaded. Please refresh the page.');
+            return;
+        }
+        clearError(errorDiv);
+        await displayPlaces(category);
+        return;
+    }
+
     if (currentLocationType === 'us') {
         // Handle U.S. state selection
         const stateSelect = document.getElementById('state-select');
@@ -1064,9 +1135,10 @@ function showYourCities() {
     const cityListSection = document.querySelector('.city-list-section');
     const heading = document.getElementById('your-cities-heading');
     
-    // Clear state cities tracking
+    // Clear state cities tracking, and stop a Places list that's still loading
     currentStateCities = null;
     currentStateName = null;
+    browseLoadGeneration++;
     
     // Reset heading and show state selector
     heading.textContent = 'Your Cities';
@@ -1081,6 +1153,7 @@ function showYourCities() {
 
 // Display location cities (US state or international country)
 async function displayLocationCities(locationName, cityNames, totalCount = null, locationType = 'us') {
+    browseLoadGeneration++;  // a Places list still loading must not replace these cities
     // Hide state selector section and show city list section with location cities
     const stateSelectorSection = document.querySelector('.state-selector-section');
     const cityListSection = document.querySelector('.city-list-section');
@@ -1251,21 +1324,100 @@ async function displayLocationCities(locationName, cityNames, totalCount = null,
     }
 }
 
-// Helper function to fetch weather data without storing in weatherData object
-async function fetchWeatherData(lat, lon) {
+// Show a Places of the World list with each place's weather, in the same
+// views as a state or country. A list can hold up to 200 places, so weather
+// comes 50 places to a request rather than one request per place.
+async function displayPlaces(category) {
+    const stateSelectorSection = document.querySelector('.state-selector-section');
+    const cityListSection = document.querySelector('.city-list-section');
+    const heading = document.getElementById('your-cities-heading');
+    const container = document.getElementById('city-list');
+    const gen = ++browseLoadGeneration;
+
+    const setHeading = (text) => {
+        heading.textContent = text + ' ';
+        const backBtn = document.createElement('button');
+        backBtn.id = 'back-to-your-cities-btn';
+        backBtn.className = 'back-btn';
+        backBtn.textContent = '← Back to Your Cities';
+        backBtn.addEventListener('click', () => showYourCities());
+        heading.appendChild(backBtn);
+    };
+
+    stateSelectorSection.hidden = false;
+    cityListSection.hidden = false;
+    setHeading(category.name);
+    container.innerHTML = '';
+    const loading = document.createElement('p');
+    loading.className = 'loading-text';
+    loading.textContent = `Loading weather for ${category.places.length} places...`;
+    container.appendChild(loading);
+    announceToScreenReader(`Loading weather for ${category.name}`);
+
+    const placeInfos = category.places.map(placeToCityInfo);
+    const batches = chunk(placeInfos, PLACES_WEATHER_BATCH);
+    for (let i = 0; i < batches.length; i++) {
+        if (gen !== browseLoadGeneration) return;  // another list or Back was chosen
+        if (i > 0) await new Promise(resolve => setTimeout(resolve, PLACES_WEATHER_GAP_MS));
+        try {
+            const results = await fetchWeatherDataBatch(batches[i]);
+            batches[i].forEach((info, j) => { info.weather = results[j]; });
+        } catch (error) {
+            console.error(`Error fetching weather for ${category.name}:`, error);
+        }
+    }
+    if (gen !== browseLoadGeneration) return;
+
+    placeInfos.sort((a, b) => a.name.localeCompare(b.name));
+    currentStateCities = placeInfos;
+    currentStateName = category.name;
+    setHeading(`${category.name} (${placeInfos.length})`);
+    renderStateCitiesWithWeather(container, placeInfos);
+
+    const missing = placeInfos.filter(p => !p.weather).length;
+    announceToScreenReader(missing
+        ? `Loaded ${placeInfos.length} places for ${category.name}; weather unavailable for ${missing}`
+        : `Loaded ${placeInfos.length} places with weather for ${category.name}`);
+}
+
+const PLACES_WEATHER_BATCH = 50;      // places per Open-Meteo request
+const PLACES_WEATHER_GAP_MS = 500;    // pause between those requests
+let browseLoadGeneration = 0;         // bumped on each places load and on Back
+
+// Today's weather for many places in one request; one result (or null) per place
+async function fetchWeatherDataBatch(locations) {
+    if (locations.length === 0) return [];
     const params = new URLSearchParams({
-        latitude: lat,
-        longitude: lon,
-        current: 'temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,visibility',
+        latitude: locations.map(l => l.lat).join(','),
+        longitude: locations.map(l => l.lon).join(','),
+        current: WEATHER_SUMMARY_CURRENT,
         hourly: 'cloudcover',
         daily: 'temperature_2m_max,temperature_2m_min,sunrise,sunset',
         forecast_days: '1',
         timezone: 'auto'
     });
-    
     const response = await fetch(`${OPEN_METEO_API_URL}?${params}`);
     if (!response.ok) throw new Error('Failed to fetch weather data');
-    
+    return weatherResultsFromResponse(await response.json(), locations.length);
+}
+
+const WEATHER_SUMMARY_CURRENT = 'temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,visibility';
+
+// Helper function to fetch weather data without storing in weatherData object
+async function fetchWeatherData(lat, lon) {
+    const params = new URLSearchParams({
+        latitude: lat,
+        longitude: lon,
+        current: WEATHER_SUMMARY_CURRENT,
+        hourly: 'cloudcover',
+        daily: 'temperature_2m_max,temperature_2m_min,sunrise,sunset',
+        forecast_days: '1',
+        timezone: 'auto'
+    });
+
+    const response = await fetch(`${OPEN_METEO_API_URL}?${params}`);
+    if (!response.ok) throw new Error('Failed to fetch weather data');
+
     return await response.json();
 }
 
@@ -1410,6 +1562,20 @@ function renderStateCitiesFlatWithWeather(container, citiesData) {
         title.textContent = cityData.display;
         header.appendChild(title);
         card.appendChild(header);
+
+        // A place from Places of the World: where it is and why it's known
+        if (cityData.location) {
+            const where = document.createElement('p');
+            where.className = 'place-location';
+            where.textContent = cityData.location;
+            card.appendChild(where);
+        }
+        if (cityData.note) {
+            const note = document.createElement('p');
+            note.className = 'place-note';
+            note.textContent = cityData.note;
+            card.appendChild(note);
+        }
         
         const content = document.createElement('div');
         content.className = 'city-card-content';
@@ -1582,7 +1748,16 @@ function renderStateCitiesTableWithWeather(container, citiesData) {
             headerRow.appendChild(th);
         }
     });
-    
+
+    // Places of the World lists say where each place is and why it's known
+    const hasAbout = citiesData.some(c => c.location || c.note);
+    if (hasAbout) {
+        const aboutHeader = document.createElement('th');
+        aboutHeader.textContent = 'About';
+        aboutHeader.scope = 'col';
+        headerRow.appendChild(aboutHeader);
+    }
+
     const actionsHeader = document.createElement('th');
     actionsHeader.textContent = 'Actions';
     actionsHeader.scope = 'col';
@@ -1690,7 +1865,13 @@ function renderStateCitiesTableWithWeather(container, citiesData) {
                 row.appendChild(loadingCell);
             }
         }
-        
+
+        if (hasAbout) {
+            const aboutCell = document.createElement('td');
+            aboutCell.textContent = [cityData.location, cityData.note].filter(Boolean).join('. ');
+            row.appendChild(aboutCell);
+        }
+
         const actionsCell = document.createElement('td');
         
         const isInList = cities[cityData.display];
@@ -1793,6 +1974,14 @@ function renderStateCitiesListWithWeather(container, citiesData) {
             });
             
             weatherText = `${cityData.display} - ${parts.join(', ')}`;
+        } else if (cityData.location || cityData.note) {
+            weatherText = `${cityData.display} - weather unavailable`;
+        }
+
+        // A place: name and weather first, then where it is and why it's known
+        const about = [cityData.location, cityData.note].filter(Boolean).join('. ');
+        if (about) {
+            weatherText += `. ${about}`;
         }
         
         // Just show the text - buttons will be displayed after the list
@@ -4284,6 +4473,7 @@ async function testDebugNetwork() {
     const files = [
         'us-cities-cached.json',
         'international-cities-cached.json',
+        'places-of-the-world.json',
         'manifest.json'
     ];
     

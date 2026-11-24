@@ -1,18 +1,20 @@
 // FastWeather Service Worker
 // Enables offline functionality and faster loading
-// UPDATED: February 8, 2026 - Focus return fix
+// UPDATED: November 24, 2026 - Places of the World
 
-const CACHE_NAME = 'fastweather-v7';
-const RUNTIME_CACHE = 'fastweather-runtime-v7';
+const CACHE_NAME = 'fastweather-v8';
+const RUNTIME_CACHE = 'fastweather-runtime-v8';
 
 // Files to cache for offline use
 const STATIC_CACHE_URLS = [
     './',
     './index.html',
     './styles.css',
+    './places.js',
     './app.js',
     './us-cities-cached.json',
     './international-cities-cached.json',
+    './places-of-the-world.json',
     './manifest.json'
 ];
 
@@ -81,7 +83,8 @@ self.addEventListener('fetch', event => {
 
     // Network-first strategy for JSON city data files (always check for updates)
     if (url.pathname.endsWith('.json') && 
-        (url.pathname.includes('cities-cached') || url.pathname.includes('manifest'))) {
+        (url.pathname.includes('cities-cached') || url.pathname.includes('places-of-the-world') ||
+         url.pathname.includes('manifest'))) {
         event.respondWith(
             fetch(request)
                 .then(response => {

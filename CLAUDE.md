@@ -222,6 +222,6 @@ python build-international-cache.py   # International (~40-50 min)
 # distribute-caches.bat               # Windows
 ```
 
-**Places of the World** (`CityData/places-of-the-world.json`) is hand-curated, not geocoded: an array of categories, each with up to 200 places (`name`, `description`, optional `city`/`state`, `country`, `lat`, `lon`). Open-Meteo uses the elevation at the exact coordinates, so summits and weather stations must be pinned on the spot itself. Run `python3 verify-places.py` after editing (structure checks plus a Nominatim country check, cached), then `./distribute-caches.sh`. iOS only for now.
+**Places of the World** (`CityData/places-of-the-world.json`) is hand-curated, not geocoded: an array of categories, each with up to 200 places (`name`, `description`, optional `city`/`state`, `country`, `lat`, `lon`). Open-Meteo uses the elevation at the exact coordinates, so summits and weather stations must be pinned on the spot itself. Run `python3 verify-places.py` after editing (structure checks plus a Nominatim country check, cached), then `./distribute-caches.sh`, which copies it to iOS, `webapp/` and `windows/` (all three platforms have Places of the World; CI checks the copies match).
 
 Current coverage: 93 countries (~20 cities each) + 50 US states (50 cities each) = ~4,360 pre-geocoded locations. Scripts respect Nominatim's 1 req/sec rate limit and are resumable.

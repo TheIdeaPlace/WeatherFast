@@ -14,6 +14,7 @@ import wx
 from . import __version__, browse_favorites
 from .constants import USER_GUIDE_URL
 from .city_data import flatten_cities, load_cached_cities
+from .places import load_categories as load_place_categories
 from .locale_units import locale_default_units
 from .models.city import CityStore
 from .models.settings import AppSettings
@@ -59,6 +60,7 @@ class MainFrame(wx.Frame):
 
         # Cached city coordinates for browsing
         self.us_cities_cache, self.intl_cities_cache = load_cached_cities()
+        self.place_categories = load_place_categories()
         self._all_cities = None  # flattened lazily for the Directional Explorer
         self.browse_favs = browse_favorites.load()
         self.day_offset = 0      # detailed-view date navigation (-7..+7)
@@ -258,6 +260,8 @@ class MainFrame(wx.Frame):
         cities_menu = wx.Menu()
         mi_add = cities_menu.Append(wx.ID_ANY, "Add City")
         mi_browse = cities_menu.Append(wx.ID_ANY, "Browse Cities by State/Country...")
+        mi_places = cities_menu.Append(wx.ID_ANY, "Browse Places of the World...")
+        mi_places.Enable(bool(self.place_categories))
         mi_myloc = cities_menu.Append(wx.ID_ANY, "Add My Location")
         cities_menu.AppendSeparator()
         mi_alertbrowser = cities_menu.Append(wx.ID_ANY, "Browse Weather Alerts...")
@@ -304,6 +308,7 @@ class MainFrame(wx.Frame):
 
         self.Bind(wx.EVT_MENU, self.on_focus_new_city, mi_add)
         self.Bind(wx.EVT_MENU, self.on_browse_cities, mi_browse)
+        self.Bind(wx.EVT_MENU, self.on_browse_places, mi_places)
         self.Bind(wx.EVT_MENU, self.on_add_my_location, mi_myloc)
         self.Bind(wx.EVT_MENU, self.on_browse_alerts, mi_alertbrowser)
         self.Bind(wx.EVT_MENU, self.on_full_weather, mi_full)
@@ -729,8 +734,11 @@ class MainFrame(wx.Frame):
         self.update_buttons()
         self.statusbar.SetStatusText(f"Added your location: {name}", 0)
 
-    def on_browse_cities(self, event):
-        if not self.us_cities_cache and not self.intl_cities_cache:
+    def on_browse_places(self, event):
+        self.on_browse_cities(event, start_page="places")
+
+    def on_browse_cities(self, event, start_page=None):
+        if not self.us_cities_cache and not self.intl_cities_cache and not self.place_categories:
             wx.MessageBox(
                 "City data files not found. Please ensure us-cities-cached.json and "
                 "international-cities-cached.json are in the application directory.",
@@ -739,7 +747,9 @@ class MainFrame(wx.Frame):
             return
 
         dlg = LocationBrowserDialog(self, self.us_cities_cache, self.intl_cities_cache,
-                                    self.browse_favs, self.fmt)
+                                    self.browse_favs, self.fmt,
+                                    place_categories=self.place_categories,
+                                    start_page=start_page)
         result = dlg.ShowModal()
         # Persist any favorites changes regardless of OK/Cancel.
         self.browse_favs = dlg.get_favorites()
