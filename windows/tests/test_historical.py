@@ -87,16 +87,18 @@ class HistoricalTests(unittest.TestCase):
         captured = []
         with mock.patch.object(historical_service, "fetch_single_day",
                                lambda lat, lon, iso: captured.append(iso) or HistoricalDay(date=iso)):
-            historical_service.fetch_multi_year(1.0, 2.0, 7, 4, 3, end_year=1990)
-        self.assertEqual(captured, ["1990-07-04", "1989-07-04", "1988-07-04"])
+            days = historical_service.fetch_multi_year(1.0, 2.0, 7, 4, 3, end_year=1990)
+        # Fetches run on a thread pool, so only the result order is guaranteed.
+        self.assertEqual(sorted(captured), ["1988-07-04", "1989-07-04", "1990-07-04"])
+        self.assertEqual([d.date for d in days], ["1990-07-04", "1989-07-04", "1988-07-04"])
 
     def test_multi_year_window_stops_at_1940(self):
         captured = []
         with mock.patch.object(historical_service, "fetch_single_day",
                                lambda lat, lon, iso: captured.append(iso) or HistoricalDay(date=iso)):
             days = historical_service.fetch_multi_year(1.0, 2.0, 7, 4, 5, end_year=1941)
-        self.assertEqual(len(days), 2)
-        self.assertEqual(captured[-1], "1940-07-04")
+        self.assertEqual([d.date for d in days], ["1941-07-04", "1940-07-04"])
+        self.assertEqual(sorted(captured), ["1940-07-04", "1941-07-04"])
 
 
 if __name__ == "__main__":
