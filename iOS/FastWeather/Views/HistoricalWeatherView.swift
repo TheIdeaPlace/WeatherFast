@@ -142,7 +142,7 @@ struct HistoricalWeatherView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
-                .disabled(isToday)
+                .disabled(isNextUnavailable)
                 .accessibilityLabel(nextButtonLabel)
             }
 
@@ -334,11 +334,14 @@ struct HistoricalWeatherView: View {
                         throw NSError(domain: "HistoricalWeather", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid start date"])
                     }
                     
-                    // Calculate end date (30 days from start)
-                    guard let endDate = calendar.date(byAdding: .day, value: 30, to: startDate) else {
+                    // 30 days including the start, so each 30-day step starts right after
+                    // the last page; the archive rejects end dates after today
+                    guard let rangeEnd = calendar.date(byAdding: .day, value: 29, to: startDate),
+                          let todayDate = HistoricalDate.today.toDate() else {
                         data = []
                         throw NSError(domain: "HistoricalWeather", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid end date"])
                     }
+                    let endDate = min(rangeEnd, todayDate)
                     
                     let startString = dateFormatter.string(from: startDate)
                     let endString = dateFormatter.string(from: endDate)
@@ -420,7 +423,7 @@ struct HistoricalWeatherView: View {
     }
     
     private func nextDay() {
-        guard !isToday else { return }
+        guard !isNextUnavailable else { return }
         if viewMode == .dailyBrowse {
             // In browse mode, go forward 30 days (next group)
             selectedDate.addDays(30)
@@ -453,6 +456,16 @@ struct HistoricalWeatherView: View {
 
     private var isToday: Bool {
         selectedDate == .today
+    }
+    
+    // Browse can step forward while the next 30 days still start by today
+    private var isNextUnavailable: Bool {
+        guard viewMode == .dailyBrowse else { return isToday }
+        var next = selectedDate
+        next.addDays(30)
+        guard let nextDate = next.toDate(),
+              let todayDate = HistoricalDate.today.toDate() else { return true }
+        return nextDate > todayDate
     }
     
     // Browse Days requires a past date so a 30-day range ends before today
