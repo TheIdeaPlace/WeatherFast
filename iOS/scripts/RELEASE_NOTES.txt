@@ -1,10 +1,17 @@
 New in this build: jump a year in Historical Weather
 
-When you browse 30 consecutive days in Historical Weather, there are now Previous Year and Next Year buttons under the day arrows. They show the same 30 days in the year before or after, so you can compare a stretch of days across years without going back to the date picker.
+When you browse 30 days in a row in Historical Weather, there are now Previous Year and Next Year buttons under the day arrows. They show the same 30 days in the year before or after, so you can compare a stretch of days across years without going back to the date picker.
+
+Also fixed in Historical Weather
+- Browse Days shows exactly 30 days. Before, each page repeated the last day of the page before it.
+- Browsing near today no longer shows an error. The range now ends at today.
+- Looking at February 29 across years now shows February 28 in years without a February 29. Before, only leap years appeared.
 
 What to test
 - Open a city, open Historical Weather, load history, and choose Browse Days.
-- Press Previous Year a few times, and check that the dates stay the same and only the year changes.
-- Press Next Year, and check that it is dimmed when the next year's range would start today or later.
-- Start a browse on February 29 of a leap year, then move a year. It should land on February 28.
+- Press Previous Year a few times. The days should stay the same and only the year should change.
+- Press Next Year until it's dimmed. It dims when the next year's range would start today or later.
+- Use Next 30 Days to get close to today. The last page should end today, with no error.
+- Start Browse Days on February 29, 2024, then press Next Year. It should land on February 28, 2025.
+- Pick February 29, 2024 and choose History. Years without a February 29 should show February 28.
 - With VoiceOver, check that the buttons read "Previous year" and "Next year" and that their hints name the year they go to.
