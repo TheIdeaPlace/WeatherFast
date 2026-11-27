@@ -138,7 +138,14 @@ struct HistoricalDate: Equatable {
         guard let newDate = Calendar.current.date(byAdding: .day, value: days, to: date) else { return }
         self = HistoricalDate(from: newDate)
     }
-    
+
+    /// Same calendar day in another year; Feb 29 lands on Feb 28 in non-leap years.
+    mutating func addYears(_ years: Int) {
+        guard let date = toDate() else { return }
+        guard let newDate = Calendar.current.date(byAdding: .year, value: years, to: date) else { return }
+        self = HistoricalDate(from: newDate)
+    }
+
     static var today: HistoricalDate {
         HistoricalDate(from: Date())
     }

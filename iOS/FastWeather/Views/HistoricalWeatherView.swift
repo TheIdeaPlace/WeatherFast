@@ -145,7 +145,32 @@ struct HistoricalWeatherView: View {
                 .disabled(isToday)
                 .accessibilityLabel(nextButtonLabel)
             }
-            
+
+            // Year jumps keep the same date range while browsing consecutive days
+            if viewMode == .dailyBrowse {
+                HStack(spacing: 8) {
+                    Button(action: { shiftBrowseYear(by: -1) }) {
+                        Label("Previous Year", systemImage: "chevron.left.2")
+                            .font(.caption)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(!canShiftBrowseYear(by: -1))
+                    .accessibilityLabel("Previous year")
+                    .accessibilityHint("Shows the same 30 days in \(String(selectedDate.year - 1))")
+
+                    Button(action: { shiftBrowseYear(by: 1) }) {
+                        Label("Next Year", systemImage: "chevron.right.2")
+                            .font(.caption)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(!canShiftBrowseYear(by: 1))
+                    .accessibilityLabel("Next year")
+                    .accessibilityHint("Shows the same 30 days in \(String(selectedDate.year + 1))")
+                }
+            }
+
             // Load button
             if historicalData.isEmpty {
                 Button(action: loadHistoricalData) {
@@ -410,6 +435,22 @@ struct HistoricalWeatherView: View {
         loadHistoricalData() // Automatically reload with new date
     }
     
+    private func shiftBrowseYear(by years: Int) {
+        guard canShiftBrowseYear(by: years) else { return }
+        selectedDate.addYears(years)
+        loadHistoricalData()
+    }
+
+    // The archive starts in 1940, and a browse range must start before today
+    private func canShiftBrowseYear(by years: Int) -> Bool {
+        var shifted = selectedDate
+        shifted.addYears(years)
+        guard shifted.year >= 1940,
+              let shiftedDate = shifted.toDate(),
+              let todayDate = HistoricalDate.today.toDate() else { return false }
+        return shiftedDate < todayDate
+    }
+
     private var isToday: Bool {
         selectedDate == .today
     }
