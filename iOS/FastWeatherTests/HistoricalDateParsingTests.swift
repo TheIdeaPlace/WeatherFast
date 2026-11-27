@@ -161,6 +161,22 @@ final class HistoricalDateParsingTests: XCTestCase {
         XCTAssertEqual(hd.day, 12, "Day should go back to 12")
     }
 
+    // MARK: - addYears (Browse Days year jumps)
+
+    func testHistoricalDateAddYearsKeepsMonthAndDay() {
+        var hd = HistoricalDate(year: 2020, month: 7, day: 4)
+        hd.addYears(-1)
+        XCTAssertEqual(hd, HistoricalDate(year: 2019, month: 7, day: 4))
+        hd.addYears(2)
+        XCTAssertEqual(hd, HistoricalDate(year: 2021, month: 7, day: 4))
+    }
+
+    func testHistoricalDateAddYearsFromLeapDayLandsOnFeb28() {
+        var hd = HistoricalDate(year: 2024, month: 2, day: 29)
+        hd.addYears(1)
+        XCTAssertEqual(hd, HistoricalDate(year: 2025, month: 2, day: 28))
+    }
+
     // MARK: - isBrowseDaysUnavailable logic (today and future dates must block)
 
     func testTodayDateIsConsideredUnavailableForBrowse() {
