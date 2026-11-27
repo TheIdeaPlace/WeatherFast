@@ -100,6 +100,34 @@ class HistoricalTests(unittest.TestCase):
         self.assertEqual([d.date for d in days], ["1941-07-04", "1940-07-04"])
         self.assertEqual(sorted(captured), ["1940-07-04", "1941-07-04"])
 
+    def test_multi_year_feb_29_uses_feb_28_in_non_leap_years(self):
+        with mock.patch.object(historical_service, "fetch_single_day",
+                               lambda lat, lon, iso: HistoricalDay(date=iso)):
+            days = historical_service.fetch_multi_year(1.0, 2.0, 2, 29, 5, end_year=2024)
+        self.assertEqual([d.date for d in days],
+                         ["2024-02-29", "2023-02-28", "2022-02-28", "2021-02-28", "2020-02-29"])
+
+    def test_fetch_range_caches_only_settled_results(self):
+        store = {}
+        disk = mock.Mock(get=store.get, set=store.__setitem__)
+        old_iso, recent_iso = "2000-01-02", date.today().isoformat()
+        daily = lambda iso: {"time": [iso], "temperature_2m_max": [1.0]}
+        with mock.patch.object(historical_service, "_disk", return_value=disk):
+            # An empty result isn't cached, so the next lookup asks again.
+            with mock.patch.object(historical_service, "_fetch_range_raw", return_value={}):
+                self.assertEqual(historical_service.fetch_range(1.0, 2.0, old_iso, old_iso), [])
+            self.assertEqual(store, {})
+            with mock.patch.object(historical_service, "_fetch_range_raw",
+                                   side_effect=lambda lat, lon, s, e: daily(s)) as raw:
+                historical_service.fetch_range(1.0, 2.0, old_iso, old_iso)
+                historical_service.fetch_range(1.0, 2.0, old_iso, old_iso)
+                self.assertEqual(raw.call_count, 1)
+                # Recent days can still change, so they're fetched every time.
+                historical_service.fetch_range(1.0, 2.0, recent_iso, recent_iso)
+                historical_service.fetch_range(1.0, 2.0, recent_iso, recent_iso)
+                self.assertEqual(raw.call_count, 3)
+            self.assertEqual(len(store), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

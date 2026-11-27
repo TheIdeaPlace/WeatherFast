@@ -5091,7 +5091,13 @@ async function fetchHistoricalWeatherMultiYear(lat, lon, date, endYear) {
     const results = await Promise.all(dates.map(async (iso) => {
         try {
             const [day] = await fetchHistoricalRange(lat, lon, iso, iso);
-            return day ? { ...day, label: String(HistoricalDates.yearOf(iso)) } : null;
+            if (!day) return null;
+            // Feb 29 falls back to Feb 28 in non-leap years; name the day when it differs
+            const year = String(HistoricalDates.yearOf(iso));
+            const label = iso.slice(5) === monthDay
+                ? year
+                : `${year} (${HistoricalDates.formatLong(iso, { withYear: false })})`;
+            return { ...day, label };
         } catch (e) {
             console.error(`Failed to fetch data for ${iso}:`, e);
             return null;

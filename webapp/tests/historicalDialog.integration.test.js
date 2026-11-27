@@ -219,4 +219,15 @@ describe('Historical Weather dialog', () => {
     const results = await axe(byId('historical-weather-dialog'));
     expect(results).toHaveNoViolations();
   });
+
+  test('Feb 29 across years uses Feb 28 in non-leap years and says so', async () => {
+    await chooseView('singleDay');
+    await loadDate('2024-02-29');
+    await chooseView('multiYear');
+    const starts = archiveRequests().map(r => r.start);
+    expect(starts).toContain('2024-02-29');
+    expect(starts).toContain('2023-02-28');
+    expect(starts).not.toContain('2023-02-29');
+    expect(byId('historical-data-container').textContent).toContain('2023 (February 28)');
+  });
 });

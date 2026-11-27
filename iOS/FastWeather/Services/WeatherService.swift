@@ -1316,7 +1316,10 @@ class WeatherService: ObservableObject {
             let batchResults: [HistoricalDay] = await withTaskGroup(of: HistoricalDay?.self) { group in
                 for year in batch {
                     group.addTask { [self] in
-                        let dateString = String(format: "%04d-%02d-%02d", year, month, day)
+                        // Feb 29 falls back to Feb 28 in non-leap years, as the year jumps do
+                        let isLeap = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
+                        let dayInYear = (month == 2 && day == 29 && !isLeap) ? 28 : day
+                        let dateString = String(format: "%04d-%02d-%02d", year, month, dayInYear)
                         do {
                             let response = try await self.fetchHistoricalWeather(
                                 for: city, startDate: dateString, endDate: dateString,

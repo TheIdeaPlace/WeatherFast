@@ -6,6 +6,7 @@ cached (historical data never changes). Multi-year lookups fetch each year
 concurrently.
 """
 
+import calendar
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 
@@ -41,18 +42,24 @@ def _day_from(daily, idx):
     )
 
 
+def _is_recent(end_date):
+    """Ranges ending in the last ten days come from the forecast API and can
+    still change, so they are neither cached nor read from the cache."""
+    return date.fromisoformat(end_date) >= date.today() - timedelta(days=10)
+
+
 def _fetch_range_raw(lat, lon, start_date, end_date):
     """Fetch a date range, choosing archive vs forecast-past_days by recency."""
     today = date.today()
-    end = date.fromisoformat(end_date)
-    recent_cutoff = today - timedelta(days=10)
 
-    if end >= recent_cutoff:
+    if _is_recent(end_date):
         # Use forecast past_days for recency (archive lags a few days).
         past_days = min(92, (today - date.fromisoformat(start_date)).days + 1)
         data = http.get_json(OPEN_METEO_API_URL, params={
             "latitude": lat, "longitude": lon, "timezone": "auto",
-            "daily": _DAILY, "past_days": max(1, past_days), "forecast_days": 1,
+            # Two forecast days so a city behind this computer's time zone still
+            # returns this computer's today (timezone=auto uses the city's dates).
+            "daily": _DAILY, "past_days": max(1, past_days), "forecast_days": 2,
         })
     else:
         data = http.get_json(OPEN_METEO_ARCHIVE_URL, params={
@@ -65,8 +72,10 @@ def _fetch_range_raw(lat, lon, start_date, end_date):
 def fetch_range(lat, lon, start_date, end_date):
     """Return HistoricalDay list for [start_date, end_date] inclusive."""
     key = f"range:{lat:.3f},{lon:.3f}:{start_date}:{end_date}"
-    cached = _disk().get(key)
-    if cached is not None:
+    recent = _is_recent(end_date)
+    # An empty cached list is a failed lookup, not data; fetch it again.
+    cached = None if recent else _disk().get(key)
+    if cached:
         return [HistoricalDay(**d) for d in cached]
 
     daily = _fetch_range_raw(lat, lon, start_date, end_date)
@@ -75,7 +84,8 @@ def fetch_range(lat, lon, start_date, end_date):
     for i, t in enumerate(times):
         if start_date <= t <= end_date:
             days.append(_day_from(daily, i))
-    _disk().set(key, [d.__dict__ for d in days])
+    if days and not recent:
+        _disk().set(key, [d.__dict__ for d in days])
     return days
 
 
@@ -93,7 +103,9 @@ def fetch_multi_year(lat, lon, month, day, years_back, end_year=None):
     years = [y for y in range(end_year, end_year - years_back, -1) if y >= 1940]
 
     def one(year):
-        iso = f"{year:04d}-{month:02d}-{day:02d}"
+        # Feb 29 falls back to Feb 28 in non-leap years, as the year jumps do.
+        day_in_year = 28 if (month, day) == (2, 29) and not calendar.isleap(year) else day
+        iso = f"{year:04d}-{month:02d}-{day_in_year:02d}"
         try:
             return fetch_single_day(lat, lon, iso)
         except Exception as e:  # noqa: BLE001
