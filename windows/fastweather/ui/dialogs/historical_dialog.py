@@ -79,6 +79,7 @@ class HistoricalDialog(wx.Dialog):
         self.settings = settings
         self.fmt = fmt
         self._alive = True
+        self._requests = {}  # id(results panel) -> token of its newest load
 
         panel = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -200,22 +201,37 @@ class HistoricalDialog(wx.Dialog):
     def _run(self, target_panel, fn):
         target_panel.set_message("Loading...")
         name, lat, lon = self.center
+        # Pressing a step button twice quickly starts two loads; only the
+        # newest may render, or a slower older reply would show the wrong day.
+        token = self._requests.get(id(target_panel), 0) + 1
+        self._requests[id(target_panel)] = token
 
         def work():
             try:
                 days = fn(lat, lon)
             except Exception as e:  # noqa: BLE001
-                wx.CallAfter(target_panel.set_message, f"Error: {e}")
+                wx.CallAfter(self._show_message, target_panel, token, f"Error: {e}")
                 return
-            wx.CallAfter(self._render, target_panel, days)
+            wx.CallAfter(self._render, target_panel, token, days)
 
         threading.Thread(target=work, daemon=True).start()
 
-    def _render(self, target_panel, days):
-        if not self._alive:
+    def _is_current(self, target_panel, token):
+        return self._alive and self._requests.get(id(target_panel)) == token
+
+    def _show_message(self, target_panel, token, text):
+        if not self._is_current(target_panel, token):
+            return
+        target_panel.set_message(text)
+        # Focus the list, as a successful load does, so a screen reader reads
+        # the error; otherwise a step button press would end in silence.
+        target_panel.set_focus()
+
+    def _render(self, target_panel, token, days):
+        if not self._is_current(target_panel, token):
             return
         if not days:
-            target_panel.set_message("No historical data available.")
+            self._show_message(target_panel, token, "No historical data available.")
             return
         target_panel.set_lines([format_day_line(d, self.fmt) for d in days])
         target_panel.set_focus()
@@ -260,6 +276,7 @@ class HistoricalDialog(wx.Dialog):
         new = self._picker_date(self.single_date) + timedelta(days=days)
         if not in_archive(new):
             return
+        self._limit_picker(self.single_date)  # today may have moved on
         self.single_date.SetValue(_to_wxdate(new))
         self._update_single_buttons()
         self.on_single(None)
@@ -302,6 +319,7 @@ class HistoricalDialog(wx.Dialog):
         new = self._browse_start() + timedelta(days=direction * n)
         if not in_archive(new):
             return
+        self._limit_picker(self.browse_date)  # today may have moved on
         self.browse_date.SetValue(_to_wxdate(new))
         self._update_browse_buttons()
         self.on_browse(None)
@@ -311,6 +329,7 @@ class HistoricalDialog(wx.Dialog):
         if not can_shift_browse_year(start, years):
             return
         new = shift_year(start, years)
+        self._limit_picker(self.browse_date)  # today may have moved on
         self.browse_date.SetValue(_to_wxdate(new))
         self._update_browse_buttons()
         self.on_browse(None)
