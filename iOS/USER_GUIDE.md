@@ -159,9 +159,9 @@ Configure in **Settings → Weather Around Me** or tap the gear icon inside Weat
 Access from the **Actions menu** on any city → **View Historical Weather**. Data is available back to 1940 for most locations.
 
 Modes:
-- **Single Day** — pick a specific date
-- **Multi-Year** — compare the same date across multiple years
-- **Daily Browse** — scroll through a month view
+- **Single Day** — pick a specific date; the arrows move a day at a time
+- **History** — compare the same date across multiple years; the arrows shift the window of years
+- **Browse Days** — 30 consecutive days; the arrows move 30 days at a time, and **Previous Year** and **Next Year** show the same 30 days in the year before or after
 
 ---
 

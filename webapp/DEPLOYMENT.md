@@ -11,6 +11,7 @@ Upload these files from `webapp/` folder to your server:
 - [ ] `index.html`
 - [ ] `styles.css`
 - [ ] `app.js`
+- [ ] `historical-dates.js`
 - [ ] `service-worker.js`
 - [ ] `manifest.json`
 - [ ] `robots.txt`

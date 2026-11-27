@@ -208,11 +208,11 @@ Compares weather in the area around your selected city. It has two tabs:
 
 ### Historical Weather
 
-Looks up past weather (Open-Meteo's archive covers 1940 through yesterday). Three tabs:
+Looks up past weather (Open-Meteo's archive covers 1940 through today). Three tabs:
 
-- **Single Day** — conditions for one chosen date.
-- **Multi-Year** — the same calendar day across a number of past years (you set how many years back, up to 85), useful for comparing a date over time.
-- **Daily Browse** — a run of consecutive days from a chosen start date (up to 31 days).
+- **Single Day** — conditions for one chosen date. **Previous Day** and **Next Day** move a day at a time and load it.
+- **Multi-Year** — the same calendar day across a number of past years (you set how many years back, up to 85), useful for comparing a date over time. **Previous Years** and **Next Years** shift the window of years by that many; the buttons name the count, for example **Previous 20 Years**.
+- **Daily Browse** — a run of consecutive days from a chosen start date (up to 31 days). **Previous Days** and **Next Days** move by a whole run, for example **Next 7 Days**. **Previous Year** and **Next Year** show the same days in the year before or after.
 
 ### My Data
 

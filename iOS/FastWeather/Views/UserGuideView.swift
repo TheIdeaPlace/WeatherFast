@@ -592,8 +592,8 @@ struct UserGuideView: View {
                 ) {
                     Text("Explore weather from the past:")
                     BulletPoint("**Single Day** - View specific date's weather")
-                    BulletPoint("**Multi-Year** - Compare across years")
-                    BulletPoint("**Daily Browse** - Scroll through month view")
+                    BulletPoint("**History** - Compare the same date across years")
+                    BulletPoint("**Browse Days** - 30 days in a row; Previous Year and Next Year show the same days in another year")
                     BulletPoint("Data available back to 1940 for most locations")
                 }
                 

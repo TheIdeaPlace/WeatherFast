@@ -2,8 +2,8 @@
 // Enables offline functionality and faster loading
 // UPDATED: February 8, 2026 - Focus return fix
 
-const CACHE_NAME = 'fastweather-v7';
-const RUNTIME_CACHE = 'fastweather-runtime-v7';
+const CACHE_NAME = 'fastweather-v8';
+const RUNTIME_CACHE = 'fastweather-runtime-v8';
 
 // Files to cache for offline use
 const STATIC_CACHE_URLS = [
@@ -11,6 +11,7 @@ const STATIC_CACHE_URLS = [
     './index.html',
     './styles.css',
     './app.js',
+    './historical-dates.js',
     './us-cities-cached.json',
     './international-cities-cached.json',
     './manifest.json'

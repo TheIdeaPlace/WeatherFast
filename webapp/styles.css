@@ -1646,6 +1646,46 @@ a:hover {
     justify-content: center;
 }
 
+fieldset.historical-view-modes {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin: 0;
+}
+
+fieldset.historical-view-modes legend {
+    font-weight: 600;
+    padding: 0 var(--spacing-sm);
+}
+
+fieldset.historical-view-modes label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+}
+
+.historical-date-picker {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.historical-date-picker label {
+    font-weight: 600;
+}
+
+.historical-date-nav[hidden] {
+    display: none;
+}
+
+.historical-date-nav button[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .historical-view-modes button {
     padding: 0.5rem 1rem;
     border: 2px solid var(--border-color);
