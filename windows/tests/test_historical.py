@@ -1,9 +1,13 @@
 import unittest
+from datetime import date
+from unittest import mock
 
 from fastweather.models.historical import HistoricalDay
 from fastweather.models.settings import AppSettings
 from fastweather.services import historical_service
-from fastweather.ui.dialogs.historical_dialog import format_day_line
+from fastweather.ui.dialogs.historical_dialog import (
+    browse_end, can_shift_browse_year, format_day_line, in_archive,
+    multi_year_end_limit, shift_year)
 from fastweather.ui.formatters import Formatter
 
 
@@ -49,6 +53,50 @@ class HistoricalTests(unittest.TestCase):
         self.assertEqual(len(days), 3)
         # all requested dates end in -07-04
         self.assertTrue(all(iso.endswith("-07-04") for iso in captured))
+
+    def test_shift_year(self):
+        self.assertEqual(shift_year(date(2020, 7, 4), -1), date(2019, 7, 4))
+        self.assertEqual(shift_year(date(2024, 2, 29), 1), date(2025, 2, 28))
+
+    def test_can_shift_browse_year(self):
+        today = date(2026, 11, 26)
+        self.assertTrue(can_shift_browse_year(date(2024, 11, 1), 1, today))
+        # The shifted range would start after today.
+        self.assertFalse(can_shift_browse_year(date(2025, 12, 1), 1, today))
+        # The archive begins in 1940.
+        self.assertTrue(can_shift_browse_year(date(1941, 1, 1), -1, today))
+        self.assertFalse(can_shift_browse_year(date(1940, 1, 1), -1, today))
+
+    def test_browse_end_stops_at_today(self):
+        today = date(2026, 11, 26)
+        self.assertEqual(browse_end(date(2026, 10, 1), 30, today), date(2026, 10, 30))
+        # The archive rejects end dates after today.
+        self.assertEqual(browse_end(date(2026, 11, 10), 30, today), today)
+
+    def test_in_archive(self):
+        today = date(2026, 11, 26)
+        self.assertTrue(in_archive(date(1940, 1, 1), today))
+        self.assertFalse(in_archive(date(1939, 12, 31), today))
+        self.assertTrue(in_archive(today, today))
+        self.assertFalse(in_archive(date(2026, 11, 27), today))
+
+    def test_multi_year_end_limit(self):
+        self.assertEqual(multi_year_end_limit(date(2026, 11, 26)), 2025)
+
+    def test_multi_year_window_end_year(self):
+        captured = []
+        with mock.patch.object(historical_service, "fetch_single_day",
+                               lambda lat, lon, iso: captured.append(iso) or HistoricalDay(date=iso)):
+            historical_service.fetch_multi_year(1.0, 2.0, 7, 4, 3, end_year=1990)
+        self.assertEqual(captured, ["1990-07-04", "1989-07-04", "1988-07-04"])
+
+    def test_multi_year_window_stops_at_1940(self):
+        captured = []
+        with mock.patch.object(historical_service, "fetch_single_day",
+                               lambda lat, lon, iso: captured.append(iso) or HistoricalDay(date=iso)):
+            days = historical_service.fetch_multi_year(1.0, 2.0, 7, 4, 5, end_year=1941)
+        self.assertEqual(len(days), 2)
+        self.assertEqual(captured[-1], "1940-07-04")
 
 
 if __name__ == "__main__":

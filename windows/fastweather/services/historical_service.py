@@ -84,10 +84,13 @@ def fetch_single_day(lat, lon, day_iso):
     return days[0] if days else HistoricalDay(date=day_iso, error="No data")
 
 
-def fetch_multi_year(lat, lon, month, day, years_back):
-    """Same calendar day across the past `years_back` years, newest first."""
-    this_year = date.today().year
-    years = list(range(this_year - 1, this_year - 1 - years_back, -1))
+def fetch_multi_year(lat, lon, month, day, years_back, end_year=None):
+    """Same calendar day across `years_back` years ending at `end_year`
+    (default last year), newest first. Years before the 1940 archive start
+    are left out."""
+    if end_year is None:
+        end_year = date.today().year - 1
+    years = [y for y in range(end_year, end_year - years_back, -1) if y >= 1940]
 
     def one(year):
         iso = f"{year:04d}-{month:02d}-{day:02d}"
